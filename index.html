@@ -692,44 +692,48 @@
                 <div id="net-join-wrap" style="display:none; flex-direction:column; gap:8px; margin-top:6px;">
                     <div id="join-inputs-wrap" style="display:flex; flex-direction:column; gap:8px;">
                         <div style="display:flex; gap:6px; flex-wrap:wrap;">
-                            <input type="text" id="join-player-name" placeholder="Your Name" value="Player 2" onfocus="if(this.value==='Player 2') this.value=''" style="clip-path:var(--hex-btn); border:2px solid #ecf0f1; padding:6px 10px; font-weight:700; flex-grow:1;">
-                            <select id="join-player-color" class="setup-select" style="width: 110px; min-height: 38px; padding: 4px;"></select>
+                            <input type="text" id="join-player-name" placeholder="Your Name" value="Player 2" onfocus="if(this.value==='Player 2') this.value=''" oninput="sendProfileUpdate()" style="clip-path:var(--hex-btn); border:2px solid #ecf0f1; padding:6px 10px; font-weight:700; flex-grow:1;">
+                            <select id="join-player-color" class="setup-select" onchange="sendProfileUpdate()" style="width: 110px; min-height: 38px; padding: 4px;"></select>
                         </div>
-                        <div style="display:flex; gap:6px;">
+                        <div style="display:flex; gap:6px;" id="join-connect-row">
                             <input type="text" id="join-room-code-input" placeholder="ENTER ROOM CODE" style="clip-path:var(--hex-btn); border:2px solid #ecf0f1; padding:6px 10px; font-weight:700; text-transform:uppercase; flex-grow:1;">
                             <button class="secondary-btn" onclick="connectToHostRoom()">Connect</button>
                         </div>
                         <span id="join-status-msg" style="font-size:0.75rem; font-weight:600; color:#e67e22;"></span>
                     </div>
                     
-                    <div id="client-lobby-wrap" style="display:none; flex-direction:column; gap:8px; align-items:center;">
+                    <div id="client-lobby-wrap" style="display:none; flex-direction:column; gap:8px; align-items:center; width: 100%;">
                         <div style="font-size:0.85rem; font-weight:700; color:#3498db;" id="client-lobby-status">Connected to Host!</div>
                         <button id="client-ready-btn" onclick="toggleClientReady()" style="width:100%; min-height: 45px; font-size:1rem; background:linear-gradient(135deg, #e67e22, #f39c12);">Click when Ready!</button>
+                        
+                        <div id="client-lobby-players" style="width: 100%; display: flex; flex-direction: column; gap: 4px; margin-top: 8px; max-height: 180px; overflow-y: auto;">
+                            <!-- Populated via LOBBY_UPDATE -->
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Custom Victory Mode Selection -->
-            <div class="setup-section-box">
+            <!-- Custom Victory Mode Selection (Hidden for Clients) -->
+            <div class="setup-section-box" id="victory-mode-section">
                 <div class="setup-section-title">🏆 Victory Mode</div>
-                <select id="win-condition-type" class="setup-select" onchange="toggleWinConditionInputs()">
+                <select id="win-condition-type" class="setup-select" onchange="toggleWinConditionInputs(); if(typeof broadcastLobbyState === 'function') broadcastLobbyState()">
                     <option value="score">Target Score (First to Reach Point Target)</option>
                     <option value="tiles">Tile Limit (Highest Score after Tile Limit)</option>
                 </select>
 
                 <div id="win-score-wrap" style="display: flex; align-items: center; gap: 10px; margin-top: 4px;">
                     <span style="font-size: 0.85rem; font-weight: 600; color: #555;">Target Points:</span>
-                    <input type="number" id="win-score-val" value="100" min="10" max="1000" style="width: 90px; padding: 6px 10px; border-radius: 10px; border: 2px solid #ecf0f1; font-weight: 700;">
+                    <input type="number" id="win-score-val" value="100" min="10" max="1000" style="width: 90px; padding: 6px 10px; border-radius: 10px; border: 2px solid #ecf0f1; font-weight: 700;" oninput="if(typeof broadcastLobbyState === 'function') broadcastLobbyState()">
                 </div>
 
                 <div id="win-tiles-wrap" style="display: none; align-items: center; gap: 10px; margin-top: 4px;">
                     <span style="font-size: 0.85rem; font-weight: 600; color: #555;">Total Tile Limit:</span>
-                    <input type="number" id="win-tiles-val" value="20" min="4" max="200" style="width: 90px; padding: 6px 10px; border-radius: 10px; border: 2px solid #ecf0f1; font-weight: 700;">
+                    <input type="number" id="win-tiles-val" value="20" min="4" max="200" style="width: 90px; padding: 6px 10px; border-radius: 10px; border: 2px solid #ecf0f1; font-weight: 700;" oninput="if(typeof broadcastLobbyState === 'function') broadcastLobbyState()">
                 </div>
             </div>
 
-            <!-- Player List -->
-            <div class="setup-section-box">
+            <!-- Player List (Hidden for Clients) -->
+            <div class="setup-section-box" id="players-setup-section">
                 <div class="setup-section-title">👥 Players & AI Opponents</div>
                 <div id="player-inputs-container"></div>
                 <div style="display: flex; gap: 6px; margin-top: 6px;">
@@ -848,6 +852,8 @@
         
         let clientReadyStates = new Map();
         let isClientReady = false;
+        let isGameStarted = false;
+        let hostPeerId = null;
 
         const iceConfig = {
             iceServers: [
@@ -875,6 +881,11 @@
             let mode = document.getElementById('network-mode-select').value;
             document.getElementById('net-host-wrap').style.display = (mode === 'host') ? 'flex' : 'none';
             document.getElementById('net-join-wrap').style.display = (mode === 'join') ? 'flex' : 'none';
+
+            let victorySection = document.getElementById('victory-mode-section');
+            let playersSection = document.getElementById('players-setup-section');
+            if(victorySection) victorySection.style.display = (mode === 'join') ? 'none' : 'flex';
+            if(playersSection) playersSection.style.display = (mode === 'join') ? 'none' : 'flex';
 
             let confirmBtn = document.getElementById('confirm-setup-btn');
             if (mode === 'join') {
@@ -911,6 +922,19 @@
             }
         }
 
+        function sendProfileUpdate() {
+            if (isOnline && !isHost && hostConn && hostConn.open) {
+                let pName = document.getElementById('join-player-name').value.trim() || "Guest";
+                let pColor = document.getElementById('join-player-color').value || "#3498db";
+                hostConn.send({
+                    type: 'UPDATE_PROFILE',
+                    name: pName,
+                    color: pColor,
+                    peerId: myPeerId
+                });
+            }
+        }
+
         function shareRoom() {
             const url = window.location.origin + window.location.pathname + '?room=' + roomCode;
             if (navigator.share) {
@@ -927,6 +951,47 @@
                     let oldText = btn.innerText;
                     btn.innerText = "✅ Link Copied!";
                     setTimeout(() => btn.innerText = oldText, 2000);
+                });
+            }
+        }
+
+        function getHostLobbyPlayers() {
+            const container = document.getElementById('player-inputs-container');
+            const rows = container.querySelectorAll('.player-input-row');
+            let lobbyPlayers = [];
+            rows.forEach((row, idx) => {
+                let nameInput = row.querySelector('.player-name-input');
+                let isAI = nameInput ? (nameInput.getAttribute('data-is-ai') === 'true') : false;
+                let fallbackName = nameInput ? (nameInput.getAttribute('placeholder') || (isAI ? `Bot ${idx + 1} 🤖` : `Player ${idx + 1}`)) : `Player ${idx + 1}`;
+                let name = nameInput ? (nameInput.value.trim() || fallbackName) : fallbackName;
+                let colorSelect = row.querySelector('.player-color-select');
+                let color = colorSelect ? colorSelect.value : themePalette[idx % themePalette.length].hex;
+                let peerIdAttr = row.getAttribute('data-peer-id');
+                
+                let isReady = true; 
+                let isHostPlayer = (idx === 0);
+                if (peerIdAttr && peerIdAttr !== 'local' && peerIdAttr !== 'ai' && peerIdAttr !== myPeerId) {
+                    isReady = clientReadyStates.get(peerIdAttr) || false;
+                }
+                
+                lobbyPlayers.push({ name, color, isAI, isReady, isHost: isHostPlayer });
+            });
+            return lobbyPlayers;
+        }
+
+        function broadcastLobbyState() {
+            if (isOnline && isHost) {
+                let pList = getHostLobbyPlayers();
+                let winModeSelect = document.getElementById('win-condition-type');
+                let winMode = winModeSelect ? winModeSelect.value : 'score';
+                let winTargetInput = winMode === 'score' ? document.getElementById('win-score-val') : document.getElementById('win-tiles-val');
+                let winTarget = winTargetInput ? winTargetInput.value : '100';
+                
+                broadcastToClients({
+                    type: 'LOBBY_UPDATE',
+                    players: pList,
+                    winMode: winMode,
+                    winTarget: winTarget
                 });
             }
         }
@@ -958,12 +1023,107 @@
                 startBtn.innerText = "Start Game!";
                 startBtn.style.background = "linear-gradient(135deg, #27ae60, #2ecc71)";
             }
+
+            if (isOnline && isHost) {
+                broadcastLobbyState();
+            }
+        }
+
+        function handleClientDisconnect(connPeerId) {
+            clientConns.delete(connPeerId);
+            if (!isGameStarted) {
+                clientReadyStates.delete(connPeerId);
+                let container = document.getElementById('player-inputs-container');
+                if (container) {
+                    let row = container.querySelector(`.player-input-row[data-peer-id="${connPeerId}"]`);
+                    if (row) row.remove();
+                }
+                checkHostStartButton();
+                broadcastLobbyState();
+            } else {
+                let p = players.find(p => p.peerId === connPeerId);
+                if (p && !p.isAI) {
+                    p.isAI = true;
+                    p.difficulty = 'medium';
+                    msg(`${p.name} disconnected! AI taking over.`);
+                    broadcastToClients({ type: 'PLAYER_DROPPED', droppedPeerId: connPeerId });
+                    updateUI();
+                    
+                    if (players[currentPlayerIndex].id === p.id) {
+                        setTimeout(() => handleAITurn(), 1000);
+                    }
+                }
+            }
+        }
+
+        function handleHostDisconnect() {
+            if (!isGameStarted) {
+                msg("Disconnected from Host.");
+                let codeInput = document.getElementById('join-room-code-input');
+                if (codeInput) codeInput.style.display = 'inline-block';
+                let connectRow = document.getElementById('join-connect-row');
+                if (connectRow) connectRow.style.display = 'flex';
+                document.getElementById('client-lobby-wrap').style.display = 'none';
+                document.getElementById('join-status-msg').innerText = "Disconnected.";
+                return;
+            }
+
+            msg("Host disconnected! Migrating server...");
+            
+            let oldHost = players.find(p => p.peerId === hostPeerId);
+            if (oldHost) {
+                oldHost.isAI = true;
+                oldHost.difficulty = 'medium';
+            }
+
+            let newHost = players.find(p => !p.isAI);
+            
+            if (!newHost) {
+                msg("All humans disconnected. Game Over.");
+                return;
+            }
+
+            hostPeerId = newHost.peerId;
+
+            if (newHost.peerId === myPeerId) {
+                isHost = true;
+                clientConns = new Map();
+                msg("You are the new Host!");
+                
+                peer.on('connection', (conn) => {
+                    let connPeerId = conn.peer;
+                    conn.on('open', () => { clientConns.set(connPeerId, conn); });
+                    conn.on('data', (data) => { handleNetMessageAsHost(connPeerId, data); });
+                    conn.on('close', () => { handleClientDisconnect(connPeerId); });
+                });
+
+                setTimeout(() => {
+                    broadcastToClients({ type: 'PLAYER_DROPPED', droppedPeerId: oldHost.peerId });
+                }, 1000);
+
+                if (players[currentPlayerIndex].isAI) {
+                    setTimeout(() => handleAITurn(), 1500);
+                }
+            } else {
+                isHost = false;
+                msg("Connecting to new host: " + newHost.name);
+                setTimeout(() => {
+                    hostConn = peer.connect(hostPeerId, { reliable: true });
+                    
+                    hostConn.on('open', () => {
+                        hostConn.send({ type: 'RECONNECT', peerId: myPeerId });
+                    });
+                    hostConn.on('data', (data) => handleNetMessageAsClient(data));
+                    hostConn.on('close', () => handleHostDisconnect());
+                    hostConn.on('error', () => handleHostDisconnect());
+                }, 1000);
+            }
+            updateUI();
         }
 
         function initPeerHost() {
-            const rawId = 'cg-' + Math.random().toString(36).substring(2, 7).toLowerCase();
-            
-            peer = new Peer(rawId, {
+            const shortCode = 'CG-' + Math.random().toString(36).substring(2, 7).toUpperCase();
+            peer = new Peer(shortCode, {
                 config: iceConfig,
                 pingInterval: 5000, 
                 debug: 1
@@ -971,6 +1131,7 @@
 
             peer.on('open', (id) => {
                 myPeerId = id;
+                hostPeerId = id;
                 roomCode = id.toUpperCase();
                 isHost = true;
                 isOnline = true;
@@ -999,9 +1160,7 @@
                 });
 
                 conn.on('close', () => {
-                    clientConns.delete(connPeerId);
-                    clientReadyStates.delete(connPeerId);
-                    checkHostStartButton();
+                    handleClientDisconnect(connPeerId);
                 });
             });
 
@@ -1013,7 +1172,8 @@
 
         function connectToHostRoom() {
             let rawCode = document.getElementById('join-room-code-input').value;
-            let inputCode = rawCode.trim().toLowerCase().replace(/[^a-z0-9-]/g, '');
+            // FIX: This forces the input code to uppercase to perfectly match the host room!
+            let inputCode = rawCode.trim().toUpperCase().replace(/[^A-Z0-9-]/g, '');
             let pName = document.getElementById('join-player-name').value.trim() || "Guest";
             let pColor = document.getElementById('join-player-color').value || "#3498db";
 
@@ -1032,9 +1192,9 @@
             
             peer.on('open', (id) => {
                 myPeerId = id;
+                hostPeerId = inputCode;
                 hostConn = peer.connect(inputCode, { reliable: true });
                 
-                // Add Timeout handler in case firewall blocks connection
                 let connTimeout = setTimeout(() => {
                     if (hostConn && !hostConn.open) {
                         let joinMsgEl = document.getElementById('join-status-msg');
@@ -1044,14 +1204,16 @@
                 }, 8000);
 
                 hostConn.on('open', () => {
-                    clearTimeout(connTimeout); // Connection succeeded
+                    clearTimeout(connTimeout); 
                     
                     document.getElementById('join-status-msg').innerText = "Connected! Waiting for Host to start...";
                     isOnline = true;
                     isHost = false;
                     updateChatVisibility();
 
-                    document.getElementById('join-inputs-wrap').style.display = 'none';
+                    let connectRow = document.getElementById('join-connect-row');
+                    if (connectRow) connectRow.style.display = 'none';
+
                     document.getElementById('client-lobby-wrap').style.display = 'flex';
                     
                     isClientReady = false;
@@ -1074,10 +1236,7 @@
                 });
 
                 hostConn.on('close', () => {
-                    msg("Disconnected from Host.");
-                    document.getElementById('join-inputs-wrap').style.display = 'flex';
-                    document.getElementById('client-lobby-wrap').style.display = 'none';
-                    document.getElementById('join-status-msg').innerText = "Disconnected.";
+                    handleHostDisconnect();
                 });
             });
             
@@ -1110,7 +1269,15 @@
                 clientReadyStates.set(data.peerId, false);
                 addPlayerInput(false, data.name, 'medium', data.color, true, data.peerId);
                 msg(`🌐 ${data.name} connected to room!`);
-                checkHostStartButton();
+            } else if (data.type === 'UPDATE_PROFILE') {
+                let row = document.querySelector(`.player-input-row[data-peer-id="${fromPeerId}"]`);
+                if (row) {
+                    let nameInput = row.querySelector('.player-name-input');
+                    let colorSelect = row.querySelector('.player-color-select');
+                    if (nameInput) nameInput.value = data.name;
+                    if (colorSelect) colorSelect.value = data.color;
+                    broadcastLobbyState();
+                }
             } else if (data.type === 'SET_READY') {
                 clientReadyStates.set(fromPeerId, data.ready);
                 let statusEl = document.getElementById(`ready-status-${fromPeerId}`);
@@ -1119,6 +1286,7 @@
                     statusEl.style.color = data.ready ? '#2ecc71' : '#e67e22';
                 }
                 checkHostStartButton();
+                broadcastLobbyState();
             } else if (data.type === 'REQ_ROLL') {
                 let activePlayer = players[currentPlayerIndex];
                 if (activePlayer && activePlayer.peerId === fromPeerId && !hasRolledDiceThisTurn) {
@@ -1148,11 +1316,38 @@
                     text: data.text,
                     color: data.color
                 });
+            } else if (data.type === 'RECONNECT') {
+                console.log("Player reconnected to new host.");
             }
         }
 
         function handleNetMessageAsClient(data) {
-            if (data.type === 'SYNC_GAME_START') {
+            if (data.type === 'LOBBY_UPDATE') {
+                let container = document.getElementById('client-lobby-players');
+                if (container) {
+                    let html = `<div style="font-size:0.75rem; font-weight:700; color:var(--text-dim); text-align:center; margin-bottom:6px;">Goal: ${data.winTarget} ${data.winMode === 'score' ? 'Pts' : 'Tiles'}</div>`;
+                    data.players.forEach(p => {
+                        let status = p.isHost ? '👑 Host' : (p.isReady ? '✅ Ready' : '⏳ Wait');
+                        let icon = p.isAI ? '🤖' : '👤';
+                        html += `
+                            <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.05); padding:6px 10px; clip-path:var(--hex-btn); border-left: 4px solid ${p.color}; border-right: 1px solid rgba(255,255,255,0.1); margin-bottom: 4px;">
+                                <span style="font-size:0.8rem; font-weight:700; color:var(--text-light); text-shadow: 0 1px 3px rgba(0,0,0,0.8);">${icon} ${p.name}</span>
+                                <span style="font-size:0.7rem; font-weight:800; color:${(p.isReady || p.isHost) ? '#2ecc71' : '#e67e22'};">${status}</span>
+                            </div>
+                        `;
+                    });
+                    container.innerHTML = html;
+                }
+            } else if (data.type === 'PLAYER_DROPPED') {
+                let p = players.find(p => p.peerId === data.droppedPeerId);
+                if (p) {
+                    p.isAI = true;
+                    p.difficulty = 'medium';
+                    msg(`${p.name} disconnected! AI taking over.`);
+                    updateUI();
+                }
+            } else if (data.type === 'SYNC_GAME_START') {
+                isGameStarted = true;
                 players = data.players;
                 winConditionType = data.winConditionType;
                 winTargetValue = data.winTargetValue;
@@ -2436,11 +2631,11 @@
                 `;
             } else if (isAI) {
                 row.innerHTML = `
-                    <input type="text" class="player-name-input" data-is-ai="true" placeholder="${placeholderVal}" value="${initialVal}" onfocus="if(this.value==='${placeholderVal}') this.value=''">
-                    <select class="player-color-select setup-select" style="width: 100px; min-height: 38px; padding: 4px; font-size: 0.75rem;">
+                    <input type="text" class="player-name-input" data-is-ai="true" placeholder="${placeholderVal}" value="${initialVal}" onfocus="if(this.value==='${placeholderVal}') this.value=''" oninput="if(typeof broadcastLobbyState === 'function') broadcastLobbyState()">
+                    <select class="player-color-select setup-select" style="width: 100px; min-height: 38px; padding: 4px; font-size: 0.75rem;" onchange="if(typeof broadcastLobbyState === 'function') broadcastLobbyState()">
                         ${colorOptionsHTML}
                     </select>
-                    <select class="ai-diff-select setup-select" style="width: 90px; min-height: 38px; padding: 4px; font-size: 0.75rem;">
+                    <select class="ai-diff-select setup-select" style="width: 90px; min-height: 38px; padding: 4px; font-size: 0.75rem;" onchange="if(typeof broadcastLobbyState === 'function') broadcastLobbyState()">
                         <option value="easy" ${defaultDiff === 'easy' ? 'selected' : ''}>Easy 🤖</option>
                         <option value="medium" ${defaultDiff === 'medium' ? 'selected' : ''}>Medium 🤖</option>
                         <option value="hard" ${defaultDiff === 'hard' ? 'selected' : ''}>Hard 🤖</option>
@@ -2449,8 +2644,8 @@
                 `;
             } else {
                 row.innerHTML = `
-                    <input type="text" class="player-name-input" data-is-ai="false" placeholder="${placeholderVal}" value="${initialVal}" onfocus="if(this.value==='${placeholderVal}') this.value=''">
-                    <select class="player-color-select setup-select" style="width: 110px; min-height: 38px; padding: 4px; font-size: 0.75rem;">
+                    <input type="text" class="player-name-input" data-is-ai="false" placeholder="${placeholderVal}" value="${initialVal}" onfocus="if(this.value==='${placeholderVal}') this.value=''" oninput="if(typeof broadcastLobbyState === 'function') broadcastLobbyState()">
+                    <select class="player-color-select setup-select" style="width: 110px; min-height: 38px; padding: 4px; font-size: 0.75rem;" onchange="if(typeof broadcastLobbyState === 'function') broadcastLobbyState()">
                         ${colorOptionsHTML}
                     </select>
                     <button class="danger-btn" onclick="removePlayerInput(this)">✕</button>
@@ -2458,6 +2653,11 @@
             }
 
             container.appendChild(row);
+
+            if (isOnline && isHost) {
+                checkHostStartButton();
+                broadcastLobbyState();
+            }
         }
 
         function removePlayerInput(btn, peerId = null) {
@@ -2470,7 +2670,11 @@
 
             if (peerId && isOnline && isHost) {
                 clientReadyStates.delete(peerId);
+            }
+
+            if (isOnline && isHost) {
                 checkHostStartButton();
+                broadcastLobbyState();
             }
         }
 
@@ -2530,6 +2734,7 @@
             document.getElementById('tutorial-overlay').classList.remove('visible');
 
             if (isOnline && isHost) {
+                isGameStarted = true;
                 let starterTile = generateStarterTile();
                 let startTurnIndex = Math.floor(Math.random() * players.length);
                 
