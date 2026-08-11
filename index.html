@@ -140,7 +140,7 @@
         }
 
         .animate-title {
-            animation: titleReveal 3.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            animation: titleReveal 3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
         @keyframes titleReveal {
             0% { opacity: 0; transform: scale(0.6) translateY(30px); filter: blur(12px); }
@@ -961,17 +961,29 @@
         }
 
         function initPeerHost() {
-            const shortCode = 'CG-' + Math.random().toString(36).substring(2, 7).toUpperCase();
-            peer = new Peer(shortCode, { config: iceConfig });
+            const rawId = 'cg-' + Math.random().toString(36).substring(2, 7).toLowerCase();
+            
+            peer = new Peer(rawId, {
+                config: iceConfig,
+                pingInterval: 5000, 
+                debug: 1
+            });
 
             peer.on('open', (id) => {
                 myPeerId = id;
-                roomCode = id;
+                roomCode = id.toUpperCase();
                 isHost = true;
                 isOnline = true;
                 updateChatVisibility();
-                document.getElementById('room-code-display').innerText = id;
+                document.getElementById('room-code-display').innerText = roomCode;
                 checkHostStartButton();
+            });
+
+            peer.on('disconnected', () => {
+                if (!isGameOver) {
+                    msg("Host connection dropped by network. Reconnecting...");
+                    peer.reconnect();
+                }
             });
 
             peer.on('connection', (conn) => {
@@ -1001,18 +1013,23 @@
 
         function connectToHostRoom() {
             let rawCode = document.getElementById('join-room-code-input').value;
-            let inputCode = rawCode.trim().toUpperCase().replace(/[^A-Z0-9-]/g, '');
+            let inputCode = rawCode.trim().toLowerCase().replace(/[^a-z0-9-]/g, '');
             let pName = document.getElementById('join-player-name').value.trim() || "Guest";
             let pColor = document.getElementById('join-player-color').value || "#3498db";
 
             if (!inputCode) {
-                document.getElementById('join-status-msg').innerText = "Please enter a Room Code!";
+                document.getElementById('join-status-msg').innerText = "Please enter a valid Room Code!";
                 return;
             }
 
             document.getElementById('join-status-msg').innerText = "Connecting to Host...";
 
-            peer = new Peer({ config: iceConfig });
+            peer = new Peer({
+                config: iceConfig,
+                pingInterval: 5000,
+                debug: 1
+            });
+            
             peer.on('open', (id) => {
                 myPeerId = id;
                 hostConn = peer.connect(inputCode, { reliable: true });
@@ -1062,6 +1079,12 @@
                     document.getElementById('client-lobby-wrap').style.display = 'none';
                     document.getElementById('join-status-msg').innerText = "Disconnected.";
                 });
+            });
+            
+            peer.on('disconnected', () => {
+                if (!isGameOver && peer && !peer.destroyed) {
+                    peer.reconnect();
+                }
             });
 
             peer.on('error', (err) => {
@@ -1915,9 +1938,10 @@
                     document.getElementById('network-mode-select').value = 'join';
                     toggleNetworkModeUI();
                     
-                    let cleanRoom = roomToJoin.replace(/[^A-Za-z0-9-]/g, '').toUpperCase();
+                    let cleanRoom = roomToJoin.toUpperCase().replace(/[^A-Z0-9-]/g, '');
                     document.getElementById('join-room-code-input').value = cleanRoom;
                     
+                    msg("Invite link loaded! Enter your name and tap Connect.");
                 } else {
                     showTutorialPrompt();
                 }
