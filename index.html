@@ -1918,10 +1918,6 @@
                     let cleanRoom = roomToJoin.replace(/[^A-Za-z0-9-]/g, '').toUpperCase();
                     document.getElementById('join-room-code-input').value = cleanRoom;
                     
-                    // Auto-connect after brief pause
-                    setTimeout(() => {
-                        connectToHostRoom();
-                    }, 500);
                 } else {
                     showTutorialPrompt();
                 }
