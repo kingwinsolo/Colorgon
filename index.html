@@ -172,6 +172,18 @@
             100% { opacity: 0; transform: translateY(-10px); }
         }
 
+        .skip-intro-btn {
+            position: absolute;
+            bottom: 30px;
+            z-index: 2505;
+            background: rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(10px);
+            font-size: 0.75rem;
+            letter-spacing: 2px;
+            padding: 8px 22px;
+        }
+
         /* --- PREVIEW HOVER EFFECT --- */
         .preview-hover { animation: previewFloatBob 1.4s infinite ease-in-out alternate; transform-origin: 0 0; }
         @keyframes previewFloatBob {
@@ -837,6 +849,16 @@
         let clientReadyStates = new Map();
         let isClientReady = false;
 
+        const iceConfig = {
+            iceServers: [
+                { urls: 'stun:stun.l.google.com:19302' },
+                { urls: 'stun:openrelay.metered.ca:80' },
+                { urls: 'turn:openrelay.metered.ca:80', username: 'openrelayproject', credential: 'openrelayproject' },
+                { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' },
+                { urls: 'turn:openrelay.metered.ca:443?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' }
+            ]
+        };
+
         function getLocalPlayer() {
             if (!isOnline) return players[currentPlayerIndex];
             let p = players.find(player => player.peerId === myPeerId);
@@ -940,15 +962,7 @@
 
         function initPeerHost() {
             const shortCode = 'CG-' + Math.random().toString(36).substring(2, 7).toUpperCase();
-            peer = new Peer(shortCode, {
-                config: {
-                    iceServers: [
-                        { urls: 'stun:stun.l.google.com:19302' },
-                        { urls: 'stun:stun1.l.google.com:19302' },
-                        { urls: 'stun:stun2.l.google.com:19302' }
-                    ]
-                }
-            });
+            peer = new Peer(shortCode, { config: iceConfig });
 
             peer.on('open', (id) => {
                 myPeerId = id;
@@ -997,15 +1011,7 @@
 
             document.getElementById('join-status-msg').innerText = "Connecting to Host...";
 
-            peer = new Peer({
-                config: {
-                    iceServers: [
-                        { urls: 'stun:stun.l.google.com:19302' },
-                        { urls: 'stun:stun1.l.google.com:19302' },
-                        { urls: 'stun:stun2.l.google.com:19302' }
-                    ]
-                }
-            });
+            peer = new Peer({ config: iceConfig });
             peer.on('open', (id) => {
                 myPeerId = id;
                 hostConn = peer.connect(inputCode, { reliable: true });
