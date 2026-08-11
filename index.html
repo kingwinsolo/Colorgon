@@ -912,7 +912,7 @@
         }
 
         function shareRoom() {
-            const url = window.location.href.split('?')[0] + '?room=' + roomCode;
+            const url = window.location.origin + window.location.pathname + '?room=' + roomCode;
             if (navigator.share) {
                 navigator.share({
                     title: 'Join my Colorgon game!',
@@ -1000,7 +1000,8 @@
         }
 
         function connectToHostRoom() {
-            let inputCode = document.getElementById('join-room-code-input').value.trim().toUpperCase();
+            let rawCode = document.getElementById('join-room-code-input').value;
+            let inputCode = rawCode.trim().toUpperCase().replace(/[^A-Z0-9-]/g, '');
             let pName = document.getElementById('join-player-name').value.trim() || "Guest";
             let pColor = document.getElementById('join-player-color').value || "#3498db";
 
@@ -1015,8 +1016,19 @@
             peer.on('open', (id) => {
                 myPeerId = id;
                 hostConn = peer.connect(inputCode, { reliable: true });
+                
+                // Add Timeout handler in case firewall blocks connection
+                let connTimeout = setTimeout(() => {
+                    if (hostConn && !hostConn.open) {
+                        let joinMsgEl = document.getElementById('join-status-msg');
+                        if (joinMsgEl) joinMsgEl.innerText = "Connection blocked by firewall!";
+                        hostConn.close();
+                    }
+                }, 8000);
 
                 hostConn.on('open', () => {
+                    clearTimeout(connTimeout); // Connection succeeded
+                    
                     document.getElementById('join-status-msg').innerText = "Connected! Waiting for Host to start...";
                     isOnline = true;
                     isHost = false;
@@ -1902,7 +1914,14 @@
                     openPlayerSetup();
                     document.getElementById('network-mode-select').value = 'join';
                     toggleNetworkModeUI();
-                    document.getElementById('join-room-code-input').value = roomToJoin;
+                    
+                    let cleanRoom = roomToJoin.replace(/[^A-Za-z0-9-]/g, '').toUpperCase();
+                    document.getElementById('join-room-code-input').value = cleanRoom;
+                    
+                    // Auto-connect after brief pause
+                    setTimeout(() => {
+                        connectToHostRoom();
+                    }, 500);
                 } else {
                     showTutorialPrompt();
                 }
