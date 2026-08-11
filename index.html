@@ -852,10 +852,10 @@
         const iceConfig = {
             iceServers: [
                 { urls: 'stun:stun.l.google.com:19302' },
-                { urls: 'stun:openrelay.metered.ca:80' },
-                { urls: 'turn:openrelay.metered.ca:80', username: 'openrelayproject', credential: 'openrelayproject' },
-                { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' },
-                { urls: 'turn:openrelay.metered.ca:443?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' }
+                { urls: 'stun:stun1.l.google.com:19302' },
+                { urls: 'stun:stun2.l.google.com:19302' },
+                { urls: 'stun:stun.cloudflare.com:3478' },
+                { urls: 'stun:global.stun.twilio.com:3478' }
             ]
         };
 
@@ -1053,7 +1053,10 @@
             });
 
             peer.on('error', (err) => {
-                document.getElementById('join-status-msg').innerText = "Connection failed. Check Code!";
+                let errorMsg = err.type === 'peer-unavailable' ? "Room not found! Check Code." : "Connection failed.";
+                let joinMsgEl = document.getElementById('join-status-msg');
+                if (joinMsgEl) joinMsgEl.innerText = errorMsg;
+                console.error("Connection error:", err);
             });
         }
 
