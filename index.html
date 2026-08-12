@@ -65,10 +65,10 @@
         svg#board:active { cursor: grabbing; }
 
         #master-pan { 
-            will-change: transform;
-            transform-origin: center center;
-            transition: transform 0.15s ease-out; 
-        }
+    will-change: transform;
+    transform-origin: 0 0; /* CRITICAL FIX: Forces math to align with pointer */
+    transition: transform 0.15s ease-out; 
+}
         #master-pan.dragging { transition: none !important; }
 
         /* --- CINEMATIC OPENING OVERLAY --- */
@@ -454,53 +454,50 @@
         .wedge-match { animation: pulse-match 0.9s ease-out; transform-origin: 0 0; }
         .wedge-colorgon { animation: pulse-colorgon 1.2s ease-in-out; transform-origin: 0 0; }
 
-        /* --- MOBILE OVERRIDES --- */
-        @media (max-width: 768px) {
-            #left-hud-wrapper { width: 140px; top: 8px; left: 8px; }
+        /* --- MOBILE & LANDSCAPE RESPONSIVENESS --- */
+        @media (max-width: 850px), (max-height: 550px) {
+            #left-hud-wrapper { width: 130px; top: 8px; left: 8px; }
             #top-left-hud { padding: 6px 8px; background: rgba(20, 20, 26, 0.65); }
             h1 { font-size: 1.1rem; letter-spacing: 1px; }
-            #top-controls button { padding: 4px 6px; font-size: 0.6rem; min-height: 28px; }
-            #lb-toggle-btn { display: flex; } /* Shown via the dropdown now */
+            #lb-toggle-btn { display: flex; }
 
             #leaderboard-container { padding: 6px; }
-            #leaderboard-container.mobile-collapsed { opacity: 0; pointer-events: none; transform: translateX(-30px); max-height: 0; padding: 0; margin: 0; overflow: hidden; }
+            #leaderboard-container.mobile-collapsed #leaderboard-list { display: none; }
+            #leaderboard-container.mobile-collapsed #lb-arrow { transform: rotate(180deg); }
 
             #ui-bar { top: 8px; right: 8px; padding: 6px 10px; gap: 8px; background: rgba(20, 20, 26, 0.65); max-width: calc(100vw - 150px); }
             .stat-label { font-size: 0.5rem; }
             .stat-val { font-size: 0.85rem; }
+            #top-controls button { padding: 4px 6px; font-size: 0.6rem; min-height: 28px; }
             
-            #settings-dropdown { top: 55px; right: 8px; background: rgba(20, 20, 26, 0.85); }
+            #settings-dropdown { top: 55px; right: 8px; background: rgba(20, 20, 26, 0.85); max-height: 80vh; overflow-y: auto; }
 
-            /* Moving Dice & Zoom to mid-right to free bottom corners */
-            #dice-panel { right: 8px; padding: 6px 4px; top: 35%; transform: translateY(-50%); background: rgba(20, 20, 26, 0.65); }
+            #dice-panel { right: 8px; padding: 6px 4px; top: 40%; transform: translateY(-50%); background: rgba(20, 20, 26, 0.65); }
             .die-container { width: 28px; height: 32px; }
 
-            #zoom-controls { bottom: auto; right: 8px; top: 65%; transform: translateY(-50%); }
+            #zoom-controls { bottom: auto; right: 8px; top: 70%; transform: translateY(-50%); }
             .zoom-btn { width: 36px; height: 40px; min-height: 40px; font-size: 1.1rem; }
 
-            /* Hand container fills bottom, optimized size */
             #hand-container { bottom: 8px; padding: 6px 10px; gap: 6px; width: 95vw; max-width: 450px; flex-direction: column; background: rgba(20, 20, 26, 0.85); }
             #current-player-label { font-size: 0.7rem; }
-            #hand { min-height: 80px; gap: 10px !important; }
-            .hand-tile { width: 75px; height: 75px; } /* Increased to 75px for mobile */
+            #hand { min-height: 70px; gap: 8px !important; }
+            .hand-tile { width: 65px; height: 65px; } 
             
             .rotate-btn-group { flex-direction: row !important; width: 100%; justify-content: center; }
             .rotate-btn-group button { flex: 1; min-height: 28px; font-size: 0.7rem; padding: 4px; }
 
-            #message-banner { bottom: 145px; font-size: 0.7rem; padding: 6px 12px; width: 90vw; max-width: 320px; white-space: normal; line-height: 1.2; }
+            #message-banner { bottom: 125px; font-size: 0.7rem; padding: 6px 12px; width: 90vw; max-width: 320px; white-space: normal; line-height: 1.2; }
+            #chat-container { width: 160px; max-height: 120px; bottom: 130px; left: 8px; }
+            .modal-card { max-height: 90vh; padding: 16px; width: 95vw; }
 
-            /* Fix text clipping on small screens */
-            .float-colorgon { font-size: 1.8rem; white-space: normal; text-align: center; width: 90vw; line-height: 1.1; }
-            .float-match, .float-colorgon-mini { font-size: 1.1rem; white-space: normal; text-align: center; width: 90vw; line-height: 1.1; }
-
-            #turn-announcement { font-size: 1.2rem; padding: 12px 16px; white-space: normal; line-height: 1.3; }
-
-            #top-victory-banner { padding: 10px 16px; width: 95vw; }
-            .victory-title-inline { font-size: 1rem; }
-            .standing-item { font-size: 0.7rem; padding: 3px 6px; }
-            .cinematic-title { font-size: 2.2rem; letter-spacing: 6px; }
-
-            #chat-container { width: 180px; max-height: 140px; bottom: 8px; left: 8px; }
+            /* Specific adjustments for phones flipped sideways (Landscape) */
+            @media (orientation: landscape) and (max-height: 550px) {
+                #hand-container { bottom: 6px; left: 50%; max-width: 60vw; flex-direction: row; }
+                .rotate-btn-group { flex-direction: column !important; width: auto; }
+                #message-banner { bottom: auto; top: 6px; left: 50%; transform: translateX(-50%); z-index: 100;}
+                #zoom-controls { top: auto; bottom: 6px; right: 6px; transform: none; flex-direction: row; }
+                #dice-panel { top: 50%; right: 6px; }
+            }
         }
     </style>
 </head>
@@ -539,7 +536,7 @@
         <div id="center-die-y" class="center-die-wrapper"></div>
     </div>
 
-    <!-- Left HUD Wrapper -->
+<!-- Left HUD Wrapper -->
     <div id="left-hud-wrapper">
         <div id="top-left-hud">
             <h1>
@@ -547,8 +544,11 @@
             </h1>
         </div>
 
-        <div id="leaderboard-container" class="mobile-collapsed">
-            <div class="lb-header">Current Match</div>
+        <div id="leaderboard-container">
+            <div class="lb-header" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center;" onclick="toggleMobileLeaderboard()">
+                <span>Current Match</span>
+                <span id="lb-arrow" style="font-size: 0.9rem; transition: transform 0.3s ease; display: inline-block;">▲</span>
+            </div>
             <div id="leaderboard-list"></div>
         </div>
     </div>
@@ -588,8 +588,8 @@
     <!-- Dropdown Menu for Settings (Moved outside UI Bar to avoid clip-path masking) -->
     <div id="settings-dropdown" class="hud-element">
         <button onclick="openPlayerSetup(); toggleSettingsMenu();" style="width: 100%;">New Game</button>
+        <button class="secondary-btn" onclick="toggleFullscreen(); toggleSettingsMenu();" style="width: 100%;">⛶ Fullscreen</button>
         <button id="bgm-toggle-btn" class="secondary-btn" onclick="toggleBGM()" style="width: 100%;">🎵 Music: ON</button>
-        <button id="lb-toggle-btn" class="secondary-btn" onclick="toggleMobileLeaderboard(); toggleSettingsMenu();" style="width: 100%;">📊 Ranks</button>
         
         <div style="width: 100%; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 8px; margin-top: 4px; display: flex; flex-direction: column; gap: 6px;">
             <div class="lb-header">Career Wins 🏆</div>
@@ -747,7 +747,38 @@
             </div>
         </div>
     </div>
-<script>
+    <script>
+       function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.warn(`Error attempting to enable full-screen mode: ${err.message}`);
+                });
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
+
+        function enterFullscreen() {
+            if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen().catch(err => {});
+            }
+        }
+
+        function sendProfileUpdate() {
+if (isOnline && !isHost && hostConn && hostConn.open) {
+                let pName = document.getElementById('join-player-name').value.trim() || "Guest";
+                let pColor = document.getElementById('join-player-color').value || "#3498db";
+                hostConn.send({
+                    type: 'UPDATE_PROFILE',
+                    name: pName,
+                    color: pColor,
+                    peerId: myPeerId
+                });
+            }
+        }
+
         const themePalette = [
             { label: "🟢 Emerald", hex: "#2ecc71" },
             { label: "🔵 Sapphire", hex: "#3498db" },
@@ -808,6 +839,7 @@
                     });
                 }
             } else if (isOnline && isHost) {
+                if (typeof SFX.chatMessage === 'function') SFX.chatMessage();
                 appendChatMessage(senderName, text, senderColor);
                 broadcastToClients({
                     type: 'CHAT_MSG',
@@ -918,19 +950,6 @@
             }
             if (hostConn && hostConn.open) {
                 hostConn.send({ type: 'SET_READY', ready: isClientReady });
-            }
-        }
-
-        function sendProfileUpdate() {
-            if (isOnline && !isHost && hostConn && hostConn.open) {
-                let pName = document.getElementById('join-player-name').value.trim() || "Guest";
-                let pColor = document.getElementById('join-player-color').value || "#3498db";
-                hostConn.send({
-                    type: 'UPDATE_PROFILE',
-                    name: pName,
-                    color: pColor,
-                    peerId: myPeerId
-                });
             }
         }
 
@@ -1264,9 +1283,36 @@
 
         function handleNetMessageAsHost(fromPeerId, data) {
             if (data.type === 'JOIN_LOBBY') {
+                if (isGameStarted) {
+                    let targetPlayer = players.find(p => p.name.toLowerCase() === data.name.toLowerCase() && p.isAI);
+                    if (!targetPlayer) targetPlayer = players.find(p => p.isAI); 
+                    
+                    if (targetPlayer) {
+                        targetPlayer.isAI = false;
+                        targetPlayer.peerId = fromPeerId;
+                        targetPlayer.name = data.name; 
+                        targetPlayer.color = data.color;
+
+                        clientConns.get(fromPeerId).send({
+                            type: 'REJOIN_STATE',
+                            syncData: { players, winConditionType, winTargetValue, currentPlayerIndex },
+                            gridArray: Array.from(grid.entries()),
+                            playsLeft, tilesPlayedThisTurn, diceActive, hasRolledDiceThisTurn
+                        });
+
+                        msg(`${data.name} rejoined the game!`);
+                        broadcastToClients({ type: 'PLAYER_REJOINED', peerId: fromPeerId, playerId: targetPlayer.id, name: data.name, color: data.color });
+                        updateUI();
+                    } else {
+                        clientConns.get(fromPeerId).send({ type: 'REJECT_JOIN', reason: "Game is full. No disconnected slots available." });
+                    }
+                    return;
+                }
+
                 clientReadyStates.set(data.peerId, false);
                 addPlayerInput(false, data.name, 'medium', data.color, true, data.peerId);
                 msg(`🌐 ${data.name} connected to room!`);
+                checkHostStartButton();
             } else if (data.type === 'UPDATE_PROFILE') {
                 let row = document.querySelector(`.player-input-row[data-peer-id="${fromPeerId}"]`);
                 if (row) {
@@ -1307,6 +1353,7 @@
                     endTurn();
                 }
             } else if (data.type === 'CHAT_MSG') {
+                if (typeof SFX.chatMessage === 'function') SFX.chatMessage();
                 appendChatMessage(data.name, data.text, data.color);
                 broadcastToClients({
                     type: 'CHAT_MSG',
@@ -1350,9 +1397,7 @@
                 winConditionType = data.winConditionType;
                 winTargetValue = data.winTargetValue;
                 currentPlayerIndex = data.currentPlayerIndex;
-                playsLeft = 2; // The first turn of the game gets 2 plays!
-                
-                // RESET turn & state variables for remote players on new game
+                playsLeft = 2; 
                 hasRolledDiceThisTurn = false;
                 isRolling = false;
                 isAnimating = false;
@@ -1376,16 +1421,13 @@
 
                 ['hand-container', 'dice-panel', 'ui-bar', 'message-banner'].forEach(id => {
                     let el = document.getElementById(id);
-                    if (el) {
-                        el.style.opacity = '1';
-                        el.style.pointerEvents = 'auto';
-                    }
+                    if (el) { el.style.opacity = '1'; el.style.pointerEvents = 'auto'; }
                 });
 
                 document.getElementById('tutorial-overlay').classList.remove('visible');
                 updateChatVisibility();
 
-                resetCameraToCenter(true); // Center the view back to origin
+                resetCameraToCenter(true); 
                 
                 renderHand();
                 updateUI();
@@ -1395,6 +1437,49 @@
                 let p = players[currentPlayerIndex];
                 msg(`${p.isAI ? '🤖 ' : ''}${p.name}'s Turn!`);
                 showTurnAnnouncement(p.name);
+            } else if (data.type === 'REJOIN_STATE') {
+                isGameStarted = true;
+                players = data.syncData.players;
+                winConditionType = data.syncData.winConditionType;
+                winTargetValue = data.syncData.winTargetValue;
+                currentPlayerIndex = data.syncData.currentPlayerIndex;
+                playsLeft = data.playsLeft;
+                tilesPlayedThisTurn = data.tilesPlayedThisTurn;
+                diceActive = data.diceActive;
+                hasRolledDiceThisTurn = data.hasRolledDiceThisTurn;
+                
+                grid.clear();
+                data.gridArray.forEach(([k, v]) => grid.set(k, v));
+                
+                document.getElementById('tutorial-overlay').classList.remove('visible');
+                updateChatVisibility();
+                
+                ['hand-container', 'dice-panel', 'ui-bar', 'message-banner'].forEach(id => {
+                    let el = document.getElementById(id);
+                    if (el) { el.style.opacity = '1'; el.style.pointerEvents = 'auto'; }
+                });
+
+                resetCameraToCenter(false);
+                renderHand();
+                updateUI();
+                renderBoard();
+                
+                msg(`Welcome back! You have rejoined the game.`);
+                let p = players[currentPlayerIndex];
+                showTurnAnnouncement(p.name);
+            } else if (data.type === 'PLAYER_REJOINED') {
+                let p = players.find(player => player.id === data.playerId);
+                if (p) {
+                    p.isAI = false;
+                    p.peerId = data.peerId;
+                    p.name = data.name;
+                    p.color = data.color;
+                    msg(`${data.name} reconnected to the game!`);
+                    updateUI();
+                }
+            } else if (data.type === 'REJECT_JOIN') {
+                msg(data.reason);
+                document.getElementById('join-status-msg').innerText = data.reason;
             } else if (data.type === 'LOBBY_RESET') {
                 initGame(false);
             } else if (data.type === 'SYNC_ROLL_RESULT') {
@@ -1413,7 +1498,7 @@
                 newlyPlacedTileKey = `${data.q},${data.r}`;
                 
                 renderHand(); 
-                newlyPlacedTileKey = null; // Clear key immediately after rendering frame so tile does not shake on future updates
+                newlyPlacedTileKey = null; 
                 
                 updateUI();
             } else if (data.type === 'NET_MATCH_EDGE') {
@@ -1500,11 +1585,11 @@
                 let nextP = players[currentPlayerIndex];
                 showTurnAnnouncement(nextP.name);
             } else if (data.type === 'CHAT_MSG') {
+                if (typeof SFX.chatMessage === 'function') SFX.chatMessage();
                 appendChatMessage(data.name, data.text, data.color);
             }
         }
-
-        async function executeClientDiceRoll(r, b, y) {
+async function executeClientDiceRoll(r, b, y) {
             isRolling = true;
             let centerContainer = document.getElementById('center-dice-container');
             let centerR = document.getElementById('center-die-r');
@@ -1878,6 +1963,17 @@
         }
 
         const SFX = {
+            chatMessage() {
+                let ctx = getAudioContext(); if (!ctx) return;
+                let osc = ctx.createOscillator(), gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(600, ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.3, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
+                osc.connect(gain); gain.connect(ctx.destination);
+                osc.start(); osc.stop(ctx.currentTime + 0.1);
+            },
             rotateCW() {
                 let ctx = getAudioContext(); if (!ctx) return;
                 let osc = ctx.createOscillator(), gain = ctx.createGain();
@@ -2108,7 +2204,8 @@
         let initialScale = 1.0;
 
         const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
-function initGame(isFirstLoad = true) {
+
+        function initGame(isFirstLoad = true) {
             gameSessionId++; 
 
             grid.clear();
@@ -2374,9 +2471,7 @@ function initGame(isFirstLoad = true) {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
             }
         }
-
-        /* --- INTERACTIVE TUTORIAL SYSTEM --- */
-        let currentTutorialStep = 0;
+let currentTutorialStep = 0;
 
         const tutorialSteps = [
             {
@@ -2490,7 +2585,6 @@ function initGame(isFirstLoad = true) {
             document.getElementById('tut-desc').innerHTML = stepData.desc;
             document.getElementById('tut-visual-box').innerHTML = stepData.visualHTML;
 
-            // Update Dots
             const dotsContainer = document.getElementById('tut-dots');
             dotsContainer.innerHTML = '';
             for (let i = 0; i < tutorialSteps.length; i++) {
@@ -2499,7 +2593,6 @@ function initGame(isFirstLoad = true) {
                 dotsContainer.appendChild(dot);
             }
 
-            // Update Buttons
             const prevBtn = document.getElementById('tut-prev-btn');
             const nextBtn = document.getElementById('tut-next-btn');
 
@@ -2521,7 +2614,6 @@ function initGame(isFirstLoad = true) {
                 currentTutorialStep++;
                 updateTutorialStep();
             } else {
-                // Finish Tutorial
                 openPlayerSetup();
             }
         }
@@ -2542,6 +2634,7 @@ function initGame(isFirstLoad = true) {
         }
 
         function startTutorial() {
+            enterFullscreen(); // Auto-Fullscreen!
             let overlay = document.getElementById('tutorial-overlay');
             if (overlay) overlay.classList.add('visible');
             document.getElementById('prompt-card').style.display = 'none';
@@ -2552,6 +2645,7 @@ function initGame(isFirstLoad = true) {
         }
 
         function openPlayerSetup() {
+            enterFullscreen(); // Auto-Fullscreen!
             gameSessionId++; 
             hideTurnAnnouncement();
             clearAllPreviews();
@@ -2562,6 +2656,7 @@ function initGame(isFirstLoad = true) {
             document.getElementById('prompt-card').style.display = 'none';
             document.getElementById('tutorial-card').style.display = 'none';
             document.getElementById('setup-card').style.display = 'flex';
+            // ... rest of logic remains identical below this
 
             if (isOnline && !isHost) {
                 document.getElementById('network-mode-select').value = 'join';
@@ -3096,8 +3191,7 @@ function initGame(isFirstLoad = true) {
                                     }
 
                                     evalScore = (sidePts * 2) + (speculativeColorgonPts * 5) + bonusPlayValue + activeColorClustering;
-                               } else if (cp.difficulty === 'medium') {
-                                    // NEW MEDIUM LOGIC: Values standard matches and basic Colorgons, but ignores clustering/future planning
+                                } else if (cp.difficulty === 'medium') {
                                     let sidePts = val.matches; 
                                     
                                     grid.set(`${q},${r}`, currentTile);
@@ -3130,10 +3224,9 @@ function initGame(isFirstLoad = true) {
                 validMoves.sort((a, b) => b.score - a.score);
                 let chosenMove;
 
-               if (cp.difficulty === 'easy') {
+                if (cp.difficulty === 'easy') {
                     chosenMove = validMoves[Math.floor(Math.random() * validMoves.length)];
                 } else if (cp.difficulty === 'medium') {
-                    // NEW MEDIUM SELECTION: 75% best move, 25% chance to pick a "good but not best" move (top 3)
                     if (Math.random() < 0.75) {
                         chosenMove = validMoves[0];
                     } else {
@@ -3182,17 +3275,16 @@ function initGame(isFirstLoad = true) {
                 
                 centerCameraOn(chosenMove.q, chosenMove.r, true);
                 
-                await sleep(1100);
+                await sleep(500); /* Sped up from 1100 */
                 if (activeSession !== gameSessionId) return;
                 clearAllPreviews();
 
                 await attemptPlacement(chosenMove.q, chosenMove.r);
                 if (isGameOver || activeSession !== gameSessionId) return;
-                await sleep(800);
+                await sleep(400); /* Sped up from 800 */
                 if (activeSession !== gameSessionId) return;
             }
 
-            // FORCE CLEAR ANIMATION FLAGS SO AI TURN ABSOLUTELY ENDS AND HANDS OVER TO HUMAN!
             isAnimating = false;
             isRolling = false;
 
@@ -3202,7 +3294,6 @@ function initGame(isFirstLoad = true) {
             }
         }
 
-        /* --- UPDATED RENDER HAND: ALWAYS SHOW LOCAL PLAYER CARDS FACE-UP --- */
         function renderHand() {
             const handDiv = document.getElementById('hand');
             handDiv.innerHTML = '';
@@ -3406,7 +3497,6 @@ function initGame(isFirstLoad = true) {
             }
         }
 
-        /* --- REAL-TIME MULTIPLAYER TILE PLACEMENT & SCORING ANIMATIONS --- */
         async function attemptPlacement(q, r) {
             let activeSession = gameSessionId;
             if(hasDragged || isRolling || isAnimating || !hasRolledDiceThisTurn) return; 
@@ -3430,9 +3520,9 @@ function initGame(isFirstLoad = true) {
 
             if (isOnline && !isHost) {
                 if (hostConn && hostConn.open) {
-                    isAnimating = true; // LOCK LOCAL INPUT IMMEDIATELY TO PREVENT DOUBLE-CLICK
+                    isAnimating = true; 
                     let sentHandIndex = selectedHandIndex;
-                    selectedHandIndex = -1; // RESET SELECTION IMMEDIATELY
+                    selectedHandIndex = -1; 
                     clearAllPreviews();
                     renderHand();
 
@@ -3483,7 +3573,7 @@ function initGame(isFirstLoad = true) {
             let matchPts = 0;
             if (validation.matches >= 2) {
                 matchPts = validation.matches;
-                if (tilesPlayedThisTurn < 3) playsLeft++; // BONUS PLAY AWARDED!
+                if (tilesPlayedThisTurn < 3) playsLeft++; 
             }
 
             if (isOnline && isHost) {
@@ -3658,9 +3748,7 @@ function initGame(isFirstLoad = true) {
             }
         }
 
-        /* --- RECENTER CAMERA ON BOARD CENTER ON END TURN --- */
         function endTurn() {
-            // ALWAYS RESET ANIMATION AND ROLLING FLAGS AT TURN END
             isAnimating = false;
             isRolling = false;
 
@@ -3679,7 +3767,7 @@ function initGame(isFirstLoad = true) {
             currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
             
             tilesPlayedThisTurn = 0;
-            playsLeft = 1; // RESET playsLeft TO 1 BY DEFAULT FOR NEW TURN!
+            playsLeft = 1; 
             selectedHandIndex = -1;
             hasRolledDiceThisTurn = false;
 
@@ -4466,6 +4554,20 @@ function initGame(isFirstLoad = true) {
             return Math.hypot(dx, dy);
         }
 
+        /* --- ZOOM-TO-POINTER MATH --- */
+        function zoomAtPoint(targetX, targetY, newScale) {
+            const cx = window.innerWidth / 2;
+            const cy = window.innerHeight / 2;
+
+            const ratio = newScale / currentBoardScale;
+
+            panX = targetX - cx - (targetX - cx - panX) * ratio;
+            panY = targetY - cy - (targetY - cy - panY) * ratio;
+
+            currentBoardScale = newScale;
+            renderBoard();
+        }
+
         boardSvg.addEventListener('pointerdown', (e) => {
             getAudioContext();
             
@@ -4495,13 +4597,12 @@ function initGame(isFirstLoad = true) {
                 dragStartY = e.clientY - panY;
             }
         });
-
-        boardSvg.addEventListener('pointermove', (e) => {
+boardSvg.addEventListener('pointermove', (e) => {
             if (activePointers.has(e.pointerId)) {
                 activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
             }
 
-            /* --- UPDATED ZOOM-TO-FINGERS MATH FOR PINCHING --- */
+            /* --- ZOOM-TO-FINGERS MATH FOR PINCHING --- */
             if (isPinching && activePointers.size === 2) {
                 let currDist = getPinchDistance();
                 if (initialPinchDist > 0) {
@@ -4566,7 +4667,7 @@ function initGame(isFirstLoad = true) {
             }
         });
 
-        /* --- UPDATED ZOOM-TO-POINTER MATH FOR MOUSE WHEEL --- */
+        /* --- ZOOM-TO-POINTER MATH FOR MOUSE WHEEL --- */
         boardSvg.addEventListener('wheel', (e) => {
             e.preventDefault();
             let delta = e.deltaY < 0 ? 0.12 : -0.12;
