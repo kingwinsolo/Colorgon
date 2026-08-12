@@ -585,8 +585,9 @@
         <button id="menu-toggle-btn" class="secondary-btn" onclick="toggleSettingsMenu()" style="font-size: 1.1rem; padding: 4px 10px; min-width: 38px;">☰</button>
     </div>
 
-    <!-- Dropdown Menu for Settings (Moved outside UI Bar to avoid clip-path masking) -->
+    <!-- Dropdown Menu for Settings -->
     <div id="settings-dropdown" class="hud-element">
+        <div id="menu-room-code" style="display: none; font-size: 0.7rem; color: #2ecc71; text-align: center; font-weight: 800; letter-spacing: 1px; margin-bottom: 6px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 6px;"></div>
         <button onclick="openPlayerSetup(); toggleSettingsMenu();" style="width: 100%;">New Game</button>
         <button id="bgm-toggle-btn" class="secondary-btn" onclick="toggleBGM()" style="width: 100%;">🎵 Music: ON</button>
         <button id="lb-toggle-btn" class="secondary-btn" onclick="toggleMobileLeaderboard(); toggleSettingsMenu();" style="width: 100%;">📊 Ranks</button>
@@ -771,6 +772,18 @@
                 menu.style.display = (menu.style.display === 'none' || menu.style.display === '') ? 'flex' : 'none';
             }
         }
+        
+        function updateMenuRoomCode() {
+            let el = document.getElementById('menu-room-code');
+            if (el) {
+                if (isOnline && roomCode) {
+                    el.style.display = 'block';
+                    el.innerText = `ROOM: ${roomCode}`;
+                } else {
+                    el.style.display = 'none';
+                }
+            }
+        }
 
         /* --- CHAT SYSTEM (MULTIPLAYER ONLY) --- */
         function updateChatVisibility() {
@@ -864,6 +877,16 @@
                 { urls: 'stun:global.stun.twilio.com:3478' }
             ]
         };
+
+        // Window Unload Events to actively destroy connections on exit
+        window.addEventListener('beforeunload', () => {
+            if (hostConn) hostConn.close();
+            if (peer) peer.destroy();
+        });
+        window.addEventListener('pagehide', () => {
+            if (hostConn) hostConn.close();
+            if (peer) peer.destroy();
+        });
 
         function getLocalPlayer() {
             if (!isOnline) return players[currentPlayerIndex];
@@ -1046,7 +1069,7 @@
                     p.isAI = true;
                     p.difficulty = 'medium';
                     msg(`${p.name} disconnected! AI taking over.`);
-                    broadcastToClients({ type: 'PLAYER_DROPPED', droppedPeerId: connPeerId });
+                    broadcastToClients({ type: 'PLAYER_DROPPED', droppedPeerId: connPeerId, players: players });
                     updateUI();
                     
                     if (players[currentPlayerIndex].id === p.id) {
@@ -1084,6 +1107,8 @@
             }
 
             hostPeerId = newHost.peerId;
+            roomCode = hostPeerId.toUpperCase();
+            updateMenuRoomCode();
 
             if (newHost.peerId === myPeerId) {
                 isHost = true;
@@ -1098,7 +1123,7 @@
                 });
 
                 setTimeout(() => {
-                    broadcastToClients({ type: 'PLAYER_DROPPED', droppedPeerId: oldHost.peerId });
+                    broadcastToClients({ type: 'PLAYER_DROPPED', droppedPeerId: oldHost.peerId, players: players });
                 }, 1000);
 
                 if (players[currentPlayerIndex].isAI) {
@@ -1136,6 +1161,7 @@
                 isHost = true;
                 isOnline = true;
                 updateChatVisibility();
+                updateMenuRoomCode();
                 document.getElementById('room-code-display').innerText = roomCode;
                 checkHostStartButton();
             });
@@ -1172,7 +1198,6 @@
 
         function connectToHostRoom() {
             let rawCode = document.getElementById('join-room-code-input').value;
-            // FIX: This forces the input code to uppercase to perfectly match the host room!
             let inputCode = rawCode.trim().toUpperCase().replace(/[^A-Z0-9-]/g, '');
             let pName = document.getElementById('join-player-name').value.trim() || "Guest";
             let pColor = document.getElementById('join-player-color').value || "#3498db";
@@ -1209,6 +1234,8 @@
                     document.getElementById('join-status-msg').innerText = "Connected! Waiting for Host to start...";
                     isOnline = true;
                     isHost = false;
+                    roomCode = inputCode;
+                    updateMenuRoomCode();
                     updateChatVisibility();
 
                     let connectRow = document.getElementById('join-connect-row');
@@ -1266,9 +1293,46 @@
 
         function handleNetMessageAsHost(fromPeerId, data) {
             if (data.type === 'JOIN_LOBBY') {
-                clientReadyStates.set(data.peerId, false);
-                addPlayerInput(false, data.name, 'medium', data.color, true, data.peerId);
-                msg(`🌐 ${data.name} connected to room!`);
+                if (isGameStarted) {
+                    let pName = data.name.trim().toLowerCase();
+                    let targetPlayer = players.find(p => p.name.trim().toLowerCase() === pName && p.isAI);
+                    
+                    if (targetPlayer) {
+                        targetPlayer.isAI = false;
+                        targetPlayer.peerId = data.peerId;
+                        if(data.color) targetPlayer.color = data.color;
+                        
+                        let conn = clientConns.get(data.peerId);
+                        if (conn) {
+                            conn.send({
+                                type: 'SYNC_MIDGAME_STATE',
+                                players: players,
+                                winConditionType: winConditionType,
+                                winTargetValue: winTargetValue,
+                                currentPlayerIndex: currentPlayerIndex,
+                                playsLeft: playsLeft,
+                                tilesPlayedThisTurn: tilesPlayedThisTurn,
+                                diceActive: diceActive,
+                                gridEntries: Array.from(grid.entries()),
+                                scoredColorgons: Array.from(scoredColorgons),
+                                playerScoredWedgesArray: Array.from(playerScoredWedges.entries()).map(([k,v]) => [k, Array.from(v)])
+                            });
+                        }
+                        
+                        broadcastToClients({ type: 'PLAYER_RECONNECTED', players: players });
+                        msg(`${targetPlayer.name} rejoined the game!`);
+                        updateUI();
+                        renderBoard();
+                        renderHand();
+                    } else {
+                        let conn = clientConns.get(data.peerId);
+                        if (conn) conn.send({ type: 'JOIN_REJECTED', reason: 'Game in progress. Enter the exact name of a disconnected player to rejoin.' });
+                    }
+                } else {
+                    clientReadyStates.set(data.peerId, false);
+                    addPlayerInput(false, data.name, 'medium', data.color, true, data.peerId);
+                    msg(`🌐 ${data.name} connected to room!`);
+                }
             } else if (data.type === 'UPDATE_PROFILE') {
                 let row = document.querySelector(`.player-input-row[data-peer-id="${fromPeerId}"]`);
                 if (row) {
@@ -1318,6 +1382,7 @@
                 });
             } else if (data.type === 'RECONNECT') {
                 console.log("Player reconnected to new host.");
+                broadcastToClients({ type: 'PLAYER_RECONNECTED', players: players });
             }
         }
 
@@ -1338,13 +1403,79 @@
                     });
                     container.innerHTML = html;
                 }
-            } else if (data.type === 'PLAYER_DROPPED') {
-                let p = players.find(p => p.peerId === data.droppedPeerId);
-                if (p) {
-                    p.isAI = true;
-                    p.difficulty = 'medium';
-                    msg(`${p.name} disconnected! AI taking over.`);
-                    updateUI();
+            } else if (data.type === 'JOIN_REJECTED') {
+                msg(data.reason);
+                let joinInputs = document.getElementById('join-inputs-wrap');
+                if(joinInputs) joinInputs.style.display = 'flex';
+                let lobbyWrap = document.getElementById('client-lobby-wrap');
+                if(lobbyWrap) lobbyWrap.style.display = 'none';
+                let joinMsgEl = document.getElementById('join-status-msg');
+                if(joinMsgEl) joinMsgEl.innerText = data.reason;
+                if(hostConn) hostConn.close();
+            } else if (data.type === 'PLAYER_RECONNECTED' || data.type === 'PLAYER_DROPPED') {
+                if(data.players) players = data.players;
+                updateUI();
+                renderHand();
+            } else if (data.type === 'SYNC_MIDGAME_STATE') {
+                isGameStarted = true;
+                players = data.players;
+                winConditionType = data.winConditionType;
+                winTargetValue = data.winTargetValue;
+                currentPlayerIndex = data.currentPlayerIndex;
+                playsLeft = data.playsLeft;
+                tilesPlayedThisTurn = data.tilesPlayedThisTurn;
+                diceActive = data.diceActive;
+
+                grid.clear();
+                data.gridEntries.forEach(entry => grid.set(entry[0], entry[1]));
+                
+                scoredColorgons = new Set(data.scoredColorgons);
+                
+                playerScoredWedges.clear();
+                data.playerScoredWedgesArray.forEach(entry => playerScoredWedges.set(entry[0], new Set(entry[1])));
+
+                isAnimating = false;
+                isRolling = false;
+                isGameOver = false;
+                selectedHandIndex = -1;
+
+                let victoryBanner = document.getElementById('top-victory-banner');
+                if (victoryBanner) victoryBanner.classList.remove('visible');
+                stopVictoryParticles();
+
+                ['hand-container', 'dice-panel', 'ui-bar', 'message-banner'].forEach(id => {
+                    let el = document.getElementById(id);
+                    if (el) {
+                        el.style.opacity = '1';
+                        el.style.pointerEvents = 'auto';
+                    }
+                });
+
+                document.getElementById('tutorial-overlay').classList.remove('visible');
+                updateChatVisibility();
+                updateMenuRoomCode();
+
+                resetCameraToCenter(false); 
+
+                ['r', 'b', 'y'].forEach(c => {
+                    let wrap = document.getElementById('die-wrap-' + c);
+                    if (diceActive && diceActive.includes(c)) {
+                        wrap.classList.add('active-die');
+                        wrap.classList.remove('inactive-die');
+                    } else {
+                        wrap.classList.add('inactive-die');
+                        wrap.classList.remove('active-die');
+                    }
+                });
+
+                renderHand();
+                updateUI();
+                renderBoard();
+
+                let p = players[currentPlayerIndex];
+                msg(`Reconnected successfully!`);
+                if (isMyTurn()) {
+                    showTurnAnnouncement(p.name);
                 }
             } else if (data.type === 'SYNC_GAME_START') {
                 isGameStarted = true;
@@ -1386,6 +1517,7 @@
 
                 document.getElementById('tutorial-overlay').classList.remove('visible');
                 updateChatVisibility();
+                updateMenuRoomCode();
 
                 resetCameraToCenter(true); // Center the view back to origin
                 
@@ -2763,6 +2895,7 @@
 
                 renderHand();
                 updateUI();
+                updateMenuRoomCode();
                 updateAllTimeWinsDisplay();
                 placeTile(0, 0, starterTile);
                 renderBoard();
@@ -4037,6 +4170,11 @@
         }
 
         function clearAllPreviews() {
+            let previewLayer = document.getElementById('preview-layer');
+            if (previewLayer) previewLayer.innerHTML = '';
+            currentPreviewKey = null;
+            document.querySelectorAll('.playable-hitarea').forEach(el => {
+                function clearAllPreviews() {
             let previewLayer = document.getElementById('preview-layer');
             if (previewLayer) previewLayer.innerHTML = '';
             currentPreviewKey = null;
