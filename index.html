@@ -412,21 +412,21 @@
         #tutorial-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(12, 12, 16, 0.85); backdrop-filter: blur(8px); z-index: 1000; display: flex; justify-content: center; align-items: center; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
         #tutorial-overlay.visible { opacity: 1 !important; pointer-events: auto !important; }
 
-        .modal-card { background: #ffffff; width: 580px; max-width: 92vw; clip-path: var(--hex-chamfer); padding: 28px 24px; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6); display: flex; flex-direction: column; align-items: center; text-align: center; position: relative; animation: cardPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); color: #2c3e50; max-height: 90vh; overflow-y: auto; }
+        .modal-card { background: var(--panel-bg); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.12); width: 580px; max-width: 92vw; clip-path: var(--hex-chamfer); padding: 28px 24px; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8); display: flex; flex-direction: column; align-items: center; text-align: center; position: relative; animation: cardPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); color: var(--text-light); max-height: 90vh; overflow-y: auto; }
         @keyframes cardPop { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
 
-        .modal-card h2 { font-family: 'Montserrat', sans-serif; font-size: 1.6rem; margin: 0 0 8px 0; color: #2c3e50; }
-        .modal-card p { color: #555; font-size: 0.85rem; line-height: 1.4; margin: 0 0 14px 0; }
+        .modal-card h2 { font-family: 'Montserrat', sans-serif; font-size: 1.6rem; margin: 0 0 8px 0; color: var(--text-light); text-shadow: 0 2px 6px rgba(0,0,0,0.6); }
+        .modal-card p { color: var(--text-dim); font-size: 0.85rem; line-height: 1.4; margin: 0 0 14px 0; }
 
-        .setup-section-box { width: 100%; background: #f8f9fa; border: 2px solid #ecf0f1; clip-path: polygon(10px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px), 0 10px); padding: 12px; margin-bottom: 14px; display: flex; flex-direction: column; gap: 8px; text-align: left; }
-        .setup-section-title { font-size: 0.8rem; font-weight: 700; color: #2c3e50; text-transform: uppercase; letter-spacing: 0.5px; }
+        .setup-section-box { width: 100%; background: rgba(12, 12, 18, 0.6); border: 1px solid rgba(255, 255, 255, 0.15); clip-path: polygon(10px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px), 0 10px); padding: 12px; margin-bottom: 14px; display: flex; flex-direction: column; gap: 8px; text-align: left; }
+        .setup-section-title { font-size: 0.8rem; font-weight: 700; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; }
 
-        select.setup-select { padding: 8px 12px; font-size: 0.85rem; font-weight: 600; font-family: 'Poppins', sans-serif; border: 2px solid #ecf0f1; clip-path: var(--hex-btn); background: white; outline: none; cursor: pointer; width: 100%; min-height: 40px; }
+        select.setup-select { padding: 8px 12px; font-size: 0.85rem; font-weight: 600; font-family: 'Poppins', sans-serif; border: 1px solid rgba(255, 255, 255, 0.2); clip-path: var(--hex-btn); background: rgba(12, 12, 18, 0.9); color: var(--text-light); outline: none; cursor: pointer; width: 100%; min-height: 40px; }
 
         #player-inputs-container { width: 100%; max-height: 180px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 2px; }
 
         .player-input-row { display: flex; gap: 8px; align-items: center; width: 100%; }
-        .player-input-row input { flex-grow: 1; padding: 8px 12px; clip-path: var(--hex-btn); border: 2px solid #ecf0f1; font-family: 'Poppins', sans-serif; font-size: 0.85rem; font-weight: 600; outline: none; min-height: 38px; background: #ffffff; }
+        .player-input-row input { flex-grow: 1; padding: 8px 12px; clip-path: var(--hex-btn); border: 1px solid rgba(255, 255, 255, 0.2); font-family: 'Poppins', sans-serif; font-size: 0.85rem; font-weight: 600; outline: none; min-height: 38px; background: rgba(12, 12, 18, 0.9); color: var(--text-light); }
         .player-input-row input:focus { border-color: #3498db; }
 
         .tut-visual-box { width: 100%; height: 135px; background: #1e1e24; clip-path: polygon(12px 0, calc(100% - 12px) 0, 100% 12px, 100% calc(100% - 12px), calc(100% - 12px) 100%, 12px 100%, 0 calc(100% - 12px), 0 12px); margin-bottom: 14px; display: flex; justify-content: center; align-items: center; overflow: hidden; position: relative; box-shadow: inset 0 2px 8px rgba(0,0,0,0.5); }
@@ -437,11 +437,11 @@
         @keyframes tutGlowPulse { 0% { filter: drop-shadow(0 0 2px gold) brightness(1); } 50% { filter: drop-shadow(0 0 15px gold) brightness(1.4); } 100% { filter: drop-shadow(0 0 2px gold) brightness(1); } }
         .tut-glowing-colorgon { animation: tutGlowPulse 1.5s infinite alternate; }
 
-        .tutorial-badge { background: #e8f8f5; color: #27ae60; font-weight: 700; font-size: 0.75rem; padding: 4px 12px; clip-path: var(--hex-btn); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+        .tutorial-badge { background: rgba(39, 174, 96, 0.25); border: 1px solid #2ecc71; color: #2ecc71; font-weight: 700; font-size: 0.75rem; padding: 4px 12px; clip-path: var(--hex-btn); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
 
         .tutorial-steps-indicator { display: flex; gap: 8px; margin-bottom: 16px; }
-        .step-dot { width: 10px; height: 10px; border-radius: 50%; background: #ddd; transition: all 0.3s ease; }
-        .step-dot.active { background: #3498db; width: 24px; border-radius: 10px; }
+        .step-dot { width: 10px; height: 10px; border-radius: 50%; background: rgba(255, 255, 255, 0.2); transition: all 0.3s ease; }
+        .step-dot.active { background: #3498db; width: 24px; border-radius: 10px; box-shadow: 0 0 8px #3498db; }
 
         .modal-btn-group { display: flex; gap: 10px; width: 100%; justify-content: center; }
 
@@ -684,19 +684,19 @@
                 </select>
 
                 <div id="net-host-wrap" style="display:none; flex-direction:column; gap:6px; margin-top:6px;">
-                    <span style="font-size: 0.8rem; font-weight:600; color:#555;">Room Code: <strong id="room-code-display" style="color:#2ecc71; font-size:1.1rem; letter-spacing:2px;">GENERATE...</strong></span>
-                    <span style="font-size:0.7rem; color:#777;">Share this Room Code with remote players to let them join your match!</span>
+                    <span style="font-size: 0.8rem; font-weight:600; color:var(--text-dim);">Room Code: <strong id="room-code-display" style="color:#2ecc71; font-size:1.1rem; letter-spacing:2px;">GENERATE...</strong></span>
+                    <span style="font-size:0.7rem; color:var(--text-dim);">Share this Room Code with remote players to let them join your match!</span>
                     <button class="secondary-btn" id="share-invite-btn" onclick="shareRoom()" style="margin-top: 4px;">📤 Share Invite Link</button>
                 </div>
 
                 <div id="net-join-wrap" style="display:none; flex-direction:column; gap:8px; margin-top:6px;">
                     <div id="join-inputs-wrap" style="display:flex; flex-direction:column; gap:8px;">
                         <div style="display:flex; gap:6px; flex-wrap:wrap;">
-                            <input type="text" id="join-player-name" placeholder="Your Name" value="Player 2" onfocus="if(this.value==='Player 2') this.value=''" oninput="sendProfileUpdate()" style="clip-path:var(--hex-btn); border:2px solid #ecf0f1; padding:6px 10px; font-weight:700; flex-grow:1;">
+                            <input type="text" id="join-player-name" placeholder="Your Name" value="Player 2" onfocus="if(this.value==='Player 2') this.value=''" oninput="sendProfileUpdate()" style="clip-path:var(--hex-btn); border:1px solid rgba(255,255,255,0.2); background: rgba(12, 12, 18, 0.9); color: var(--text-light); padding:6px 10px; font-weight:700; flex-grow:1;">
                             <select id="join-player-color" class="setup-select" onchange="sendProfileUpdate()" style="width: 110px; min-height: 38px; padding: 4px;"></select>
                         </div>
                         <div style="display:flex; gap:6px;" id="join-connect-row">
-                            <input type="text" id="join-room-code-input" placeholder="ENTER ROOM CODE" style="clip-path:var(--hex-btn); border:2px solid #ecf0f1; padding:6px 10px; font-weight:700; text-transform:uppercase; flex-grow:1;">
+                            <input type="text" id="join-room-code-input" placeholder="ENTER ROOM CODE" style="clip-path:var(--hex-btn); border:1px solid rgba(255,255,255,0.2); background: rgba(12, 12, 18, 0.9); color: var(--text-light); padding:6px 10px; font-weight:700; text-transform:uppercase; flex-grow:1;">
                             <button class="secondary-btn" onclick="connectToHostRoom()">Connect</button>
                         </div>
                         <span id="join-status-msg" style="font-size:0.75rem; font-weight:600; color:#e67e22;"></span>
@@ -722,13 +722,13 @@
                 </select>
 
                 <div id="win-score-wrap" style="display: flex; align-items: center; gap: 10px; margin-top: 4px;">
-                    <span style="font-size: 0.85rem; font-weight: 600; color: #555;">Target Points:</span>
-                    <input type="number" id="win-score-val" value="100" min="10" max="1000" style="width: 90px; padding: 6px 10px; border-radius: 10px; border: 2px solid #ecf0f1; font-weight: 700;" oninput="if(typeof broadcastLobbyState === 'function') broadcastLobbyState()">
+                    <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-dim);">Target Points:</span>
+                    <input type="number" id="win-score-val" value="100" min="10" max="1000" style="width: 90px; padding: 6px 10px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.2); background: rgba(12,12,18,0.9); color: var(--text-light); font-weight: 700;" oninput="if(typeof broadcastLobbyState === 'function') broadcastLobbyState()">
                 </div>
 
                 <div id="win-tiles-wrap" style="display: none; align-items: center; gap: 10px; margin-top: 4px;">
-                    <span style="font-size: 0.85rem; font-weight: 600; color: #555;">Total Tile Limit:</span>
-                    <input type="number" id="win-tiles-val" value="20" min="4" max="200" style="width: 90px; padding: 6px 10px; border-radius: 10px; border: 2px solid #ecf0f1; font-weight: 700;" oninput="if(typeof broadcastLobbyState === 'function') broadcastLobbyState()">
+                    <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-dim);">Total Tile Limit:</span>
+                    <input type="number" id="win-tiles-val" value="20" min="4" max="200" style="width: 90px; padding: 6px 10px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.2); background: rgba(12,12,18,0.9); color: var(--text-light); font-weight: 700;" oninput="if(typeof broadcastLobbyState === 'function') broadcastLobbyState()">
                 </div>
             </div>
 
@@ -747,8 +747,7 @@
             </div>
         </div>
     </div>
-
-    <script>
+<script>
         const themePalette = [
             { label: "🟢 Emerald", hex: "#2ecc71" },
             { label: "🔵 Sapphire", hex: "#3498db" },
@@ -1172,7 +1171,6 @@
 
         function connectToHostRoom() {
             let rawCode = document.getElementById('join-room-code-input').value;
-            // FIX: This forces the input code to uppercase to perfectly match the host room!
             let inputCode = rawCode.trim().toUpperCase().replace(/[^A-Z0-9-]/g, '');
             let pName = document.getElementById('join-player-name').value.trim() || "Guest";
             let pColor = document.getElementById('join-player-color').value || "#3498db";
@@ -1673,6 +1671,31 @@
             }
         }
 
+        /* --- NEW ZOOM LOGIC: ZOOMS TO POINTER OFFSET --- */
+        function zoomAtPoint(targetX, targetY, newScale) {
+            const cx = window.innerWidth / 2;
+            const cy = window.innerHeight / 2;
+
+            const ratio = newScale / currentBoardScale;
+
+            // Shift panX and panY by the ratio offset difference to keep the screen target completely static
+            panX = targetX - cx - (targetX - cx - panX) * ratio;
+            panY = targetY - cy - (targetY - cy - panY) * ratio;
+
+            currentBoardScale = newScale;
+            renderBoard();
+        }
+
+        function zoomIn() {
+            let newScale = Math.min(2.2, currentBoardScale + 0.15);
+            zoomAtPoint(window.innerWidth / 2, window.innerHeight / 2, newScale);
+        }
+
+        function zoomOut() {
+            let newScale = Math.max(0.4, currentBoardScale - 0.15);
+            zoomAtPoint(window.innerWidth / 2, window.innerHeight / 2, newScale);
+        }
+
         /* --- WEB AUDIO API SOUND EFFECTS & QUIET SEAMLESS BGM PLAYER --- */
         let audioCtx = null;
 
@@ -2019,7 +2042,7 @@
         };
 
         const colorMap = { 'r': '#e74c3c', 'b': '#3498db', 'y': '#f1c40f', 'w': '#ffffff', 'k': '#2c3e50' };
-        
+
         const wedges = [
             "M0,0 L20,-34.64 L40,0 Z", "M0,0 L40,0 L20,34.64 Z", "M0,0 L20,34.64 L-20,34.64 Z",
             "M0,0 L-20,34.64 L-40,0 Z", "M0,0 L-40,0 L-20,-34.64 Z", "M0,0 L-20,-34.64 L20,-34.64 Z"
@@ -2033,7 +2056,7 @@
             { dx: -22, dy: -18 },
             { dx: 0,  dy: -25 }  
         ];
-        
+
         const neighbors = [
             { dq: 1, dr: -1, edge: 0, opp: 3 }, { dq: 1, dr: 0,  edge: 1, opp: 4 },
             { dq: 0, dr: 1,  edge: 2, opp: 5 }, { dq: -1, dr: 1, edge: 3, opp: 0 },
@@ -2043,7 +2066,7 @@
         let grid = new Map();
         let players = [];
         let currentPlayerIndex = 0;
-        
+
         let playerScoredWedges = new Map();
 
         let isGameOver = false;
@@ -2056,7 +2079,7 @@
 
         let previousRanks = new Map();     
         let playerAnimState = new Map();   
-        
+
         let selectedHandIndex = -1;
         let currentPreviewKey = null; 
         let scoredColorgons = new Set();
@@ -2064,7 +2087,7 @@
         let recentColorgonWedges = new Set();
         let newlyPlacedTileKey = null; 
         let newlyBlockedKeys = new Set(); 
-        
+
         let playsLeft = 2; 
         let tilesPlayedThisTurn = 0;
         let diceActive = [];
@@ -2085,8 +2108,7 @@
         let initialScale = 1.0;
 
         const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
-
-        function initGame(isFirstLoad = true) {
+function initGame(isFirstLoad = true) {
             gameSessionId++; 
 
             grid.clear();
@@ -2143,16 +2165,6 @@
             } else {
                 openPlayerSetup();
             }
-        }
-
-        function zoomIn() {
-            currentBoardScale = Math.min(2.2, currentBoardScale + 0.15);
-            renderBoard();
-        }
-
-        function zoomOut() {
-            currentBoardScale = Math.max(0.4, currentBoardScale - 0.15);
-            renderBoard();
         }
 
         function toggleMobileLeaderboard() {
@@ -2619,8 +2631,8 @@
 
             if (isRemote) {
                 row.innerHTML = `
-                    <input type="text" class="player-name-input" data-is-ai="false" value="${initialVal}" disabled style="background:#e9ecef; opacity:0.85; cursor:not-allowed;">
-                    <select class="player-color-select setup-select" disabled style="width: 100px; min-height: 38px; padding: 4px; font-size: 0.75rem; background:#e9ecef; cursor:not-allowed;">
+                    <input type="text" class="player-name-input" data-is-ai="false" value="${initialVal}" disabled style="background:rgba(255,255,255,0.05); color:var(--text-dim); opacity:0.85; cursor:not-allowed;">
+                    <select class="player-color-select setup-select" disabled style="width: 100px; min-height: 38px; padding: 4px; font-size: 0.75rem; background:rgba(255,255,255,0.05); color:var(--text-dim); cursor:not-allowed;">
                         ${colorOptionsHTML}
                     </select>
                     <div style="display:flex; flex-direction:column; align-items:center; min-width: 60px;">
@@ -3084,9 +3096,15 @@
                                     }
 
                                     evalScore = (sidePts * 2) + (speculativeColorgonPts * 5) + bonusPlayValue + activeColorClustering;
-                                } else if (cp.difficulty === 'medium') {
-                                    let sidePts = (val.matches >= 2) ? val.matches : 0;
-                                    evalScore = sidePts;
+                               } else if (cp.difficulty === 'medium') {
+                                    // NEW MEDIUM LOGIC: Values standard matches and basic Colorgons, but ignores clustering/future planning
+                                    let sidePts = val.matches; 
+                                    
+                                    grid.set(`${q},${r}`, currentTile);
+                                    let speculativeColorgonPts = findColorgonPointsSpeculative();
+                                    grid.delete(`${q},${r}`);
+
+                                    evalScore = sidePts + (speculativeColorgonPts * 2);
                                 } else {
                                     evalScore = Math.random();
                                 }
@@ -3112,10 +3130,16 @@
                 validMoves.sort((a, b) => b.score - a.score);
                 let chosenMove;
 
-                if (cp.difficulty === 'easy') {
+               if (cp.difficulty === 'easy') {
                     chosenMove = validMoves[Math.floor(Math.random() * validMoves.length)];
                 } else if (cp.difficulty === 'medium') {
-                    chosenMove = (Math.random() < 0.6) ? validMoves[0] : validMoves[Math.floor(Math.random() * validMoves.length)];
+                    // NEW MEDIUM SELECTION: 75% best move, 25% chance to pick a "good but not best" move (top 3)
+                    if (Math.random() < 0.75) {
+                        chosenMove = validMoves[0];
+                    } else {
+                        let topN = Math.min(3, validMoves.length);
+                        chosenMove = validMoves[Math.floor(Math.random() * topN)];
+                    }
                 } else { 
                     chosenMove = validMoves[0];
                 }
@@ -4477,12 +4501,22 @@
                 activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
             }
 
+            /* --- UPDATED ZOOM-TO-FINGERS MATH FOR PINCHING --- */
             if (isPinching && activePointers.size === 2) {
                 let currDist = getPinchDistance();
                 if (initialPinchDist > 0) {
                     let ratio = currDist / initialPinchDist;
-                    currentBoardScale = Math.min(Math.max(initialScale * ratio, 0.4), 2.2);
-                    renderBoard();
+                    let newScale = Math.min(Math.max(initialScale * ratio, 0.4), 2.2);
+
+                    let pts = Array.from(activePointers.values());
+                    let pinchCenterX = (pts[0].x + pts[1].x) / 2;
+                    let pinchCenterY = (pts[0].y + pts[1].y) / 2;
+
+                    zoomAtPoint(pinchCenterX, pinchCenterY, newScale);
+
+                    // Reset initials for relative zooming per-frame to prevent drift
+                    initialPinchDist = currDist;
+                    initialScale = newScale;
                 }
                 return;
             }
@@ -4532,11 +4566,12 @@
             }
         });
 
+        /* --- UPDATED ZOOM-TO-POINTER MATH FOR MOUSE WHEEL --- */
         boardSvg.addEventListener('wheel', (e) => {
             e.preventDefault();
             let delta = e.deltaY < 0 ? 0.12 : -0.12;
-            currentBoardScale = Math.min(Math.max(currentBoardScale + delta, 0.4), 2.2);
-            renderBoard();
+            let newScale = Math.min(Math.max(currentBoardScale + delta, 0.4), 2.2);
+            zoomAtPoint(e.clientX, e.clientY, newScale);
         }, { passive: false });
 
         window.addEventListener('resize', () => { renderBoard(); });
