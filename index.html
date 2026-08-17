@@ -1,6 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<!-- Apple Web App Standalone Fullscreen Support -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Colorgon">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Colorgon - Fullscreen Prototype</title>
@@ -420,7 +424,7 @@
             flex-shrink: 0;
         }
 
-        /* --- TURN ANNOUNCEMENT BILLBOARD --- */
+        /* --- TURN ANNOUNCEMENT BILLBOARD (MOBILE & APPLE SAFE) --- */
         #turn-announcement { 
             position: fixed; 
             top: 50%; 
@@ -429,33 +433,57 @@
             z-index: 500; 
             pointer-events: auto; 
             font-family: 'Montserrat', sans-serif; 
-            font-size: 2.2rem; 
+            font-size: 1.8rem; 
             font-weight: 900; 
             color: #ffffff; 
-            background: rgba(20, 20, 26, 0.94); 
+            background: rgba(20, 20, 26, 0.95); 
             backdrop-filter: blur(14px); 
-            padding: 20px 24px; 
+            padding: 18px 20px; 
             clip-path: var(--hex-chamfer); 
             border: 3px solid #27ae60; 
             box-shadow: 0 20px 60px rgba(0,0,0,0.8), 0 0 35px rgba(39, 174, 96, 0.4); 
             text-align: center; 
             opacity: 0; 
             display: none; 
-            letter-spacing: 1px; 
-            width: max-content;
-            max-width: calc(100vw - max(24px, env(safe-area-inset-left) + env(safe-area-inset-right))); 
+            letter-spacing: 0.5px; 
+            width: calc(100vw - max(32px, env(safe-area-inset-left) + env(safe-area-inset-right))); 
+            max-width: 420px;
             box-sizing: border-box;
             white-space: normal;
             word-break: break-word;
             transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), border-color 0.4s ease, box-shadow 0.4s ease; 
         }
 
-        /* Portrait Screen Overrides for iPhone / iPad */
+        #turn-announcement div {
+            max-width: 100%;
+            white-space: normal;
+            word-break: break-word;
+            line-height: 1.25;
+        }
+
+        #turn-announcement.show-billboard { 
+            display: flex !important; 
+            flex-direction: column; 
+            align-items: center; 
+            opacity: 1; 
+            transform: translate(-50%, -50%) scale(1); 
+        }
+
+        #turn-announcement.hide-billboard { 
+            display: flex !important; 
+            flex-direction: column; 
+            align-items: center; 
+            opacity: 0; 
+            transform: translate(-50%, -50%) scale(1.2); 
+            pointer-events: none; 
+        }
+
+        /* Portrait Screen Font & Padding Scaling for iPhone */
         @media (max-width: 600px), (orientation: portrait) {
             #turn-announcement {
-                font-size: 1.4rem;
-                padding: 16px 18px;
-                letter-spacing: 0.5px;
+                font-size: 1.25rem;
+                padding: 14px 16px;
+                width: calc(100vw - 24px);
             }
         }
 
@@ -861,20 +889,36 @@
 
     <script>
        function toggleFullscreen() {
-            if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen().catch(err => {
-                    console.warn(`Error attempting to enable full-screen mode: ${err.message}`);
-                });
+            const doc = document.documentElement;
+            if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+                if (doc.requestFullscreen) {
+                    doc.requestFullscreen().catch(() => {});
+                } else if (doc.webkitRequestFullscreen) {
+                    /* Safari / iOS WebKit Prefix */
+                    doc.webkitRequestFullscreen();
+                } else {
+                    /* iOS iPhone Safari Fallback: Hide location bar via scroll */
+                    window.scrollTo(0, 1);
+                }
             } else {
                 if (document.exitFullscreen) {
-                    document.exitFullscreen();
+                    document.exitFullscreen().catch(() => {});
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
                 }
             }
         }
 
         function enterFullscreen() {
-            if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
-                document.documentElement.requestFullscreen().catch(err => {});
+            const doc = document.documentElement;
+            if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+                if (doc.requestFullscreen) {
+                    doc.requestFullscreen().catch(() => {});
+                } else if (doc.webkitRequestFullscreen) {
+                    doc.webkitRequestFullscreen();
+                } else {
+                    window.scrollTo(0, 1);
+                }
             }
         }
 
