@@ -80,6 +80,10 @@
         #turn-announcement.show-billboard { display: flex !important; flex-direction: column; align-items: center; opacity: 1; transform: translate(-50%, -50%) scale(1); }
         #turn-announcement.hide-billboard { display: flex !important; flex-direction: column; align-items: center; opacity: 0; transform: translate(-50%, -50%) scale(1.2); pointer-events: none; }
 
+        /* NO MOVES ALERT TOAST */
+        #no-moves-toast { position: fixed; top: 22%; left: 50%; transform: translate(-50%, -50%) scale(0.8); z-index: 1200; pointer-events: none; font-family: 'Montserrat', sans-serif; font-size: 1.1rem; font-weight: 900; color: #ffffff; background: rgba(231, 76, 60, 0.92); backdrop-filter: blur(12px); padding: 12px 22px; clip-path: var(--hex-chamfer); border: 2px solid #ff5252; box-shadow: 0 10px 30px rgba(231, 76, 60, 0.6); text-align: center; opacity: 0; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        #no-moves-toast.visible { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+
         #hand-container { bottom: max(12px, env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); width: auto; min-width: 250px; max-width: 95vw; background: var(--panel-bg); clip-path: var(--hex-chamfer); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6); padding: 12px 24px; border: 1px solid rgba(255, 255, 255, 0.12); display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 16px; backdrop-filter: blur(12px); z-index: 40; }
         #hand-center-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; width: 100%; }
         #current-player-label { margin: 0; color: #2ecc71; font-size: 0.85rem; font-weight: 700; text-align: center; width: 100%; white-space: nowrap; letter-spacing: 0.5px; }
@@ -126,25 +130,27 @@
         .secondary-btn { background: linear-gradient(135deg, #e67e22, #f39c12); box-shadow: 0 4px 10px rgba(230, 126, 34, 0.3); font-size: 0.7rem; padding: 6px 10px; }
         .highlight-btn { background: linear-gradient(135deg, #27ae60, #2ecc71) !important; }
 
+        @keyframes pulseEndTurnBtn {
+            0% { transform: scale(1); box-shadow: 0 0 8px #e74c3c; background: linear-gradient(135deg, #e74c3c, #c0392b) !important; }
+            50% { transform: scale(1.12); box-shadow: 0 0 25px #e74c3c, 0 0 35px #e74c3c; background: linear-gradient(135deg, #ff5252, #e74c3c) !important; }
+            100% { transform: scale(1); box-shadow: 0 0 8px #e74c3c; background: linear-gradient(135deg, #e74c3c, #c0392b) !important; }
+        }
+        .pulse-end-turn {
+            animation: pulseEndTurnBtn 1.1s infinite ease-in-out !important;
+            z-index: 100 !important;
+        }
+
         #zoom-controls { bottom: max(12px, env(safe-area-inset-bottom)); right: max(12px, env(safe-area-inset-right)); display: flex; flex-direction: column; gap: 6px; z-index: 100; position: absolute; }
         .zoom-btn { width: 42px; height: 46px; min-height: 46px; padding: 0; clip-path: var(--hex-shape) !important; background: linear-gradient(135deg, #2980b9, #3498db); font-size: 1.3rem; font-weight: 900; box-shadow: 0 6px 16px rgba(0,0,0,0.5); }
 
-        /* FIXED HIGH-PRIORITY FLOATING SCORING TEXT STYLE */
-        .floating-text { 
-            position: fixed !important; 
-            pointer-events: none !important; 
-            font-weight: 900; 
-            color: #ffffff; 
-            text-shadow: 0px 0px 18px currentColor, 0px 0px 6px #000000, 3px 3px 0px #000000; 
-            z-index: 99999 !important; 
-            transform: translate(-50%, -50%); 
+        svg .svg-float-text { 
             font-family: 'Montserrat', sans-serif; 
-            will-change: transform, opacity; 
+            font-weight: 900; 
+            text-anchor: middle; 
+            dominant-baseline: central; 
+            pointer-events: none; 
         }
-        .float-match, .float-colorgon-mini { font-size: 1.8rem; }
-        .float-colorgon { font-size: 3.8rem; text-shadow: 0 0 30px currentColor, 0 0 10px #000, 4px 4px 0 #000; }
 
-        /* CINEMATIC VICTORY BANNER OVERLAY */
         #top-victory-banner { position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; z-index: 2500; background: rgba(8, 8, 14, 0.92); backdrop-filter: blur(20px); display: flex; flex-direction: column; justify-content: center; align-items: center; opacity: 0; pointer-events: none; transition: opacity 0.8s ease; }
         #top-victory-banner.visible { opacity: 1; pointer-events: auto; }
         
@@ -231,6 +237,8 @@
             </defs>
         </svg>
     </div>
+
+    <div id="no-moves-toast">NO MORE MOVES — END YOUR TURN!</div>
 
     <div id="prematch-countdown-overlay">
         <div id="countdown-number">3</div>
@@ -908,7 +916,7 @@
                     connections.forEach(c => {
                         if (c !== conn) c.send(data);
                     });
-                } else if (data.type === 'ACTION_PLACE') { attemptPlacement(data.q, data.r, null, true, data.handIndex); }
+                } else if (data.type === 'ACTION_PLACE') { attemptPlacement(data.q, data.r, null, true, data.handIndex, data.tile); }
                 else if (data.type === 'ACTION_END_TURN') { endTurn(true); }
                 else if (data.type === 'ACTION_ROLL') { 
                     executeDiceRollAnimation(); 
@@ -929,23 +937,27 @@
                 else if (data.type === 'SYNC_STATE') { applySyncedState(data.state); }
                 else if (data.type === 'TRIGGER_ROLL') { executeDiceRollAnimation(); }
                 else if (data.type === 'CHAT_MSG') { receiveChatMessage(data.sender, data.color, data.text); }
+                else if (data.type === 'GAME_OVER') { triggerVictoryScreen(data.winner, data.standings); }
+                else if (data.type === 'ANIM_CAMERA_PAN') { animateCamera(data.targetPanX, data.targetPanY, data.targetScale, data.duration); }
                 else if (data.type === 'ANIM_PLACEMENT_START') {
                     centerCameraOn(data.q, data.r, 1.3);
-                } else if (data.type === 'ANIM_MATCH_EDGE') {
+                } else if (data.type === 'ANIM_MATCH_BURST') {
                     recentMatchWedges.clear();
-                    recentMatchWedges.add(`${data.q},${data.r},${data.myDir}`); 
-                    recentMatchWedges.add(`${data.neighborQ},${data.neighborR},${data.neighborDir}`);
+                    data.matchingEdges.forEach(m => {
+                        recentMatchWedges.add(`${data.q},${data.r},${m.myDir}`);
+                        recentMatchWedges.add(`${m.neighborQ},${m.neighborR},${m.neighborDir}`);
+                    });
                     renderBoard();
-                    SFX.sideMatch(data.mIdx);
-                    spawnMatchPairText(data.q, data.r, data.myDir, data.neighborQ, data.neighborR, data.neighborDir, "+1", "float-match", data.colorHex);
+                    SFX.sideMatch(data.matches);
+                    spawnSVGText(data.q, data.r, `+${data.matches}`, 36, data.colorHex, 900);
                 } else if (data.type === 'ANIM_SWOOSH') {
-                    spawnTotalThenSwoosh(data.q, data.r, data.text, data.styleType, data.colorHex, 600, 600, 0);
+                    spawnSVGText(data.q, data.r, data.text, 36, data.colorHex, 900);
                 } else if (data.type === 'ANIM_COLORGON_STEP') {
                     activeColorgonColor = data.targetColor;
                     recentColorgonWedges.add(`${data.wq},${data.wr},${data.wdir}`);
                     renderBoard();
                     SFX.wedgeStep(data.stepCount);
-                    spawnWedgeText(data.wq, data.wr, data.wdir, "+1", "float-colorgon-mini", data.gColorHex);
+                    spawnSVGText(data.wq, data.wr, "+1", 22, data.gColorHex, 700);
                 } else if (data.type === 'ANIM_COLORGON_COMPLETE') {
                     SFX.colorgonChord(data.wedgesCount);
                     recentColorgonWedges.clear();
@@ -1018,6 +1030,7 @@
             renderBoard(); 
             renderHand(); 
             updateUI(); 
+            checkNoMoreMoves();
             
             if (hasRolledDiceThisTurn) {
                 hideTurnAnnouncement();
@@ -1123,7 +1136,7 @@
             }
         }
 
-        // CANVAS BACKGROUND ENGINE WITH SLOWER DRIFTING SHOOTING STARS & REINSTATED MIST PARTICLES
+        // CANVAS BACKGROUND ENGINE
         const bgCanvas = document.getElementById('bg-canvas');
         const bgCtx = bgCanvas ? bgCanvas.getContext('2d') : null;
         let ambientStars = [], ambientOrbs = [], shootingStars = [], boardMistParticles = [];
@@ -1151,7 +1164,6 @@
             }
         }
 
-        // SUBTLE RADIAL MIST FLOATING IN ALL 360 DIRECTIONS FROM BOARD
         function updateAndRenderMist() {
             if (!bgCtx || !bgCanvas || !particleFXEnabled) return;
             const cx = bgCanvas.width / 2 + panX, cy = bgCanvas.height / 2 + panY;
@@ -1594,6 +1606,9 @@
 
         function animateCamera(targetPanX, targetPanY, targetScale, duration = 600) {
             if (!cinematicCameraEnabled) return;
+            if (isHost) {
+                broadcastAnimationEvent({ type: 'ANIM_CAMERA_PAN', targetPanX, targetPanY, targetScale, duration });
+            }
             if (panAnimationId) cancelAnimationFrame(panAnimationId);
             const startX = panX, startY = panY, startScale = currentBoardScale;
             const startTime = performance.now();
@@ -1664,6 +1679,58 @@
             turnTimerInterval = null;
             let container = document.getElementById('turn-timer-container');
             if (container) container.style.display = 'none';
+        }
+
+        function checkNoMoreMoves() {
+            let btn = document.getElementById('end-turn-btn');
+            let toast = document.getElementById('no-moves-toast');
+            if (!btn) return;
+
+            let curP = playersList[activePlayerIdx];
+            let isMyTurn = (Number(activePlayerIdx) === Number(myPlayerId) || (!peer && curP.type === 'human'));
+
+            if (!isMyTurn || isGameOver) {
+                btn.classList.remove('pulse-end-turn');
+                if (toast) toast.classList.remove('visible');
+                return;
+            }
+
+            let hasValidMove = false;
+            if (hasRolledDiceThisTurn && playsLeft > 0 && curP.hand.length > 0) {
+                let emptySpots = [];
+                grid.forEach((_, k) => {
+                    let [q, r] = k.split(',').map(Number);
+                    neighbors.forEach(n => {
+                        let nk = `${q+n.dq},${r+n.dr}`;
+                        if (!grid.has(nk) && !isSpaceBlockedByBlack(q+n.dq, r+n.dr)) emptySpots.push({q: q+n.dq, r: r+n.dr});
+                    });
+                });
+
+                for (let tile of curP.hand) {
+                    let tileCopy = [...tile];
+                    for (let rot = 0; rot < 6; rot++) {
+                        for (let spot of emptySpots) {
+                            if (canPlace(spot.q, spot.r, tileCopy).valid) {
+                                hasValidMove = true;
+                                break;
+                            }
+                        }
+                        if (hasValidMove) break;
+                        tileCopy.unshift(tileCopy.pop());
+                    }
+                    if (hasValidMove) break;
+                }
+            }
+
+            let noMovesLeft = (playsLeft <= 0 || (hasRolledDiceThisTurn && !hasValidMove));
+
+            if (noMovesLeft) {
+                btn.classList.add('pulse-end-turn');
+                if (toast) toast.classList.add('visible');
+            } else {
+                btn.classList.remove('pulse-end-turn');
+                if (toast) toast.classList.remove('visible');
+            }
         }
 
         function showTurnAnnouncement() {
@@ -1775,6 +1842,11 @@
             activePreviewSocketKey = null;
             isGameOver = false;
             
+            let btn = document.getElementById('end-turn-btn');
+            if (btn) btn.classList.remove('pulse-end-turn');
+            let toast = document.getElementById('no-moves-toast');
+            if (toast) toast.classList.remove('visible');
+
             if (playersList.length > 0) {
                 playersList.forEach(p => { p.score = 0; p.hand = []; });
             }
@@ -1791,6 +1863,12 @@
             placeTile(0, 0, generateStarterTile());
             totalTilesPlaced = 0; isGameOver = false; panX = 0; panY = 0; currentBoardScale = 1.0;
             activePreviewSocketKey = null;
+            
+            let btn = document.getElementById('end-turn-btn');
+            if (btn) btn.classList.remove('pulse-end-turn');
+            let toast = document.getElementById('no-moves-toast');
+            if (toast) toast.classList.remove('visible');
+
             updateMasterPanTransform(); renderBoard(); renderHand(); updateUI(); startTurnLogic();
         }
 
@@ -1798,11 +1876,18 @@
             let curP = playersList[activePlayerIdx];
             while (curP.hand.length < targetHandSize) curP.hand.push(generateRandomTile());
             hasRolledDiceThisTurn = false;
+            
+            // STRICT GAME RULE: 2 PLAYS ON VERY FIRST PLACEMENT OF GAME, 1 PLAY ON SUBSEQUENT TURNS
             playsLeft = (totalTilesPlaced === 0) ? 2 : 1; 
             tilesPlayedThisTurn = 0; selectedHandIndex = -1;
             recentMatchWedges.clear(); recentColorgonWedges.clear(); activeColorgonColor = null; newlyPlacedKey = null;
             activePreviewSocketKey = null;
             
+            let btn = document.getElementById('end-turn-btn');
+            if (btn) btn.classList.remove('pulse-end-turn');
+            let toast = document.getElementById('no-moves-toast');
+            if (toast) toast.classList.remove('visible');
+
             renderHand(); updateUI(); showTurnAnnouncement();
             if (turnTimerDuration > 0) startTurnTimer();
         }
@@ -1843,7 +1928,7 @@
             await sleep(400);
             if (centerContainer) { centerContainer.className = ''; centerContainer.style.display = 'none'; }
 
-            hasRolledDiceThisTurn = true; isRolling = false; updateUI();
+            hasRolledDiceThisTurn = true; isRolling = false; updateUI(); checkNoMoreMoves();
             if (isHost) broadcastState();
         }
 
@@ -1865,6 +1950,7 @@
                     }, 280);
                 } else { renderHand(); renderBoard(); }
             } else { renderHand(); renderBoard(); }
+            checkNoMoreMoves();
             if (isHost) broadcastState();
         }
 
@@ -1886,23 +1972,24 @@
                     }, 280);
                 } else { renderHand(); renderBoard(); }
             } else { renderHand(); renderBoard(); }
+            checkNoMoreMoves();
             if (isHost) broadcastState();
         }
 
-        async function attemptPlacement(q, r, socketEl, isRemote = false, remoteHandIndex = null) {
+        async function attemptPlacement(q, r, socketEl, isRemote = false, remoteHandIndex = null, remoteTile = null) {
             let curP = playersList[activePlayerIdx];
             let tileIdx = isRemote ? remoteHandIndex : selectedHandIndex;
 
             if (tileIdx === null || tileIdx === -1 || isAnimating || !hasRolledDiceThisTurn) return;
 
-            let tile = curP.hand[tileIdx];
+            let tile = isRemote ? (remoteTile || curP.hand[tileIdx]) : curP.hand[tileIdx];
             if (!tile) return;
 
             let val = canPlace(q, r, tile);
             if (!val.valid) return;
 
             if (!isRemote && peer && !isHost) {
-                hostConn.send({ type: 'ACTION_PLACE', q, r, handIndex: selectedHandIndex });
+                hostConn.send({ type: 'ACTION_PLACE', q, r, handIndex: selectedHandIndex, tile: tile });
                 return;
             }
 
@@ -1919,43 +2006,46 @@
             placeTile(q, r, tile);
             curP.hand.splice(tileIdx, 1);
             selectedHandIndex = -1;
-            tilesPlayedThisTurn++; totalTilesPlaced++; playsLeft--;
+            tilesPlayedThisTurn++; totalTilesPlaced++; 
+            
+            // DECREMENT BASE PLAY COUNTER FOR TILE PLACEMENT
+            playsLeft--;
 
             renderBoard(); renderHand();
             if (isHost) broadcastState();
 
             setTimeout(() => { newlyPlacedKey = null; }, 400);
 
+            // SIMULTANEOUS EDGE MATCH BURST & UNIFIED SCORE POPUP
             let matchPts = 0;
             if (val.matches >= 2) {
                 matchPts = val.matches;
+                // STRICT RULE: AWARD +1 EXTRA PLAY ONLY WHEN MATCHING 2 OR MORE SIDES
                 playsLeft++; 
                 let matchColorHex = curP.color;
-                let mIdx = 0;
-                for (let m of val.matchingEdges) {
-                    recentMatchWedges.clear();
-                    recentMatchWedges.add(`${q},${r},${m.myDir}`); recentMatchWedges.add(`${m.neighborQ},${m.neighborR},${m.neighborDir}`);
-                    renderBoard(); 
-                    SFX.sideMatch(mIdx);
-                    spawnMatchPairText(q, r, m.myDir, m.neighborQ, m.neighborR, m.neighborDir, "+1", "float-match", matchColorHex);
-                    
-                    if (isHost) {
-                        broadcastAnimationEvent({
-                            type: 'ANIM_MATCH_EDGE', q, r, myDir: m.myDir,
-                            neighborQ: m.neighborQ, neighborR: m.neighborR, neighborDir: m.neighborDir,
-                            mIdx, colorHex: matchColorHex
-                        });
-                    }
 
-                    mIdx++;
-                    await sleep(400);
-                }
-                recentMatchWedges.clear(); renderBoard();
+                recentMatchWedges.clear();
+                val.matchingEdges.forEach(m => {
+                    recentMatchWedges.add(`${q},${r},${m.myDir}`);
+                    recentMatchWedges.add(`${m.neighborQ},${m.neighborR},${m.neighborDir}`);
+                });
+
+                renderBoard(); 
+                SFX.sideMatch(val.matches);
+                spawnSVGText(q, r, `+${matchPts}`, 36, matchColorHex, 900);
                 
                 if (isHost) {
-                    broadcastAnimationEvent({ type: 'ANIM_SWOOSH', q, r, text: `+${matchPts}`, styleType: 'float-match', colorHex: matchColorHex });
+                    broadcastAnimationEvent({
+                        type: 'ANIM_MATCH_BURST', q, r,
+                        matchingEdges: val.matchingEdges,
+                        matches: val.matches, colorHex: matchColorHex
+                    });
                 }
-                await spawnTotalThenSwoosh(q, r, `+${matchPts}`, 'float-match', matchColorHex, 600, 600, matchPts);
+
+                await sleep(600);
+                recentMatchWedges.clear(); renderBoard();
+                curP.score += matchPts;
+                updateUI();
             }
 
             renderHand(); renderBoard(); updateUI();
@@ -1982,7 +2072,7 @@
                         recentColorgonWedges.add(`${wq},${wr},${wdir}`); 
                         renderBoard(); 
                         SFX.wedgeStep(stepCount);
-                        spawnWedgeText(wq, wr, wdir, "+1", "float-colorgon-mini", gColorHex); 
+                        spawnSVGText(wq, wr, "+1", 22, gColorHex, 700);
                         
                         if (isHost) {
                             broadcastAnimationEvent({
@@ -2001,7 +2091,9 @@
                         broadcastAnimationEvent({ type: 'ANIM_SWOOSH', q: avgQ, r: avgR, text: `+${gInfo.wedges.length} COLORGON!`, styleType: 'float-colorgon', colorHex: gColorHex });
                     }
 
-                    await spawnTotalThenSwoosh(avgQ, avgR, `+${gInfo.wedges.length} COLORGON!`, 'float-colorgon', gColorHex, 800, 600, gInfo.wedges.length);
+                    spawnSVGText(avgQ, avgR, `+${gInfo.wedges.length} COLORGON!`, 42, gColorHex, 1000);
+                    curP.score += gInfo.wedges.length;
+                    await sleep(800);
                     recentColorgonWedges.clear(); activeColorgonColor = null; renderBoard();
                 }
                 animateCamera(origPanX, origPanY, origScale, 700); await sleep(700); updateUI();
@@ -2012,6 +2104,7 @@
             if (winConditionType === 'score' && curP.score >= winTargetValue) { triggerVictoryScreen(); return; } 
             else if (winConditionType === 'tiles' && totalTilesPlaced >= winTargetValue) { triggerVictoryScreen(); return; }
 
+            checkNoMoreMoves();
             if (isHost) broadcastState();
             if (curP.type === 'bot' && playsLeft > 0) setTimeout(runBotTurnLogic, 600);
         }
@@ -2082,13 +2175,17 @@
 
         function placeTile(q, r, tile) { grid.set(`${q},${r}`, tile); }
 
-        // MANUAL END TURN ONLY
         function endTurn(isRemote = false) {
             if (!isRemote && peer && !isHost) {
                 hostConn.send({ type: 'ACTION_END_TURN' });
                 return;
             }
             stopTurnTimer();
+            let btn = document.getElementById('end-turn-btn');
+            if (btn) btn.classList.remove('pulse-end-turn');
+            let toast = document.getElementById('no-moves-toast');
+            if (toast) toast.classList.remove('visible');
+
             activePlayerIdx = (activePlayerIdx + 1) % playersList.length;
             animateCamera(0, 0, 1.0, 700);
             startTurnLogic();
@@ -2120,6 +2217,8 @@
             let isMyTurn = (Number(activePlayerIdx) === Number(myPlayerId) || (!peer && curP.type === 'human'));
             let activeSelectedTile = (selectedHandIndex !== -1 && selectedHandIndex < curP.hand.length && hasRolledDiceThisTurn && isMyTurn) ? curP.hand[selectedHandIndex] : null;
 
+            let isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || window.matchMedia('(pointer: coarse)').matches;
+
             empty.forEach(k => {
                 let [q, r] = k.split(',').map(Number);
                 let x = cx + w * q, y = cy + h * (r + q/2);
@@ -2148,7 +2247,6 @@
 
                 let isLegalSpotForCurrentTile = (activeSelectedTile) ? canPlace(q, r, activeSelectedTile).valid : false;
 
-                // SOFT SAGE-GREEN NEON SOCKET OUTLINE FOR VALID PLACEMENTS
                 if (isLegalSpotForCurrentTile && validGuidesEnabled) {
                     let hexSpot = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
                     hexSpot.setAttribute('points', "20,-34.64 40,0 20,34.64 -20,34.64 -40,0 -20,-34.64");
@@ -2160,8 +2258,7 @@
                     socketsLayer.appendChild(hexSpot);
                 }
 
-                // TAP PREVIEW SOCKET RENDERING (ONE TAP TO PREVIEW, SECOND TAP TO CONFIRM)
-                if (isLegalSpotForCurrentTile && activePreviewSocketKey === spotKey) {
+                if (isTouchDevice && isLegalSpotForCurrentTile && activePreviewSocketKey === spotKey) {
                     let previewGroup = createHexGroup(activeSelectedTile, q, r);
                     previewGroup.setAttribute('transform', `translate(${x}, ${y})`);
                     previewGroup.style.pointerEvents = 'none'; 
@@ -2175,19 +2272,40 @@
                 hitArea.setAttribute('transform', `translate(${x}, ${y})`);
                 hitArea.setAttribute('fill', 'rgba(0,0,0,0.001)'); hitArea.setAttribute('stroke', 'none'); hitArea.style.cursor = 'pointer';
 
-                hitArea.onclick = () => { 
-                    if (hasDragged) return; 
-                    if (!isLegalSpotForCurrentTile) return;
+                let previewGroup = null;
 
-                    // ONE TAP: PREVIEW. SECOND TAP ON SAME SPOT: CONFIRM & PLACE.
-                    if (activePreviewSocketKey === spotKey) {
+                if (!isTouchDevice) {
+                    hitArea.onmouseenter = () => {
+                        if (isLegalSpotForCurrentTile) {
+                            SFX.hover(); previewGroup = createHexGroup(activeSelectedTile, q, r);
+                            previewGroup.setAttribute('transform', `translate(${x}, ${y})`);
+                            previewGroup.style.pointerEvents = 'none'; 
+                            let innerG = previewGroup.querySelector('g');
+                            if (innerG) { innerG.classList.add('hover-preview-animated'); innerG.style.pointerEvents = 'none'; }
+                            topActiveLayer.appendChild(previewGroup);
+                        }
+                    };
+                    hitArea.onmouseleave = () => { if (previewGroup) { previewGroup.remove(); previewGroup = null; } };
+                    hitArea.onclick = () => { 
+                        if (hasDragged) return; 
+                        if (!isLegalSpotForCurrentTile) return;
+                        if (previewGroup) { previewGroup.remove(); previewGroup = null; } 
                         attemptPlacement(q, r, hitArea, false, selectedHandIndex); 
-                    } else {
-                        activePreviewSocketKey = spotKey;
-                        SFX.hover();
-                        renderBoard();
-                    }
-                };
+                    };
+                } else {
+                    hitArea.onclick = () => { 
+                        if (hasDragged) return; 
+                        if (!isLegalSpotForCurrentTile) return;
+
+                        if (activePreviewSocketKey === spotKey) {
+                            attemptPlacement(q, r, hitArea, false, selectedHandIndex); 
+                        } else {
+                            activePreviewSocketKey = spotKey;
+                            SFX.hover();
+                            renderBoard();
+                        }
+                    };
+                }
                 socketsLayer.appendChild(hitArea);
             });
 
@@ -2204,7 +2322,6 @@
             });
         }
 
-        // RENDERER: RENDERS FULL 6-WEDGE TILE WITH WEDGE-ONLY 3D ELEVATION CLASS
         function createHexGroup(tile, q = null, r = null, isNewlyPlaced = false, isCenterLogoTile = false, isSecretBack = false) {
             let outerG = document.createElementNS('http://www.w3.org/2000/svg', 'g');
             outerG.style.pointerEvents = 'none';
@@ -2240,7 +2357,7 @@
                     path.setAttribute('fill', vibrantColorMap[activeColorgonColor] || colorMap[activeColorgonColor]);
                     path.setAttribute('filter', 'url(#colorgonBrightGlow)');
                     path.classList.add('wedge-colorgon-active');
-                    path.classList.add('colorgon-wedge-lifted'); // WEDGE-ONLY ELEVATION
+                    path.classList.add('colorgon-wedge-lifted');
                 } else {
                     path.setAttribute('fill', colorMap[rawColorKey] || '#2c3e50');
                     if (q !== null && recentMatchWedges.has(wedgeKey)) path.classList.add('wedge-match');
@@ -2284,100 +2401,83 @@
         }
 
         function generateStarterTile() { return ['y', 'r', 'b', 'y', 'r', 'b']; }
-        
-        // TUNED VOID / BLACK WEDGE DENSITY PROBABILITY
+
         function generateRandomTile() {
             let colors = ['r', 'r', 'r', 'b', 'b', 'b', 'y', 'y', 'w'];
+            let pool = [];
             if (voidDensitySetting === 'low') {
-                colors.push('k'); // 1 in 10
+                pool = [...colors, 'r', 'b', 'y', 'r', 'b', 'y', 'r', 'b', 'y', 'k'];
             } else if (voidDensitySetting === 'normal') {
-                colors.push('k', 'k'); // 2 in 11
+                pool = [...colors, 'r', 'b', 'y', 'k'];
             } else if (voidDensitySetting === 'high') {
-                colors.push('k', 'k', 'k', 'k'); // 3 in 12
+                pool = [...colors, 'k', 'k'];
+            } else {
+                pool = [...colors, 'r', 'b', 'y', 'k'];
             }
-            return Array.from({length: 6}, () => colors[Math.floor(Math.random()*colors.length)]);
+            return Array.from({length: 6}, () => pool[Math.floor(Math.random()*pool.length)]);
         }
 
-        // FIXED HIGH-PRIORITY FLOATING SCORING TEXT RENDERING ENGINE
-        function spawnLocalText(x, y, text, type, colorHex, duration = 800) {
-            let el = document.createElement('div');
-            el.className = `floating-text ${type}`; 
-            el.innerText = text; 
-            el.style.left = x + 'px'; 
-            el.style.top = y + 'px';
-            if (colorHex) {
-                el.style.color = colorHex;
-                el.style.textShadow = `0px 0px 18px ${colorHex}, 0px 0px 6px #000, 3px 3px 0px #000`;
+        // SVG FLOATING SCORING TEXT RENDERING ENGINE (LOCKED IN PERFECT SYNC WITH BOARD CAMERA)
+        function spawnSVGText(q, r, text, fontSize = 28, colorHex = '#ffffff', duration = 800) {
+            let masterPan = document.getElementById('master-pan');
+            if (!masterPan) return;
+            
+            let textLayer = document.getElementById('svg-text-layer');
+            if (!textLayer) {
+                textLayer = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                textLayer.id = 'svg-text-layer';
+                masterPan.appendChild(textLayer);
             }
-            document.body.appendChild(el); 
-            setTimeout(() => el.remove(), duration);
+
+            const cx = window.innerWidth / 2, cy = window.innerHeight / 2, size = 40, w = size * 1.5, h = size * Math.sqrt(3);
+            let baseX = cx + w * q;
+            let baseY = cy + h * (r + q / 2);
+
+            let t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            t.setAttribute('x', baseX);
+            t.setAttribute('y', baseY);
+            t.setAttribute('class', 'svg-float-text');
+            t.setAttribute('fill', colorHex);
+            t.setAttribute('font-size', fontSize);
+            t.setAttribute('stroke', '#000000');
+            t.setAttribute('stroke-width', '2.5');
+            t.setAttribute('paint-order', 'stroke fill');
+            t.style.filter = `drop-shadow(0px 0px 10px ${colorHex})`;
+            t.textContent = text;
+
+            textLayer.appendChild(t);
+
+            let startTime = performance.now();
+
+            function animateSVGText(now) {
+                let elapsed = now - startTime;
+                let p = Math.min(1, elapsed / duration);
+                let dy = -28 * p;
+                let opacity = p < 0.2 ? (p / 0.2) : (1 - (p - 0.7) / 0.3);
+                if (p >= 0.7) opacity = Math.max(0, 1 - (p - 0.7) / 0.3);
+                let scale = p < 0.3 ? (0.3 + (p / 0.3) * 0.95) : 1.25 - (p - 0.3) * 0.25;
+
+                t.setAttribute('transform', `translate(0, ${dy}) scale(${scale})`);
+                t.setAttribute('transform-origin', `${baseX} ${baseY}`);
+                t.setAttribute('opacity', Math.max(0, opacity));
+
+                if (p < 1) requestAnimationFrame(animateSVGText);
+                else t.remove();
+            }
+            requestAnimationFrame(animateSVGText);
         }
 
         function spawnMatchPairText(q1, r1, dir1, q2, r2, dir2, text, type, colorHex) {
-            const cx = window.innerWidth / 2, cy = window.innerHeight / 2, size = 40, w = size * 1.5, h = size * Math.sqrt(3);
-            let u1X = w * q1 + wedgeOffsets[dir1].dx, u1Y = h * (r1 + q1 / 2) + wedgeOffsets[dir1].dy;
-            let u2X = w * q2 + wedgeOffsets[dir2].dx, u2Y = h * (r2 + q2 / 2) + wedgeOffsets[dir2].dy;
-            let screenX = cx + panX + ((u1X + u2X) / 2) * currentBoardScale;
-            let screenY = cy + panY + ((u1Y + u2Y) / 2) * currentBoardScale;
-            spawnLocalText(screenX, screenY, text, type, colorHex, 800);
+            spawnSVGText(q1, r1, text, 28, colorHex, 800);
         }
 
         function spawnWedgeText(q, r, dir, text, type, colorHex) {
-            const cx = window.innerWidth / 2, cy = window.innerHeight / 2, size = 40, w = size * 1.5, h = size * Math.sqrt(3);
-            let offset = wedgeOffsets[dir];
-            let screenX = cx + panX + (w * q + offset.dx) * currentBoardScale;
-            let screenY = cy + panY + (h * (r + q / 2) + offset.dy) * currentBoardScale;
-            spawnLocalText(screenX, screenY, text, type, colorHex, 700);
+            spawnSVGText(q, r, text, 22, colorHex, 700);
         }
 
-        async function spawnTotalThenSwoosh(q, r, text, type, colorHex, holdDuration = 800, swooshDuration = 600, ptsEarned = 0) {
-            const cx = window.innerWidth / 2, cy = window.innerHeight / 2, size = 40, w = size * 1.5, h = size * Math.sqrt(3);
-            let startX = cx + panX + (w * q) * currentBoardScale;
-            let startY = cy + panY + (h * (r + q / 2)) * currentBoardScale;
-
-            let el = document.createElement('div');
-            el.className = `floating-text ${type}`; 
-            el.innerText = text; 
-            el.style.left = startX + 'px'; 
-            el.style.top = startY + 'px';
-            if (colorHex) { 
-                el.style.color = colorHex; 
-                el.style.textShadow = `0px 0px 20px ${colorHex}, 0px 0px 8px #000, 4px 4px 0px #000`; 
-            }
-            document.body.appendChild(el);
-
-            let popAnim = el.animate([
-                { transform: 'translate(-50%, -50%) scale(0.2)', opacity: 0 }, 
-                { transform: 'translate(-50%, -50%) scale(1.35)', opacity: 1, offset: 0.4 },
-                { transform: 'translate(-50%, -50%) scale(1.0)', opacity: 1, offset: 0.7 }, 
-                { transform: 'translate(-50%, -50%) scale(1.0)', opacity: 1, offset: 1.0 }
-            ], { duration: holdDuration, easing: 'cubic-bezier(0.175, 0.885, 0.32, 1.275)', fill: 'forwards' });
-
-            await popAnim.finished;
-            
-            let activeCard = document.querySelector('.lb-card-inner.active');
-            let targetX = 120, targetY = 140;
-            if (activeCard) { 
-                let rect = activeCard.getBoundingClientRect(); 
-                targetX = rect.left + rect.width / 2; 
-                targetY = rect.top + rect.height / 2; 
-            }
-            let deltaX = targetX - startX, deltaY = targetY - startY;
-
-            let swooshAnim = el.animate([
-                { transform: 'translate(-50%, -50%) scale(1.0)', opacity: 1, offset: 0 },
-                { transform: `translate(calc(-50% + ${deltaX * 0.85}px), calc(-50% + ${deltaY * 0.85}px)) scale(0.8)`, opacity: 0.9, offset: 0.85 },
-                { transform: `translate(calc(-50% + ${deltaX}px), calc(-50% + ${deltaY}px)) scale(0.15)`, opacity: 0, offset: 1 }
-            ], { duration: swooshDuration, easing: 'cubic-bezier(0.22, 1, 0.36, 1)', fill: 'forwards' });
-
-            await swooshAnim.finished; 
-            
-            let curP = playersList[activePlayerIdx];
-            if (curP && ptsEarned > 0) {
-                curP.score += ptsEarned;
-                updateUI();
-            }
-            el.remove();
+        function spawnTotalThenSwoosh(q, r, text, type, colorHex, holdDuration = 800, swooshDuration = 600, ptsEarned = 0) {
+            spawnSVGText(q, r, text, 32, colorHex, holdDuration + swooshDuration);
+            return Promise.resolve();
         }
 
         function renderHand() {
@@ -2447,21 +2547,20 @@
             }
         }
 
-        function triggerVictoryScreen() {
+        function triggerVictoryScreen(remoteWinner = null, remoteStandings = null) {
             isGameOver = true;
             stopTurnTimer();
 
-            // 1. CALCULATE WINNER AND SORTED STANDINGS
-            let sortedStandings = [...playersList].sort((a, b) => b.score - a.score);
-            let winner = sortedStandings[0] || { name: "PLAYER", score: 0, color: "#2ecc71" };
+            let sortedStandings = remoteStandings || [...playersList].sort((a, b) => b.score - a.score);
+            let winner = remoteWinner || sortedStandings[0] || { name: "PLAYER", score: 0, color: "#2ecc71" };
 
-            // 2. TRIGGER SUPERNOVA PARTICLE BURST
             triggerSupernovaVictoryParticles(winner.color);
-
-            // 3. SOUND STINGER
             SFX.victoryStinger();
 
-            // 4. POPULATE VICTORY BANNER UI
+            if (isHost) {
+                broadcastAnimationEvent({ type: 'GAME_OVER', winner, standings: sortedStandings });
+            }
+
             let banner = document.getElementById('top-victory-banner');
             let titleEl = document.getElementById('victory-banner-title');
             let standingsDiv = document.getElementById('victory-banner-standings');
