@@ -61,13 +61,15 @@
         .lb-name { font-size: 0.85rem; font-weight: 700; color: var(--text-light); flex-grow: 1; display: flex; align-items: center; gap: 6px; }
         .lb-score { font-size: 1rem; font-weight: 900; color: #2ecc71; }
 
-        #ui-bar { top: max(12px, env(safe-area-inset-top)); right: max(12px, env(safe-area-inset-right)); left: auto; display: flex; justify-content: flex-end; align-items: center; gap: 12px; background: var(--panel-bg); backdrop-filter: blur(12px); padding: 8px 14px; clip-path: var(--hex-chamfer); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6); border: 1px solid rgba(255, 255, 255, 0.12); }
+        #ui-bar { top: max(12px, env(safe-area-inset-top)); right: max(12px, env(safe-area-inset-right)); left: auto; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; background: var(--panel-bg); backdrop-filter: blur(12px); padding: 8px 14px; clip-path: var(--hex-chamfer); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6); border: 1px solid rgba(255, 255, 255, 0.12); }
+        .ui-top-row { display: flex; justify-content: flex-end; align-items: center; gap: 10px; width: 100%; }
         .stat-group { display: flex; flex-direction: column; align-items: center; }
         .stat-label { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-dim); font-weight: 600;}
         .stat-val { font-size: 0.95rem; font-weight: 700; color: var(--text-light); }
-        
-        #settings-dropdown { top: calc(max(12px, env(safe-area-inset-top)) + 52px); right: max(12px, env(safe-area-inset-right)); display: none; flex-direction: column; gap: 8px; z-index: 100; min-width: 180px; background: var(--panel-bg); backdrop-filter: blur(12px); padding: 12px; clip-path: var(--hex-chamfer); border: 1px solid rgba(255, 255, 255, 0.12); box-shadow: 0 8px 32px rgba(0,0,0,0.6); }
 
+        #turn-timer-container { width: 100%; height: 6px; background: rgba(255, 255, 255, 0.1); border-radius: 3px; overflow: hidden; display: none; margin-top: 2px; }
+        #turn-timer-bar { height: 100%; width: 100%; background: #2ecc71; transition: width 1s linear, background-color 0.5s ease; }
+        
         #dice-panel { top: 50%; right: max(12px, env(safe-area-inset-right)); transform: translateY(-50%); background: var(--panel-bg); backdrop-filter: blur(12px); padding: 10px 8px; clip-path: var(--hex-chamfer); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6); border: 1px solid rgba(255, 255, 255, 0.12); display: flex; flex-direction: column; align-items: center; gap: 6px; }
         #dice-area { display: flex; flex-direction: column; align-items: center; gap: 6px; justify-content: center; }
         .die-container { width: 38px; height: 42px; clip-path: var(--hex-shape); display: flex; justify-content: center; align-items: center; box-sizing: border-box; transition: all 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275); background: rgba(255, 255, 255, 0.1); }
@@ -96,7 +98,6 @@
         @keyframes validSocketPulse { 0% { fill-opacity: 0.08; stroke-opacity: 0.25; } 100% { fill-opacity: 0.22; stroke-opacity: 0.55; } }
         .legal-spot-active { animation: validSocketPulse 1.4s infinite alternate ease-in-out; }
 
-        /* BRIGHT HIGH-INTENSITY COLORGON HIGHLIGHT ANIMATION */
         @keyframes colorgonSuperGlow { 
             0% { filter: drop-shadow(0 0 8px currentColor) brightness(1.2); opacity: 0.85; } 
             50% { filter: drop-shadow(0 0 25px currentColor) drop-shadow(0 0 45px #ffffff) brightness(1.8); opacity: 1.0; } 
@@ -104,7 +105,6 @@
         }
         .wedge-colorgon-active { animation: colorgonSuperGlow 0.45s infinite ease-in-out !important; stroke: #ffffff !important; stroke-width: 1.8px !important; z-index: 100; }
 
-        /* WEDGE-ONLY ELEVATION ANIMATION DURING SCORING */
         @keyframes colorgonWedgeLift {
             0% { transform: scale(1); filter: drop-shadow(0 0 4px currentColor); }
             50% { transform: scale(1.22); filter: drop-shadow(0 0 25px currentColor) brightness(1.5); }
@@ -112,7 +112,6 @@
         }
         .colorgon-wedge-lifted { animation: colorgonWedgeLift 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards !important; transform-origin: 0 0; }
 
-        /* GLASSY SHIMMER ANIMATION FOR WHITE WILDCARD WEDGES */
         @keyframes glassyShimmer {
             0% { filter: brightness(1.0) drop-shadow(0 0 1px rgba(255,255,255,0.4)); }
             50% { filter: brightness(1.6) drop-shadow(0 0 12px rgba(255,255,255,0.9)); }
@@ -130,16 +129,35 @@
         #zoom-controls { bottom: max(12px, env(safe-area-inset-bottom)); right: max(12px, env(safe-area-inset-right)); display: flex; flex-direction: column; gap: 6px; z-index: 100; position: absolute; }
         .zoom-btn { width: 42px; height: 46px; min-height: 46px; padding: 0; clip-path: var(--hex-shape) !important; background: linear-gradient(135deg, #2980b9, #3498db); font-size: 1.3rem; font-weight: 900; box-shadow: 0 6px 16px rgba(0,0,0,0.5); }
 
-        #top-victory-banner { position: fixed; top: max(15px, env(safe-area-inset-top)); left: 50%; transform: translateX(-50%) translateY(-180%); z-index: 1000; background: rgba(18, 18, 26, 0.92); backdrop-filter: blur(16px); clip-path: var(--hex-chamfer); padding: 14px 28px; box-shadow: 0 15px 45px rgba(0,0,0,0.85); border: 2px solid #f1c40f; display: flex; flex-direction: column; align-items: center; gap: 8px; transition: transform 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275); max-width: 90vw; pointer-events: auto; }
-        #top-victory-banner.visible { transform: translateX(-50%) translateY(0); }
+        /* FIXED HIGH-PRIORITY FLOATING SCORING TEXT STYLE */
+        .floating-text { 
+            position: fixed !important; 
+            pointer-events: none !important; 
+            font-weight: 900; 
+            color: #ffffff; 
+            text-shadow: 0px 0px 18px currentColor, 0px 0px 6px #000000, 3px 3px 0px #000000; 
+            z-index: 99999 !important; 
+            transform: translate(-50%, -50%); 
+            font-family: 'Montserrat', sans-serif; 
+            will-change: transform, opacity; 
+        }
+        .float-match, .float-colorgon-mini { font-size: 1.8rem; }
+        .float-colorgon { font-size: 3.8rem; text-shadow: 0 0 30px currentColor, 0 0 10px #000, 4px 4px 0 #000; }
 
-        .floating-text { position: absolute; pointer-events: none; font-weight: 900; color: #ffffff; text-shadow: 0px 0px 10px #ffffff, 2px 2px 0px #000000; z-index: 9999 !important; transform: translate(-50%, -50%); font-family: 'Montserrat', sans-serif; will-change: transform, opacity; }
-        .float-match, .float-colorgon-mini { font-size: 1.6rem; }
-        .float-colorgon { font-size: 3.5rem; text-shadow: 0 0 25px currentColor, 3px 3px 0 #000; }
+        /* CINEMATIC VICTORY BANNER OVERLAY */
+        #top-victory-banner { position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; z-index: 2500; background: rgba(8, 8, 14, 0.92); backdrop-filter: blur(20px); display: flex; flex-direction: column; justify-content: center; align-items: center; opacity: 0; pointer-events: none; transition: opacity 0.8s ease; }
+        #top-victory-banner.visible { opacity: 1; pointer-events: auto; }
+        
+        .victory-card-inner { background: rgba(18, 18, 26, 0.95); border: 2px solid #f1c40f; clip-path: var(--hex-chamfer); padding: 28px 36px; display: flex; flex-direction: column; align-items: center; gap: 12px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9), 0 0 40px rgba(241, 196, 15, 0.3); width: 480px; max-width: 90vw; text-align: center; }
+        @keyframes trophyGlowPulse { 0% { transform: scale(0.9); filter: drop-shadow(0 0 10px #f1c40f); } 50% { transform: scale(1.15); filter: drop-shadow(0 0 30px #f1c40f); } 100% { transform: scale(0.9); filter: drop-shadow(0 0 10px #f1c40f); } }
+        .victory-trophy-icon { font-size: 4.5rem; animation: trophyGlowPulse 2s infinite ease-in-out; margin-bottom: 4px; }
+        .victory-winner-title { font-family: 'Montserrat', sans-serif; font-size: 2.2rem; font-weight: 900; margin: 0; text-shadow: 0 0 20px currentColor; }
 
-        /* LOBBY / SETUP UI */
-        #tutorial-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; background: rgba(12, 12, 16, 0.88); backdrop-filter: blur(12px); z-index: 1000; display: flex; justify-content: center; align-items: center; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
-        #tutorial-overlay.visible { opacity: 1 !important; pointer-events: auto !important; }
+        .victory-standings-list { width: 100%; display: flex; flex-direction: column; gap: 6px; margin: 10px 0; }
+        .victory-standing-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 12px; background: rgba(255, 255, 255, 0.06); clip-path: var(--hex-btn); border: 1px solid rgba(255, 255, 255, 0.1); font-size: 0.85rem; font-weight: 700; }
+
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; background: rgba(12, 12, 16, 0.88); backdrop-filter: blur(12px); z-index: 1000; display: flex; justify-content: center; align-items: center; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+        .modal-overlay.visible { opacity: 1 !important; pointer-events: auto !important; }
         .modal-card { background: var(--panel-bg); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.12); width: 560px; max-width: 92vw; clip-path: var(--hex-chamfer); padding: 22px; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8); display: flex; flex-direction: column; align-items: center; text-align: center; position: relative; color: var(--text-light); max-height: calc(100dvh - 32px); overflow-y: auto; }
         .setup-section-box { width: 100%; background: rgba(12, 12, 18, 0.6); border: 1px solid rgba(255, 255, 255, 0.15); clip-path: polygon(10px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px), 0 10px); padding: 14px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 8px; text-align: left; }
         select.setup-select, input.setup-input { padding: 8px 10px; font-size: 0.85rem; font-weight: 600; font-family: 'Poppins', sans-serif; border: 1px solid rgba(255, 255, 255, 0.2); clip-path: var(--hex-btn); background: rgba(12, 12, 18, 0.9); color: var(--text-light); outline: none; cursor: pointer; width: 100%; min-height: 38px; }
@@ -152,11 +170,42 @@
         .ready-badge { font-size: 0.65rem; font-weight: 800; padding: 2px 6px; clip-path: var(--hex-btn); text-transform: uppercase; }
         .ready-badge.is-ready { background: #2ecc71; color: #000; }
         .ready-badge.not-ready { background: #e74c3c; color: #fff; }
+
+        .setting-control-row { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 6px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.08); }
+        .setting-label { font-size: 0.8rem; font-weight: 600; color: var(--text-light); }
+        .setting-slider { width: 130px; accent-color: #2ecc71; cursor: pointer; }
+        .setting-toggle-btn { padding: 4px 10px; min-height: 28px; font-size: 0.7rem; }
+
+        .bot-diff-badge { font-size: 0.65rem; font-weight: 800; padding: 2px 8px; clip-path: var(--hex-btn); text-transform: uppercase; cursor: pointer; transition: all 0.25s ease; border: 1px solid transparent; }
+        .bot-diff-easy { background: rgba(46, 204, 113, 0.25); color: #2ecc71; border-color: #2ecc71; }
+        .bot-diff-normal { background: rgba(241, 196, 15, 0.25); color: #f1c40f; border-color: #f1c40f; }
+        .bot-diff-hard { background: rgba(231, 76, 60, 0.25); color: #e74c3c; border-color: #e74c3c; }
+        
+        .bot-icon-glow-easy { filter: drop-shadow(0 0 6px #2ecc71); stroke: #2ecc71 !important; }
+        .bot-icon-glow-normal { filter: drop-shadow(0 0 6px #f1c40f); stroke: #f1c40f !important; }
+        .bot-icon-glow-hard { filter: drop-shadow(0 0 6px #e74c3c); stroke: #e74c3c !important; }
+
+        #chat-toggle-btn { position: relative; }
+        #chat-unread-badge { position: absolute; top: -4px; right: -4px; background: #e74c3c; color: white; font-size: 0.6rem; font-weight: 900; width: 16px; height: 16px; border-radius: 50%; display: none; justify-content: center; align-items: center; border: 1px solid #ffffff; }
+        
+        #chat-messages-log { width: 100%; height: 220px; overflow-y: auto; background: rgba(10, 10, 15, 0.8); border: 1px solid rgba(255, 255, 255, 0.12); clip-path: polygon(8px 0, calc(100% - 8px) 0, 100% 8px, 100% calc(100% - 8px), calc(100% - 8px) 100%, 8px 100%, 0 calc(100% - 8px), 0 8px); padding: 10px; display: flex; flex-direction: column; gap: 8px; text-align: left; }
+        .chat-msg-item { font-size: 0.8rem; word-break: break-word; }
+        .chat-msg-author { font-weight: 800; margin-right: 6px; }
+        .chat-msg-text { color: var(--text-light); }
+
+        .lobby-wrapper-grid { display: flex; gap: 14px; width: 100%; max-width: 900px; justify-content: center; align-items: stretch; flex-direction: column; }
+        #lobby-side-audio-panel { width: 100%; display: none; flex-direction: column; justify-content: center; }
+        #lobby-mobile-audio-btn { display: inline-block; margin-bottom: 8px; width: 100%; }
+
+        @media (min-width: 820px) {
+            .lobby-wrapper-grid { flex-direction: row; }
+            #lobby-side-audio-panel { width: 280px; display: flex; }
+            #lobby-mobile-audio-btn { display: none; }
+        }
     </style>
 </head>
 <body>
 
-    <!-- MP3 BACKGROUND MUSIC PLAYER -->
     <audio id="bgm-player" preload="auto" style="display:none;"></audio>
 
     <div id="board-container">
@@ -207,7 +256,7 @@
     </div>
 
     <div id="ui-bar" class="hud-element">
-        <div style="display: flex; gap: 8px; align-items: center;">
+        <div class="ui-top-row">
             <div class="stat-group">
                 <span class="stat-label">Goal</span>
                 <span class="stat-val" id="goal-display">100 Pts</span>
@@ -220,16 +269,71 @@
                 <span class="stat-label">Tiles</span>
                 <span class="stat-val"><span id="tiles-played">0</span>/3</span>
             </div>
+            <button id="chat-toggle-btn" class="secondary-btn" onclick="toggleChatModal()">
+                💬 <span id="chat-unread-badge">0</span>
+            </button>
+            <button id="end-turn-btn" onclick="endTurn()">End Turn</button>
+            <button id="menu-toggle-btn" class="secondary-btn" onclick="toggleSettingsModal()">☰</button>
         </div>
-        <button id="end-turn-btn" onclick="endTurn()">End Turn</button>
-        <button id="menu-toggle-btn" class="secondary-btn" onclick="toggleSettingsMenu()">☰</button>
+        <div id="turn-timer-container">
+            <div id="turn-timer-bar"></div>
+        </div>
     </div>
 
-    <div id="settings-dropdown" class="hud-element">
-        <button onclick="startNewGameFromMenu(); toggleSettingsMenu();" style="width: 100%; background: linear-gradient(135deg, #e74c3c, #c0392b);">Start New Game 🔄</button>
-        <button onclick="openPlayerSetup(); toggleSettingsMenu();" style="width: 100%;">Lobby Menu</button>
-        <button id="music-toggle-btn" onclick="toggleMusic();" style="width: 100%;">Music On 🎵</button>
-        <button class="secondary-btn" onclick="toggleFullscreen(); toggleSettingsMenu();" style="width: 100%;">⛶ Fullscreen</button>
+    <div id="settings-overlay" class="modal-overlay">
+        <div class="modal-card">
+            <h2 style="font-family:'Montserrat'; color:#2ecc71; margin-bottom:12px;">GAME SETTINGS ⚙️</h2>
+            
+            <div class="setup-section-box">
+                <div style="font-size:0.8rem; font-weight:700; color:#2ecc71; margin-bottom:4px;">🔊 Audio Control</div>
+                <div class="setting-control-row">
+                    <span class="setting-label">Music Volume 🎵</span>
+                    <input type="range" class="setting-slider music-vol-input" min="0" max="1" step="0.05" value="0.35" oninput="updateMusicVolume(this.value)">
+                </div>
+                <div class="setting-control-row">
+                    <span class="setting-label">SFX Volume 🔔</span>
+                    <input type="range" class="setting-slider sfx-vol-input" min="0" max="1" step="0.05" value="1.0" oninput="updateSFXVolume(this.value)">
+                </div>
+                <div class="setting-control-row">
+                    <span class="setting-label">Master Sound</span>
+                    <button class="setting-toggle-btn highlight-btn master-mute-toggle-btn" onclick="toggleMasterMute()">Unmuted 🔊</button>
+                </div>
+            </div>
+
+            <div class="setup-section-box">
+                <div style="font-size:0.8rem; font-weight:700; color:#2ecc71; margin-bottom:4px;">✨ Visuals & Assists</div>
+                <div class="setting-control-row">
+                    <span class="setting-label">Space FX (Mist/Stars)</span>
+                    <button id="particles-toggle-btn" class="setting-toggle-btn highlight-btn" onclick="toggleParticleFX()">Enabled ON</button>
+                </div>
+                <div class="setting-control-row">
+                    <span class="setting-label">Legal Spot Guides 💡</span>
+                    <button id="guides-toggle-btn" class="setting-toggle-btn highlight-btn" onclick="toggleValidGuides()">Enabled ON</button>
+                </div>
+                <div class="setting-control-row">
+                    <span class="setting-label">Cinematic Pan 🎥</span>
+                    <button id="camera-toggle-btn" class="setting-toggle-btn highlight-btn" onclick="toggleCinematicCamera()">Enabled ON</button>
+                </div>
+            </div>
+
+            <div style="display:flex; gap:10px; width:100%; margin-top:8px;">
+                <button onclick="startNewGameFromMenu(); toggleSettingsModal();" style="flex:1; background: linear-gradient(135deg, #e74c3c, #c0392b);">Start New Game 🔄</button>
+                <button class="secondary-btn" onclick="toggleFullscreen();" style="flex:1;">Fullscreen ⛶</button>
+            </div>
+            <button onclick="toggleSettingsModal();" style="width:100%; margin-top:8px;" class="highlight-btn">Close Menu ✕</button>
+        </div>
+    </div>
+
+    <div id="chat-overlay" class="modal-overlay">
+        <div class="modal-card" style="width:460px;">
+            <h2 style="font-family:'Montserrat'; color:#3498db; margin-bottom:12px;">MATCH CHAT 💬</h2>
+            <div id="chat-messages-log"></div>
+            <div style="display:flex; gap:8px; width:100%; margin-top:10px;">
+                <input type="text" id="chat-input-text" placeholder="Type a message..." class="setup-input" style="flex:1;" onkeydown="if(event.key==='Enter') sendChatMessage();">
+                <button onclick="sendChatMessage()" class="highlight-btn">Send</button>
+            </div>
+            <button onclick="toggleChatModal()" style="width:100%; margin-top:10px;" class="secondary-btn">Close Chat ✕</button>
+        </div>
     </div>
 
     <div id="dice-panel" class="hud-element">
@@ -259,102 +363,235 @@
 
     <div id="turn-announcement"></div>
 
+    <!-- CINEMATIC VICTORY BANNER -->
     <div id="top-victory-banner">
-        <h2 class="victory-title-inline" id="victory-banner-title">🏆 GAME OVER!</h2>
-        <div id="victory-banner-standings"></div>
-        <button onclick="initGame(false)" style="padding: 6px 16px; margin-top: 2px;">Play Again</button>
+        <div class="victory-card-inner">
+            <div class="victory-trophy-icon">🏆</div>
+            <h2 class="victory-winner-title" id="victory-banner-title">PLAYER 1 WINS!</h2>
+            <div style="font-size: 0.85rem; color: var(--text-dim);" id="victory-banner-subtitle">MATCH FINAL STANDINGS</div>
+            
+            <div class="victory-standings-list" id="victory-banner-standings"></div>
+
+            <div style="display: flex; gap: 10px; width: 100%; margin-top: 10px;">
+                <button onclick="confirmPlayerSetup(); hideVictoryBanner();" class="highlight-btn" style="flex:1;">Rematch 🚀</button>
+                <button onclick="hideVictoryBanner(); openPlayerSetup();" class="secondary-btn" style="flex:1;">Lobby Menu 🏠</button>
+            </div>
+        </div>
     </div>
 
-    <div id="tutorial-overlay" class="visible">
-        <div id="setup-card" class="modal-card">
-            <h2 style="font-family:'Montserrat'; color:#2ecc71; margin-bottom:12px;">COLORGON LOBBY</h2>
-            
-            <div class="tab-row">
-                <button id="tab-host" class="tab-btn active" onclick="switchLobbyTab('host')">Host Room</button>
-                <button id="tab-join" class="tab-btn" onclick="switchLobbyTab('join')">Join Room</button>
-                <button id="tab-local" class="tab-btn" onclick="switchLobbyTab('local')">Local & Bots</button>
-            </div>
-
-            <!-- ONLINE HOST TAB -->
-            <div id="panel-host" class="setup-section-box">
-                <div style="font-size:0.8rem; font-weight:700; color:#2ecc71;">🌐 Create Online Room</div>
-                <div style="display:flex; gap:8px; align-items:center; margin-top:4px;">
-                    <span style="font-size: 0.8rem; color: var(--text-dim);">Host Name:</span>
-                    <input type="text" id="host-player-name" value="Host (P1)" onfocus="this.select()" onchange="updateHostProfile()" class="setup-input" style="flex:1;">
-                </div>
-                <div style="display:flex; gap:8px; align-items:center; margin-top:4px;">
-                    <span style="font-size: 0.8rem; color: var(--text-dim);">Host Color:</span>
-                    <input type="color" id="host-player-color" value="#2ecc71" onchange="updateHostProfile()" class="setup-input" style="width:50px; padding:2px; height:38px;">
-                </div>
-                <div style="font-size: 0.8rem; color: var(--text-dim); margin-top:6px;">Select Match Rules:</div>
-                <select id="win-condition-type" class="setup-select">
-                    <option value="score">Target Score Mode</option>
-                    <option value="tiles">Tile Limit Mode</option>
-                </select>
-                <div id="win-score-wrap" style="display: flex; align-items: center; gap: 10px;">
-                    <span style="font-size: 0.8rem; color: var(--text-dim);">Target Points:</span>
-                    <input type="number" id="win-score-val" value="100" class="setup-input" style="width:90px;">
-                </div>
-
-                <div id="host-code-wrap" style="display:none; flex-direction:column; gap:4px; align-items:center; margin-top:8px;">
-                    <div style="font-size:0.7rem; color:var(--text-dim);">SHARE 4-DIGIT ROOM CODE:</div>
-                    <div class="code-display" id="host-room-code">----</div>
-                    <div id="lobby-connected-count" style="font-size:0.75rem; color:#2ecc71; margin-top:4px;">Connected Players: 1</div>
-                </div>
-
-                <div id="online-participants-list" style="display:none; flex-direction:column; gap:4px; margin-top:8px;"></div>
-
-                <button id="create-room-btn" onclick="startHostingRoom()" style="width:100%; margin-top:8px;">Create Room</button>
-                <button id="start-hosted-game-btn" onclick="launchMultiplayerGame()" style="width:100%; margin-top:8px; display:none;" class="highlight-btn" disabled>Start Game 🚀 (Waiting for Ready)</button>
-            </div>
-
-            <!-- ONLINE JOIN TAB -->
-            <div id="panel-join" class="setup-section-box" style="display:none;">
-                <div style="font-size:0.8rem; font-weight:700; color:#2ecc71;">🔗 Join Online Room</div>
+    <div id="tutorial-overlay" class="modal-overlay visible">
+        <div class="lobby-wrapper-grid">
+            <div id="setup-card" class="modal-card">
+                <h2 style="font-family:'Montserrat'; color:#2ecc71; margin-bottom:12px;">COLORGON LOBBY</h2>
                 
-                <div id="join-input-section">
-                    <div style="display:flex; gap:8px; align-items:center;">
-                        <span style="font-size: 0.8rem; color: var(--text-dim);">Your Name:</span>
-                        <input type="text" id="join-player-name" value="Player 2" onfocus="this.select()" class="setup-input" style="flex:1;">
+                <button id="lobby-mobile-audio-btn" class="secondary-btn" onclick="toggleMobileLobbyAudioPanel()">🔊 Audio Settings</button>
+                
+                <div id="mobile-lobby-audio-box" class="setup-section-box" style="display:none; margin-bottom:10px;">
+                    <div style="font-size:0.8rem; font-weight:700; color:#2ecc71; margin-bottom:4px;">🔊 Audio Control</div>
+                    <div class="setting-control-row">
+                        <span class="setting-label">Music Volume 🎵</span>
+                        <input type="range" class="setting-slider music-vol-input" min="0" max="1" step="0.05" value="0.35" oninput="updateMusicVolume(this.value)">
+                    </div>
+                    <div class="setting-control-row">
+                        <span class="setting-label">SFX Volume 🔔</span>
+                        <input type="range" class="setting-slider sfx-vol-input" min="0" max="1" step="0.05" value="1.0" oninput="updateSFXVolume(this.value)">
+                    </div>
+                    <div class="setting-control-row">
+                        <span class="setting-label">Master Sound</span>
+                        <button class="setting-toggle-btn highlight-btn master-mute-toggle-btn" onclick="toggleMasterMute()">Unmuted 🔊</button>
+                    </div>
+                </div>
+
+                <div class="tab-row">
+                    <button id="tab-host" class="tab-btn active" onclick="switchLobbyTab('host')">Host Room</button>
+                    <button id="tab-join" class="tab-btn" onclick="switchLobbyTab('join')">Join Room</button>
+                    <button id="tab-local" class="tab-btn" onclick="switchLobbyTab('local')">Local & Bots</button>
+                </div>
+
+                <!-- ONLINE HOST TAB -->
+                <div id="panel-host" class="setup-section-box">
+                    <div style="font-size:0.8rem; font-weight:700; color:#2ecc71;">🌐 Create Online Room</div>
+                    <div style="display:flex; gap:8px; align-items:center; margin-top:4px;">
+                        <span style="font-size: 0.8rem; color: var(--text-dim);">Host Name:</span>
+                        <input type="text" id="host-player-name" value="Host (P1)" onfocus="this.select()" onchange="updateHostProfile()" class="setup-input" style="flex:1;">
                     </div>
                     <div style="display:flex; gap:8px; align-items:center; margin-top:4px;">
-                        <span style="font-size: 0.8rem; color: var(--text-dim);">Theme:</span>
-                        <input type="color" id="join-player-color" value="#3498db" class="setup-input" style="width:50px; padding:2px; height:38px;">
+                        <span style="font-size: 0.8rem; color: var(--text-dim);">Host Color:</span>
+                        <input type="color" id="host-player-color" value="#2ecc71" onchange="updateHostProfile()" class="setup-input" style="width:50px; padding:2px; height:38px;">
                     </div>
+                    
+                    <div style="font-size: 0.8rem; color: var(--text-dim); margin-top:6px;">Match Mode & Target:</div>
+                    <select id="win-condition-type" class="setup-select" onchange="handleTargetModeSelect('host')">
+                        <option value="score">Target Score Mode</option>
+                        <option value="tiles">Tile Limit Mode</option>
+                    </select>
+
+                    <div style="display: flex; align-items: center; gap: 8px; margin-top:2px;">
+                        <span style="font-size: 0.8rem; color: var(--text-dim);">Goal Value:</span>
+                        <select id="host-target-preset" class="setup-select" style="flex:1;" onchange="handlePresetTargetChange('host')">
+                            <option value="50">50 Points / Tiles</option>
+                            <option value="100" selected>100 Points / Tiles</option>
+                            <option value="150">150 Points / Tiles</option>
+                            <option value="custom">Custom Value...</option>
+                        </select>
+                        <input type="number" id="host-custom-target-val" value="100" class="setup-input" style="width:80px; display:none;">
+                    </div>
+                    
                     <div style="display:flex; gap:8px; align-items:center; margin-top:4px;">
-                        <span style="font-size: 0.8rem; color: var(--text-dim);">4-Digit Code:</span>
-                        <input type="number" id="join-room-code-input" placeholder="1234" class="setup-input" style="flex:1; font-size:1.2rem; font-weight:900; letter-spacing:4px; text-align:center;" onfocus="this.select()">
+                        <span style="font-size: 0.8rem; color: var(--text-dim);">Hand Limit:</span>
+                        <select id="host-hand-limit" class="setup-select" style="flex:1;">
+                            <option value="3">3 Tiles</option>
+                            <option value="4">4 Tiles</option>
+                            <option value="5">5 Tiles</option>
+                        </select>
                     </div>
-                    <div id="join-status-msg" style="font-size:0.75rem; color:#f1c40f; text-align:center; min-height:18px; margin-top:4px;"></div>
-                    <button id="join-btn" onclick="joinRoomByCode()" style="width:100%; margin-top:8px;">Join Room</button>
+
+                    <div style="display:flex; gap:8px; align-items:center; margin-top:4px;">
+                        <span style="font-size: 0.8rem; color: var(--text-dim);">Void Density:</span>
+                        <select id="host-void-density" class="setup-select" style="flex:1;">
+                            <option value="low">Low Density</option>
+                            <option value="normal" selected>Normal Density</option>
+                            <option value="high">High Density</option>
+                        </select>
+                    </div>
+
+                    <div style="display:flex; gap:8px; align-items:center; margin-top:4px;">
+                        <span style="font-size: 0.8rem; color: var(--text-dim);">Turn Timer:</span>
+                        <select id="host-turn-timer" class="setup-select" style="flex:1;">
+                            <option value="0">Off (Unlimited)</option>
+                            <option value="30">30 Seconds</option>
+                            <option value="60">60 Seconds</option>
+                            <option value="90">90 Seconds</option>
+                        </select>
+                    </div>
+
+                    <div id="host-bots-wrapper" style="display:none; flex-direction:column; gap:4px; margin-top:6px;">
+                        <div style="font-size:0.75rem; color:#2ecc71; font-weight:700;">AI Bots in Room:</div>
+                        <div id="host-bots-list" style="display:flex; flex-direction:column; gap:4px;"></div>
+                        <button class="secondary-btn" onclick="addHostBotSlot()" style="width:100%; margin-top:4px; font-size:0.65rem;">+ Add AI Bot 🤖</button>
+                    </div>
+
+                    <div id="host-code-wrap" style="display:none; flex-direction:column; gap:4px; align-items:center; margin-top:8px;">
+                        <div style="font-size:0.7rem; color:var(--text-dim);">SHARE 4-DIGIT ROOM CODE:</div>
+                        <div class="code-display" id="host-room-code">----</div>
+                        <div id="lobby-connected-count" style="font-size:0.75rem; color:#2ecc71; margin-top:4px;">Connected Players: 1</div>
+                    </div>
+
+                    <div id="online-participants-list" style="display:none; flex-direction:column; gap:4px; margin-top:8px;"></div>
+
+                    <button id="create-room-btn" onclick="startHostingRoom()" style="width:100%; margin-top:8px;">Create Room</button>
+                    <button id="start-hosted-game-btn" onclick="launchMultiplayerGame()" style="width:100%; margin-top:8px; display:none;" class="highlight-btn" disabled>Start Game 🚀 (Waiting for Ready)</button>
                 </div>
 
-                <div id="join-lobby-section" style="display:none; flex-direction:column; gap:8px;">
-                    <div style="font-size:0.75rem; color:#2ecc71; text-align:center; font-weight:700;">CONNECTED TO ROOM LOBBY</div>
-                    <div id="joined-participants-list" style="display:flex; flex-direction:column; gap:4px;"></div>
-                    <button id="ready-toggle-btn" onclick="toggleReadyStatus()" style="width:100%; margin-top:8px;" class="highlight-btn">Ready Up 👍</button>
+                <!-- ONLINE JOIN TAB -->
+                <div id="panel-join" class="setup-section-box" style="display:none;">
+                    <div style="font-size:0.8rem; font-weight:700; color:#2ecc71;">🔗 Join Online Room</div>
+                    
+                    <div id="join-input-section">
+                        <div style="display:flex; gap:8px; align-items:center;">
+                            <span style="font-size: 0.8rem; color: var(--text-dim);">Your Name:</span>
+                            <input type="text" id="join-player-name" value="Player 2" onfocus="this.select()" class="setup-input" style="flex:1;">
+                        </div>
+                        <div style="display:flex; gap:8px; align-items:center; margin-top:4px;">
+                            <span style="font-size: 0.8rem; color: var(--text-dim);">Theme:</span>
+                            <input type="color" id="join-player-color" value="#3498db" class="setup-input" style="width:50px; padding:2px; height:38px;">
+                        </div>
+                        <div style="display:flex; gap:8px; align-items:center; margin-top:4px;">
+                            <span style="font-size: 0.8rem; color: var(--text-dim);">4-Digit Code:</span>
+                            <input type="number" id="join-room-code-input" placeholder="1234" class="setup-input" style="flex:1; font-size:1.2rem; font-weight:900; letter-spacing:4px; text-align:center;" onfocus="this.select()">
+                        </div>
+                        <div id="join-status-msg" style="font-size:0.75rem; color:#f1c40f; text-align:center; min-height:18px; margin-top:4px;"></div>
+                        <button id="join-btn" onclick="joinRoomByCode()" style="width:100%; margin-top:8px;">Join Room</button>
+                    </div>
+
+                    <div id="join-lobby-section" style="display:none; flex-direction:column; gap:8px;">
+                        <div style="font-size:0.75rem; color:#2ecc71; text-align:center; font-weight:700;">CONNECTED TO ROOM LOBBY</div>
+                        <div id="joined-participants-list" style="display:flex; flex-direction:column; gap:4px;"></div>
+                        <button id="ready-toggle-btn" onclick="toggleReadyStatus()" style="width:100%; margin-top:8px;" class="highlight-btn">Ready Up 👍</button>
+                    </div>
                 </div>
+
+                <!-- LOCAL & BOTS TAB -->
+                <div id="panel-local" class="setup-section-box" style="display:none;">
+                    <div style="font-size:0.8rem; font-weight:700; color:#2ecc71;">🎮 Single Device & AI Bots</div>
+                    <div id="local-player-slots-list" style="display: flex; flex-direction: column; gap: 4px; width: 100%;"></div>
+                    
+                    <div style="display:flex; gap:8px; margin-top:8px;">
+                        <button onclick="addLocalPlayerSlot('human')" style="flex:1; font-size:0.65rem; padding:6px;">+ Add Human</button>
+                        <button class="secondary-btn" onclick="addLocalPlayerSlot('bot')" style="flex:1; font-size:0.65rem; padding:6px;">+ Add AI Bot 🤖</button>
+                    </div>
+
+                    <div style="font-size: 0.8rem; color: var(--text-dim); margin-top:8px;">Local Game Options:</div>
+                    
+                    <select id="local-win-condition-type" class="setup-select" style="margin-top:2px;" onchange="handleTargetModeSelect('local')">
+                        <option value="score">Target Score Mode</option>
+                        <option value="tiles">Tile Limit Mode</option>
+                    </select>
+
+                    <div style="display: flex; align-items: center; gap: 8px; margin-top:2px;">
+                        <span style="font-size: 0.8rem; color: var(--text-dim);">Goal Value:</span>
+                        <select id="local-target-preset" class="setup-select" style="flex:1;" onchange="handlePresetTargetChange('local')">
+                            <option value="50">50 Points / Tiles</option>
+                            <option value="100" selected>100 Points / Tiles</option>
+                            <option value="150">150 Points / Tiles</option>
+                            <option value="custom">Custom Value...</option>
+                        </select>
+                        <input type="number" id="local-custom-target-val" value="100" class="setup-input" style="width:80px; display:none;">
+                    </div>
+
+                    <div style="display:flex; gap:8px; align-items:center; margin-top:2px;">
+                        <span style="font-size: 0.8rem; color: var(--text-dim);">Turn Timer:</span>
+                        <select id="local-turn-timer" class="setup-select" style="flex:1;">
+                            <option value="0">Off (Unlimited)</option>
+                            <option value="30">30 Seconds</option>
+                            <option value="60">60 Seconds</option>
+                            <option value="90">90 Seconds</option>
+                        </select>
+                    </div>
+
+                    <div style="display:flex; gap:8px; align-items:center; margin-top:4px;">
+                        <span style="font-size: 0.8rem; color: var(--text-dim);">Void Density:</span>
+                        <select id="local-void-density" class="setup-select" style="flex:1;">
+                            <option value="low">Low Density</option>
+                            <option value="normal" selected>Normal Density</option>
+                            <option value="high">High Density</option>
+                        </select>
+                    </div>
+
+                    <div style="display:flex; gap:8px; align-items:center; margin-top:4px;">
+                        <span style="font-size: 0.8rem; color: var(--text-dim);">Secret Hands 🔒:</span>
+                        <select id="local-secret-hand" class="setup-select" style="flex:1;">
+                            <option value="off">Off (Open Hands)</option>
+                            <option value="on">On (Pass & Play Hide)</option>
+                        </select>
+                    </div>
+
+                    <button onclick="confirmLocalSetup()" style="width:100%; margin-top:12px;" class="highlight-btn">Start Match 🚀</button>
+                </div>
+
             </div>
 
-            <!-- UNCAPPED LOCAL & BOTS TAB -->
-            <div id="panel-local" class="setup-section-box" style="display:none;">
-                <div style="font-size:0.8rem; font-weight:700; color:#2ecc71;">🎮 Single Device & AI Bots</div>
-                <div id="local-player-slots-list" style="display: flex; flex-direction: column; gap: 4px; width: 100%;"></div>
-                
-                <div style="display:flex; gap:8px; margin-top:8px;">
-                    <button onclick="addLocalPlayerSlot('human')" style="flex:1; font-size:0.65rem; padding:6px;">+ Add Human</button>
-                    <button class="secondary-btn" onclick="addLocalPlayerSlot('bot')" style="flex:1; font-size:0.65rem; padding:6px;">+ Add AI Bot 🤖</button>
+            <!-- SIDE AUDIO PANEL IN GAME LOBBY SETUP -->
+            <div id="lobby-side-audio-panel" class="setup-section-box" style="margin-bottom:0;">
+                <div style="font-size:0.85rem; font-weight:700; color:#2ecc71; margin-bottom:6px; text-align:center;">🔊 AUDIO SETTINGS</div>
+                <div class="setting-control-row">
+                    <span class="setting-label">Music Volume 🎵</span>
+                    <input type="range" class="setting-slider music-vol-input" min="0" max="1" step="0.05" value="0.35" oninput="updateMusicVolume(this.value)">
                 </div>
-
-                <button onclick="confirmLocalSetup()" style="width:100%; margin-top:12px;" class="highlight-btn">Start Match 🚀</button>
+                <div class="setting-control-row">
+                    <span class="setting-label">SFX Volume 🔔</span>
+                    <input type="range" class="setting-slider sfx-vol-input" min="0" max="1" step="0.05" value="1.0" oninput="updateSFXVolume(this.value)">
+                </div>
+                <div class="setting-control-row">
+                    <span class="setting-label">Master Sound</span>
+                    <button class="setting-toggle-btn highlight-btn master-mute-toggle-btn" onclick="toggleMasterMute()">Unmuted 🔊</button>
+                </div>
             </div>
-
         </div>
     </div>
 
     <script>
         const colorMap = { 'r': '#e74c3c', 'b': '#3498db', 'y': '#f1c40f', 'w': '#ffffff', 'k': '#2c3e50' };
-        // ULTRA-BRIGHT HIGH-CONTRAST NEON COLOR MAP FOR COMPLETED COLORGON GROUPS
         const vibrantColorMap = { 'r': '#ff0033', 'b': '#00e5ff', 'y': '#ffe600' };
 
         const wedges = ["M0,0 L20,-34.64 L40,0 Z", "M0,0 L40,0 L20,34.64 Z", "M0,0 L20,34.64 L-20,34.64 Z", "M0,0 L-20,34.64 L-40,0 Z", "M0,0 L-40,0 L-20,-34.64 Z", "M0,0 L-20,-34.64 L20,-34.64 Z"];
@@ -366,9 +603,25 @@
         let activePlayerIdx = 0;
         let myPlayerId = 0;
 
-        let winConditionType = 'score', winTargetValue = 100;
+        let winConditionType = 'score', winTargetValue = 100, targetHandSize = 3;
+        let voidDensitySetting = 'normal'; 
+        let turnTimerDuration = 0, turnTimerInterval = null, turnTimeRemaining = 0;
+        let localSecretHandEnabled = false;
+
         let selectedHandIndex = -1, hasRolledDiceThisTurn = false, isRolling = false, isAnimating = false, playsLeft = 2, tilesPlayedThisTurn = 0, totalTilesPlaced = 0;
         let diceActive = [], lastDiceValues = { r: 1, b: 1, y: 1 }, panX = 0, panY = 0, currentBoardScale = 1.0, isGameOver = false;
+
+        let particleFXEnabled = true, validGuidesEnabled = true, cinematicCameraEnabled = true;
+        let sfxVolume = 1.0, masterSoundMuted = false;
+
+        let chatMessages = [];
+        let unreadChatCount = 0;
+        let isChatOpen = false;
+
+        let hostBotSlots = [];
+
+        // MOBILE TAP SELECT MECHANICS
+        let activePreviewSocketKey = null;
 
         let recentMatchWedges = new Set();
         let recentColorgonWedges = new Set();
@@ -378,17 +631,51 @@
 
         const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
+        function toggleMobileLobbyAudioPanel() {
+            let box = document.getElementById('mobile-lobby-audio-box');
+            if (box) {
+                box.style.display = (box.style.display === 'none') ? 'flex' : 'none';
+            }
+        }
+
+        function handlePresetTargetChange(prefix) {
+            let select = document.getElementById(`${prefix}-target-preset`);
+            let customInput = document.getElementById(`${prefix}-custom-target-val`);
+            if (select && customInput) {
+                if (select.value === 'custom') {
+                    customInput.style.display = 'inline-block';
+                } else {
+                    customInput.style.display = 'none';
+                    customInput.value = select.value;
+                }
+            }
+        }
+
+        function handleTargetModeSelect(prefix) {
+            handlePresetTargetChange(prefix);
+        }
+
+        function getTargetValFromUI(prefix) {
+            let select = document.getElementById(`${prefix}-target-preset`);
+            let customInput = document.getElementById(`${prefix}-custom-target-val`);
+            if (select && select.value === 'custom' && customInput) {
+                return Math.max(10, parseInt(customInput.value) || 100);
+            }
+            return parseInt(select ? select.value : 100) || 100;
+        }
+
         function getHumanIconSVG(colorHex = 'currentColor') {
             return `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${colorHex}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>`;
         }
 
-        function getBotIconSVG(colorHex = 'currentColor') {
-            return `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${colorHex}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"></rect><circle cx="12" cy="5" r="2"></circle><path d="M12 7v4"></path><line x1="8" y1="16" x2="8.01" y2="16"></line><line x1="16" y1="16" x2="16.01" y2="16"></line></svg>`;
+        function getBotIconSVG(colorHex = 'currentColor', difficulty = 'normal') {
+            let glowClass = `bot-icon-glow-${difficulty}`;
+            return `<svg class="${glowClass}" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${colorHex}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"></rect><circle cx="12" cy="5" r="2"></circle><path d="M12 7v4"></path><line x1="8" y1="16" x2="8.01" y2="16"></line><line x1="16" y1="16" x2="16.01" y2="16"></line></svg>`;
         }
 
         let localSlotSetup = [
-            { name: "Player 1", type: "human", color: "#2ecc71" },
-            { name: "Bot 1", type: "bot", color: "#e67e22" }
+            { name: "Player 1", type: "human", color: "#2ecc71", difficulty: "normal" },
+            { name: "Bot 1", type: "bot", color: "#e67e22", difficulty: "normal" }
         ];
 
         function renderLocalSetupSlots() {
@@ -397,13 +684,24 @@
             container.innerHTML = localSlotSetup.map((slot, idx) => `
                 <div class="lobby-slot-row">
                     <div style="display:flex; gap:6px; align-items:center;">
-                        ${slot.type === 'human' ? getHumanIconSVG(slot.color) : getBotIconSVG(slot.color)}
-                        <input type="text" value="${slot.name}" onfocus="this.select()" onchange="localSlotSetup[${idx}].name=this.value" class="setup-input" style="padding:2px 6px; font-size:0.75rem; width:120px; min-height:28px;">
-                        <input type="color" value="${slot.color}" onchange="localSlotSetup[${idx}].color=this.value; renderLocalSetupSlots();" class="setup-input" style="width:36px; padding:1px; min-height:28px; height:28px;">
+                        ${slot.type === 'human' ? getHumanIconSVG(slot.color) : getBotIconSVG(slot.color, slot.difficulty)}
+                        <input type="text" value="${slot.name}" onfocus="this.select()" onchange="localSlotSetup[${idx}].name=this.value" class="setup-input" style="padding:2px 6px; font-size:0.75rem; width:100px; min-height:28px;">
+                        <input type="color" value="${slot.color}" onchange="localSlotSetup[${idx}].color=this.value; renderLocalSetupSlots();" class="setup-input" style="width:32px; padding:1px; min-height:28px; height:28px;">
                     </div>
-                    ${localSlotSetup.length > 1 ? `<button class="remove-slot-btn" onclick="removeLocalPlayerSlot(${idx})">✕</button>` : ''}
+                    <div style="display:flex; gap:6px; align-items:center;">
+                        ${slot.type === 'bot' ? `<span class="bot-diff-badge bot-diff-${slot.difficulty}" onclick="cycleBotDifficulty(${idx})">${slot.difficulty.toUpperCase()}</span>` : ''}
+                        ${localSlotSetup.length > 1 ? `<button class="remove-slot-btn" onclick="removeLocalPlayerSlot(${idx})">✕</button>` : ''}
+                    </div>
                 </div>
             `).join('');
+        }
+
+        function cycleBotDifficulty(idx) {
+            let diffs = ['easy', 'normal', 'hard'];
+            let cur = localSlotSetup[idx].difficulty || 'normal';
+            let nextIdx = (diffs.indexOf(cur) + 1) % diffs.length;
+            localSlotSetup[idx].difficulty = diffs[nextIdx];
+            renderLocalSetupSlots();
         }
 
         function addLocalPlayerSlot(type) {
@@ -412,7 +710,8 @@
             localSlotSetup.push({
                 name: type === 'human' ? `Player ${count}` : `Bot ${count}`,
                 type: type,
-                color: palette[localSlotSetup.length % palette.length]
+                color: palette[localSlotSetup.length % palette.length],
+                difficulty: "normal"
             });
             renderLocalSetupSlots();
         }
@@ -421,6 +720,63 @@
             if (localSlotSetup.length <= 1) return;
             localSlotSetup.splice(idx, 1);
             renderLocalSetupSlots();
+        }
+
+        function renderHostBotSlots() {
+            let container = document.getElementById('host-bots-list');
+            if (!container) return;
+            container.innerHTML = hostBotSlots.map((slot, idx) => `
+                <div class="lobby-slot-row">
+                    <div style="display:flex; gap:6px; align-items:center;">
+                        ${getBotIconSVG(slot.color, slot.difficulty)}
+                        <input type="text" value="${slot.name}" onfocus="this.select()" onchange="hostBotSlots[${idx}].name=this.value; renderHostBotSlots(); updateHostBotList();" class="setup-input" style="padding:2px 6px; font-size:0.75rem; width:100px; min-height:28px;">
+                        <input type="color" value="${slot.color}" onchange="hostBotSlots[${idx}].color=this.value; renderHostBotSlots(); updateHostBotList();" class="setup-input" style="width:32px; padding:1px; min-height:28px; height:28px;">
+                    </div>
+                    <div style="display:flex; gap:6px; align-items:center;">
+                        <span class="bot-diff-badge bot-diff-${slot.difficulty}" onclick="cycleHostBotDifficulty(${idx})">${slot.difficulty.toUpperCase()}</span>
+                        <button class="remove-slot-btn" onclick="removeHostBotSlot(${idx})">✕</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function addHostBotSlot() {
+            let count = hostBotSlots.length + 1;
+            let palette = ['#e67e22', '#9b59b6', '#f1c40f', '#1abc9c'];
+            hostBotSlots.push({
+                id: 'bot_' + Date.now() + '_' + Math.random(),
+                name: `Bot ${count}`,
+                type: 'bot',
+                color: palette[hostBotSlots.length % palette.length],
+                difficulty: 'normal',
+                isReady: true,
+                score: 0,
+                hand: []
+            });
+            renderHostBotSlots();
+            updateHostBotList();
+        }
+
+        function cycleHostBotDifficulty(idx) {
+            let diffs = ['easy', 'normal', 'hard'];
+            let cur = hostBotSlots[idx].difficulty || 'normal';
+            let nextIdx = (diffs.indexOf(cur) + 1) % diffs.length;
+            hostBotSlots[idx].difficulty = diffs[nextIdx];
+            renderHostBotSlots();
+            updateHostBotList();
+        }
+
+        function removeHostBotSlot(idx) {
+            hostBotSlots.splice(idx, 1);
+            renderHostBotSlots();
+            updateHostBotList();
+        }
+
+        function updateHostBotList() {
+            let hostP = playersList[0] || { id: 0, name: "Host (P1)", color: "#2ecc71", type: "human", isReady: true, score: 0, hand: [] };
+            playersList = [hostP, ...hostBotSlots];
+            renderOnlineParticipants();
+            broadcastLobby();
         }
 
         function switchLobbyTab(tab) {
@@ -466,8 +822,11 @@
                     document.getElementById('create-room-btn').style.display = 'none';
                     document.getElementById('start-hosted-game-btn').style.display = 'block';
                     document.getElementById('online-participants-list').style.display = 'flex';
+                    document.getElementById('host-bots-wrapper').style.display = 'flex';
                     
                     playersList = [{ id: 0, name: hName || "Host (P1)", color: hColor || "#2ecc71", type: "human", isReady: true, score: 0, hand: [] }];
+                    hostBotSlots = [];
+                    renderHostBotSlots();
                     renderOnlineParticipants();
                 });
 
@@ -544,6 +903,11 @@
                     let p = playersList.find(x => x.id === conn.peerId || playersList.indexOf(x) > 0);
                     if (p) p.isReady = data.isReady;
                     renderOnlineParticipants(); broadcastLobby();
+                } else if (data.type === 'CHAT_MSG') {
+                    receiveChatMessage(data.sender, data.color, data.text);
+                    connections.forEach(c => {
+                        if (c !== conn) c.send(data);
+                    });
                 } else if (data.type === 'ACTION_PLACE') { attemptPlacement(data.q, data.r, null, true, data.handIndex); }
                 else if (data.type === 'ACTION_END_TURN') { endTurn(true); }
                 else if (data.type === 'ACTION_ROLL') { 
@@ -564,6 +928,7 @@
                 else if (data.type === 'START_GAME') { applySyncedState(data.state); document.getElementById('tutorial-overlay').classList.remove('visible'); }
                 else if (data.type === 'SYNC_STATE') { applySyncedState(data.state); }
                 else if (data.type === 'TRIGGER_ROLL') { executeDiceRollAnimation(); }
+                else if (data.type === 'CHAT_MSG') { receiveChatMessage(data.sender, data.color, data.text); }
                 else if (data.type === 'ANIM_PLACEMENT_START') {
                     centerCameraOn(data.q, data.r, 1.3);
                 } else if (data.type === 'ANIM_MATCH_EDGE') {
@@ -595,7 +960,7 @@
             if (!container) return;
             container.innerHTML = playersList.map(p => `
                 <div class="lobby-slot-row">
-                    <span style="font-weight:700; color:${p.color};">${p.name}</span>
+                    <span style="font-weight:700; color:${p.color};">${p.name} ${p.type === 'bot' ? '🤖' : ''}</span>
                     <span class="ready-badge ${p.isReady ? 'is-ready' : 'not-ready'}">${p.isReady ? 'READY' : 'NOT READY'}</span>
                 </div>
             `).join('');
@@ -610,7 +975,7 @@
             if (!container) return;
             container.innerHTML = playersList.map(p => `
                 <div class="lobby-slot-row">
-                    <span style="font-weight:700; color:${p.color};">${p.name}</span>
+                    <span style="font-weight:700; color:${p.color};">${p.name} ${p.type === 'bot' ? '🤖' : ''}</span>
                     <span class="ready-badge ${p.isReady ? 'is-ready' : 'not-ready'}">${p.isReady ? 'READY' : 'NOT READY'}</span>
                 </div>
             `).join('');
@@ -664,10 +1029,17 @@
         function launchMultiplayerGame() {
             if (!isHost) return;
             winConditionType = document.getElementById('win-condition-type').value;
-            winTargetValue = parseInt(document.getElementById('win-score-val').value) || 100;
+            winTargetValue = getTargetValFromUI('host');
+            targetHandSize = parseInt(document.getElementById('host-hand-limit') ? document.getElementById('host-hand-limit').value : 3) || 3;
+            voidDensitySetting = document.getElementById('host-void-density') ? document.getElementById('host-void-density').value : 'normal';
+            turnTimerDuration = parseInt(document.getElementById('host-turn-timer') ? document.getElementById('host-turn-timer').value : 0) || 0;
+
             document.getElementById('tutorial-overlay').classList.remove('visible');
             grid.clear(); placeTile(0, 0, generateStarterTile());
-            playersList.forEach(p => { p.hand = [generateRandomTile(), generateRandomTile(), generateRandomTile()]; });
+            playersList.forEach(p => { 
+                p.hand = [];
+                for(let i=0; i<targetHandSize; i++) p.hand.push(generateRandomTile());
+            });
             activePlayerIdx = 0;
             let state = { grid: Array.from(grid.entries()), playersList, activePlayerIdx, winConditionType, winTargetValue, playsLeft: 2, tilesPlayedThisTurn: 0, hasRolledDiceThisTurn: false, diceActive: [], lastDiceValues: {r:1, b:1, y:1} };
             connections.forEach(conn => conn.send({ type: 'START_GAME', state }));
@@ -676,10 +1048,79 @@
 
         function confirmLocalSetup() {
             myPlayerId = 0;
+            winConditionType = document.getElementById('local-win-condition-type') ? document.getElementById('local-win-condition-type').value : 'score';
+            winTargetValue = getTargetValFromUI('local');
+            targetHandSize = 3;
+            turnTimerDuration = parseInt(document.getElementById('local-turn-timer') ? document.getElementById('local-turn-timer').value : 0) || 0;
+            voidDensitySetting = document.getElementById('local-void-density') ? document.getElementById('local-void-density').value : 'normal';
+            localSecretHandEnabled = (document.getElementById('local-secret-hand') && document.getElementById('local-secret-hand').value === 'on');
+
             playersList = localSlotSetup.map((slot, i) => ({
-                id: i, name: slot.name, score: 0, hand: [generateRandomTile(), generateRandomTile(), generateRandomTile()], color: slot.color, type: slot.type
+                id: i, name: slot.name, score: 0, hand: [generateRandomTile(), generateRandomTile(), generateRandomTile()], color: slot.color, type: slot.type, difficulty: slot.difficulty || 'normal'
             }));
             confirmPlayerSetup();
+        }
+
+        // MULTIPLAYER CHAT FUNCTIONS
+        function toggleChatModal() {
+            let overlay = document.getElementById('chat-overlay');
+            if (!overlay) return;
+            isChatOpen = !isChatOpen;
+            overlay.classList.toggle('visible', isChatOpen);
+            if (isChatOpen) {
+                unreadChatCount = 0;
+                updateChatBadge();
+            }
+        }
+
+        function sendChatMessage() {
+            let input = document.getElementById('chat-input-text');
+            if (!input) return;
+            let msg = input.value.trim();
+            if (!msg) return;
+
+            let myP = playersList[myPlayerId] || { name: "Player", color: "#2ecc71" };
+            receiveChatMessage(myP.name, myP.color, msg);
+
+            if (peer) {
+                let packet = { type: 'CHAT_MSG', sender: myP.name, color: myP.color, text: msg };
+                if (isHost) {
+                    connections.forEach(c => c.send(packet));
+                } else if (hostConn) {
+                    hostConn.send(packet);
+                }
+            }
+
+            input.value = '';
+        }
+
+        function receiveChatMessage(sender, color, text) {
+            chatMessages.push({ sender, color, text });
+            let log = document.getElementById('chat-messages-log');
+            if (log) {
+                let msgDiv = document.createElement('div');
+                msgDiv.className = 'chat-msg-item';
+                msgDiv.innerHTML = `<span class="chat-msg-author" style="color:${color};">${sender}:</span><span class="chat-msg-text">${text}</span>`;
+                log.appendChild(msgDiv);
+                log.scrollTop = log.scrollHeight;
+            }
+
+            if (!isChatOpen) {
+                unreadChatCount++;
+                updateChatBadge();
+                SFX.hover();
+            }
+        }
+
+        function updateChatBadge() {
+            let badge = document.getElementById('chat-unread-badge');
+            if (!badge) return;
+            if (unreadChatCount > 0) {
+                badge.style.display = 'flex';
+                badge.innerText = unreadChatCount > 9 ? '9+' : unreadChatCount;
+            } else {
+                badge.style.display = 'none';
+            }
         }
 
         // CANVAS BACKGROUND ENGINE WITH SLOWER DRIFTING SHOOTING STARS & REINSTATED MIST PARTICLES
@@ -696,6 +1137,7 @@
         }
 
         function spawnShootingStar() {
+            if (!particleFXEnabled) return;
             if (Math.random() < 0.018 && shootingStars.length < 3) {
                 shootingStars.push({
                     x: Math.random() * bgCanvas.width * 0.8,
@@ -711,7 +1153,7 @@
 
         // SUBTLE RADIAL MIST FLOATING IN ALL 360 DIRECTIONS FROM BOARD
         function updateAndRenderMist() {
-            if (!bgCtx || !bgCanvas) return;
+            if (!bgCtx || !bgCanvas || !particleFXEnabled) return;
             const cx = bgCanvas.width / 2 + panX, cy = bgCanvas.height / 2 + panY;
             if (grid.size > 0 && Math.random() < 0.35 && boardMistParticles.length < 40) {
                 let keys = Array.from(grid.keys());
@@ -730,7 +1172,7 @@
                     vy: Math.sin(dirAngle) * driftSpeed,
                     r: Math.random() * 14 + 8,
                     alpha: 0,
-                    maxAlpha: Math.random() * 0.08 + 0.04, // SUBTLER OPACITY
+                    maxAlpha: Math.random() * 0.08 + 0.04,
                     life: 0,
                     maxLife: Math.floor(Math.random() * 80 + 50)
                 });
@@ -755,11 +1197,29 @@
             }
         }
 
+        function triggerSupernovaVictoryParticles(winnerColor) {
+            if (!bgCtx || !bgCanvas) return;
+            const cx = bgCanvas.width / 2, cy = bgCanvas.height / 2;
+            for (let i = 0; i < 90; i++) {
+                let angle = Math.random() * Math.PI * 2;
+                let speed = Math.random() * 8 + 2;
+                shootingStars.push({
+                    x: cx,
+                    y: cy,
+                    len: Math.random() * 40 + 20,
+                    speed: speed,
+                    angle: angle,
+                    life: 0,
+                    maxLife: Math.floor(Math.random() * 80 + 60)
+                });
+            }
+        }
+
         function renderBackgroundEngine() {
             if (!bgCtx || !bgCanvas) return;
             bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
 
-            // 1. BRIGHTENED AURORA BACKGROUND ORBS
+            // 1. AURORA BACKGROUND ORBS
             bgCtx.globalCompositeOperation = 'lighter';
             ambientOrbs.forEach(orb => {
                 orb.x += orb.vx; orb.y += orb.vy;
@@ -773,46 +1233,48 @@
             });
             bgCtx.globalCompositeOperation = 'source-over';
 
-            // 2. AMBIENT BACKGROUND STARS
-            ambientStars.forEach(s => {
-                s.alpha += s.speed; if (s.alpha > 1 || s.alpha < 0.1) s.speed *= -1;
-                bgCtx.fillStyle = `rgba(255, 255, 255, ${Math.abs(s.alpha)})`; bgCtx.beginPath(); bgCtx.arc(s.x, s.y, s.r, 0, Math.PI * 2); bgCtx.fill();
-            });
+            if (particleFXEnabled) {
+                // 2. AMBIENT STARS
+                ambientStars.forEach(s => {
+                    s.alpha += s.speed; if (s.alpha > 1 || s.alpha < 0.1) s.speed *= -1;
+                    bgCtx.fillStyle = `rgba(255, 255, 255, ${Math.abs(s.alpha)})`; bgCtx.beginPath(); bgCtx.arc(s.x, s.y, s.r, 0, Math.PI * 2); bgCtx.fill();
+                });
 
-            // 3. SLOW-GLIDING SHOOTING STARS
-            spawnShootingStar();
-            for (let i = shootingStars.length - 1; i >= 0; i--) {
-                let ss = shootingStars[i];
-                ss.x += Math.cos(ss.angle) * ss.speed;
-                ss.y += Math.sin(ss.angle) * ss.speed;
-                ss.life++;
-                let fade = 1 - (ss.life / ss.maxLife);
-                if (ss.life >= ss.maxLife) { shootingStars.splice(i, 1); continue; }
+                // 3. SHOOTING STARS & SUPERNOVA FX
+                spawnShootingStar();
+                for (let i = shootingStars.length - 1; i >= 0; i--) {
+                    let ss = shootingStars[i];
+                    ss.x += Math.cos(ss.angle) * ss.speed;
+                    ss.y += Math.sin(ss.angle) * ss.speed;
+                    ss.life++;
+                    let fade = 1 - (ss.life / ss.maxLife);
+                    if (ss.life >= ss.maxLife) { shootingStars.splice(i, 1); continue; }
 
-                let tailX = ss.x - Math.cos(ss.angle) * ss.len;
-                let tailY = ss.y - Math.sin(ss.angle) * ss.len;
-                let grad = bgCtx.createLinearGradient(ss.x, ss.y, tailX, tailY);
-                grad.addColorStop(0, `rgba(255, 255, 255, ${fade})`);
-                grad.addColorStop(0.3, `rgba(120, 220, 255, ${fade * 0.65})`);
-                grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+                    let tailX = ss.x - Math.cos(ss.angle) * ss.len;
+                    let tailY = ss.y - Math.sin(ss.angle) * ss.len;
+                    let grad = bgCtx.createLinearGradient(ss.x, ss.y, tailX, tailY);
+                    grad.addColorStop(0, `rgba(255, 255, 255, ${fade})`);
+                    grad.addColorStop(0.3, `rgba(241, 196, 15, ${fade * 0.85})`);
+                    grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
 
-                bgCtx.strokeStyle = grad;
-                bgCtx.lineWidth = 2.0;
-                bgCtx.beginPath();
-                bgCtx.moveTo(ss.x, ss.y);
-                bgCtx.lineTo(tailX, tailY);
-                bgCtx.stroke();
+                    bgCtx.strokeStyle = grad;
+                    bgCtx.lineWidth = 2.5;
+                    bgCtx.beginPath();
+                    bgCtx.moveTo(ss.x, ss.y);
+                    bgCtx.lineTo(tailX, tailY);
+                    bgCtx.stroke();
+                }
+
+                // 4. MIST
+                updateAndRenderMist();
             }
-
-            // 4. BOARD MIST PARTICLES
-            updateAndRenderMist();
 
             requestAnimationFrame(renderBackgroundEngine);
         }
         window.addEventListener('resize', () => { initBackgroundEngine(); renderBoard(); });
         initBackgroundEngine(); renderBackgroundEngine();
 
-        // MP3 AUDIO MUSIC ENGINE (REINSTATED WITH PLAYLIST ROTATION)
+        // MP3 AUDIO MUSIC ENGINE
         let musicPlaying = true;
         
         const bgmPlaylist = [
@@ -840,7 +1302,7 @@
             player.onended = () => {
                 currentTrackIdx = (currentTrackIdx + 1) % bgmPlaylist.length;
                 player.src = bgmPlaylist[currentTrackIdx];
-                if (musicPlaying) player.play().catch(() => {});
+                if (musicPlaying && !masterSoundMuted) player.play().catch(() => {});
             };
 
             player.onerror = () => {
@@ -850,11 +1312,68 @@
 
         window.addEventListener('pointerdown', () => {
             getAudioContext();
+            
+            // AUTO FULLSCREEN DEFAULT ON FIRST INTERACTION
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(() => {});
+            }
+
             const player = document.getElementById('bgm-player');
-            if (player && musicPlaying && player.paused) {
+            if (player && musicPlaying && !masterSoundMuted && player.paused) {
                 player.play().catch(() => {});
             }
         }, { once: false });
+
+        function updateMusicVolume(val) {
+            const player = document.getElementById('bgm-player');
+            if (player) player.volume = parseFloat(val);
+            document.querySelectorAll('.music-vol-input').forEach(input => input.value = val);
+        }
+
+        function updateSFXVolume(val) {
+            sfxVolume = parseFloat(val);
+            document.querySelectorAll('.sfx-vol-input').forEach(input => input.value = val);
+        }
+
+        function toggleMasterMute() {
+            masterSoundMuted = !masterSoundMuted;
+            const player = document.getElementById('bgm-player');
+
+            document.querySelectorAll('.master-mute-toggle-btn').forEach(btn => {
+                btn.innerText = masterSoundMuted ? "Muted 🔇" : "Unmuted 🔊";
+                btn.className = masterSoundMuted ? "setting-toggle-btn secondary-btn master-mute-toggle-btn" : "setting-toggle-btn highlight-btn master-mute-toggle-btn";
+            });
+
+            if (player) {
+                if (masterSoundMuted) {
+                    player.pause();
+                } else if (musicPlaying) {
+                    player.play().catch(() => {});
+                }
+            }
+        }
+
+        function toggleParticleFX() {
+            particleFXEnabled = !particleFXEnabled;
+            let btn = document.getElementById('particles-toggle-btn');
+            if (btn) btn.innerText = particleFXEnabled ? "Enabled ON" : "Disabled OFF";
+            if (btn) btn.className = particleFXEnabled ? "setting-toggle-btn highlight-btn" : "setting-toggle-btn secondary-btn";
+        }
+
+        function toggleValidGuides() {
+            validGuidesEnabled = !validGuidesEnabled;
+            let btn = document.getElementById('guides-toggle-btn');
+            if (btn) btn.innerText = validGuidesEnabled ? "Enabled ON" : "Disabled OFF";
+            if (btn) btn.className = validGuidesEnabled ? "setting-toggle-btn highlight-btn" : "setting-toggle-btn secondary-btn";
+            renderBoard();
+        }
+
+        function toggleCinematicCamera() {
+            cinematicCameraEnabled = !cinematicCameraEnabled;
+            let btn = document.getElementById('camera-toggle-btn');
+            if (btn) btn.innerText = cinematicCameraEnabled ? "Enabled ON" : "Disabled OFF";
+            if (btn) btn.className = cinematicCameraEnabled ? "setting-toggle-btn highlight-btn" : "setting-toggle-btn secondary-btn";
+        }
 
         function toggleMusic() {
             musicPlaying = !musicPlaying;
@@ -863,12 +1382,17 @@
 
             if (btn) btn.innerText = musicPlaying ? "Music On 🎵" : "Music Off 🔇";
             if (player) {
-                if (musicPlaying) {
+                if (musicPlaying && !masterSoundMuted) {
                     player.play().catch(() => {});
                 } else {
                     player.pause();
                 }
             }
+        }
+
+        function toggleSettingsModal() {
+            let overlay = document.getElementById('settings-overlay');
+            if (overlay) overlay.classList.toggle('visible');
         }
 
         function getDieSVG(val, colorHex) {
@@ -881,23 +1405,23 @@
         // COSMIC SYNTHESIZED SOUND EFFECTS ENGINE
         const SFX = {
             select() {
+                if (masterSoundMuted || sfxVolume <= 0) return;
                 let ctx = getAudioContext(); if (!ctx) return;
                 let now = ctx.currentTime;
-                // High crystalline chime with glass harmonics
                 [1200, 1800, 2400].forEach((freq, i) => {
                     let osc = ctx.createOscillator(), gain = ctx.createGain();
                     osc.type = 'sine';
                     osc.frequency.setValueAtTime(freq, now + i * 0.02);
-                    gain.gain.setValueAtTime(0.12, now + i * 0.02);
+                    gain.gain.setValueAtTime(0.12 * sfxVolume, now + i * 0.02);
                     gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.02 + 0.25);
                     osc.connect(gain); gain.connect(ctx.destination);
                     osc.start(now + i * 0.02); osc.stop(now + i * 0.02 + 0.25);
                 });
             },
             rotate() {
+                if (masterSoundMuted || sfxVolume <= 0) return;
                 let ctx = getAudioContext(); if (!ctx) return;
                 let now = ctx.currentTime;
-                // Orbital whirring glide with lowpass sweep
                 let osc = ctx.createOscillator(), filter = ctx.createBiquadFilter(), gain = ctx.createGain();
                 osc.type = 'sawtooth';
                 osc.frequency.setValueAtTime(280, now);
@@ -905,34 +1429,34 @@
                 filter.type = 'lowpass';
                 filter.frequency.setValueAtTime(600, now);
                 filter.frequency.exponentialRampToValueAtTime(1800, now + 0.12);
-                gain.gain.setValueAtTime(0.15, now);
+                gain.gain.setValueAtTime(0.15 * sfxVolume, now);
                 gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
                 osc.connect(filter); filter.connect(gain); gain.connect(ctx.destination);
                 osc.start(now); osc.stop(now + 0.12);
             },
             place() {
+                if (masterSoundMuted || sfxVolume <= 0) return;
                 let ctx = getAudioContext(); if (!ctx) return;
                 let now = ctx.currentTime;
-                // Sub-space impact
                 let sub = ctx.createOscillator(), subGain = ctx.createGain();
                 sub.type = 'sine';
                 sub.frequency.setValueAtTime(160, now);
                 sub.frequency.exponentialRampToValueAtTime(40, now + 0.25);
-                subGain.gain.setValueAtTime(0.5, now);
+                subGain.gain.setValueAtTime(0.5 * sfxVolume, now);
                 subGain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
                 sub.connect(subGain); subGain.connect(ctx.destination);
                 sub.start(now); sub.stop(now + 0.25);
 
-                // Celestial ring
                 let ring = ctx.createOscillator(), ringGain = ctx.createGain();
                 ring.type = 'triangle';
                 ring.frequency.setValueAtTime(987.77, now);
-                ringGain.gain.setValueAtTime(0.2, now);
+                ringGain.gain.setValueAtTime(0.2 * sfxVolume, now);
                 ringGain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
                 ring.connect(ringGain); ringGain.connect(ctx.destination);
                 ring.start(now); ring.stop(now + 0.35);
             },
             sideMatch(stepIndex = 0) {
+                if (masterSoundMuted || sfxVolume <= 0) return;
                 let ctx = getAudioContext(); if (!ctx) return;
                 let now = ctx.currentTime;
                 const baseFreqs = [523.25, 659.25, 783.99, 1046.50, 1318.51];
@@ -942,47 +1466,51 @@
                     let osc = ctx.createOscillator(), gain = ctx.createGain();
                     osc.type = 'sine';
                     osc.frequency.setValueAtTime(f, now);
-                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.setValueAtTime(0.2 * sfxVolume, now);
                     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
                     osc.connect(gain); gain.connect(ctx.destination);
                     osc.start(now); osc.stop(now + 0.3);
                 });
             },
             cardAnnounce() { 
+                if (masterSoundMuted || sfxVolume <= 0) return;
                 let ctx = getAudioContext(); if (!ctx) return; 
                 let now = ctx.currentTime;
                 let osc = ctx.createOscillator(), gain = ctx.createGain(); 
                 osc.type = 'sine'; 
                 osc.frequency.setValueAtTime(320, now); 
                 osc.frequency.exponentialRampToValueAtTime(640, now + 0.18); 
-                gain.gain.setValueAtTime(0.25, now); 
+                gain.gain.setValueAtTime(0.25 * sfxVolume, now); 
                 gain.gain.exponentialRampToValueAtTime(0.01, now + 0.18); 
                 osc.connect(gain); gain.connect(ctx.destination); 
                 osc.start(now); osc.stop(now + 0.18); 
             },
             diceRoll() { 
+                if (masterSoundMuted || sfxVolume <= 0) return;
                 let ctx = getAudioContext(); if (!ctx) return; 
                 let now = ctx.currentTime;
                 let osc = ctx.createOscillator(), gain = ctx.createGain(); 
                 osc.type = 'triangle'; 
                 osc.frequency.setValueAtTime(250 + Math.random() * 200, now); 
-                gain.gain.setValueAtTime(0.18, now); 
+                gain.gain.setValueAtTime(0.18 * sfxVolume, now); 
                 gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05); 
                 osc.connect(gain); gain.connect(ctx.destination); 
                 osc.start(now); osc.stop(now + 0.05); 
             },
             hover() {
+                if (masterSoundMuted || sfxVolume <= 0) return;
                 let ctx = getAudioContext(); if (!ctx) return;
                 let now = ctx.currentTime;
                 let osc = ctx.createOscillator(), gain = ctx.createGain();
                 osc.type = 'sine';
                 osc.frequency.setValueAtTime(523.25, now);
-                gain.gain.setValueAtTime(0.04, now);
+                gain.gain.setValueAtTime(0.04 * sfxVolume, now);
                 gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
                 osc.connect(gain); gain.connect(ctx.destination);
                 osc.start(now); osc.stop(now + 0.08);
             },
             wedgeStep(stepIndex = 0) {
+                if (masterSoundMuted || sfxVolume <= 0) return;
                 let ctx = getAudioContext(); if (!ctx) return;
                 let now = ctx.currentTime;
                 const freqs = [329.63, 392.00, 493.88, 587.33, 659.25, 783.99, 987.77, 1174.66];
@@ -991,7 +1519,7 @@
                 let pOsc = ctx.createOscillator(), pGain = ctx.createGain();
                 pOsc.type = 'triangle';
                 pOsc.frequency.setValueAtTime(freq / 2, now);
-                pGain.gain.setValueAtTime(0.3, now);
+                pGain.gain.setValueAtTime(0.3 * sfxVolume, now);
                 pGain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
                 pOsc.connect(pGain); pGain.connect(ctx.destination);
                 pOsc.start(now); pOsc.stop(now + 0.35);
@@ -999,12 +1527,13 @@
                 let cOsc = ctx.createOscillator(), cGain = ctx.createGain();
                 cOsc.type = 'sine';
                 cOsc.frequency.setValueAtTime(freq * 2, now);
-                cGain.gain.setValueAtTime(0.15, now);
+                cGain.gain.setValueAtTime(0.15 * sfxVolume, now);
                 cGain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
                 cOsc.connect(cGain); cGain.connect(ctx.destination);
                 cOsc.start(now); cOsc.stop(now + 0.3);
             },
             colorgonChord(totalWedges = 6) {
+                if (masterSoundMuted || sfxVolume <= 0) return;
                 let ctx = getAudioContext(); if (!ctx) return;
                 let now = ctx.currentTime;
                 const chord = [261.63, 329.63, 392.00, 493.88, 523.25, 659.25, 783.99];
@@ -1016,12 +1545,30 @@
                     osc.frequency.setValueAtTime(chord[i], now + i * 0.03);
 
                     gain.gain.setValueAtTime(0.001, now + i * 0.03);
-                    gain.gain.exponentialRampToValueAtTime(0.18, now + i * 0.03 + 0.1);
+                    gain.gain.exponentialRampToValueAtTime(0.18 * sfxVolume, now + i * 0.03 + 0.1);
                     gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.03 + 1.4);
 
                     osc.connect(gain); gain.connect(ctx.destination);
                     osc.start(now + i * 0.03); osc.stop(now + i * 0.03 + 1.4);
                 }
+            },
+            victoryStinger() {
+                if (masterSoundMuted || sfxVolume <= 0) return;
+                let ctx = getAudioContext(); if (!ctx) return;
+                let now = ctx.currentTime;
+                const grandChord = [261.63, 329.63, 392.00, 523.25, 659.25, 783.99, 1046.50];
+                grandChord.forEach((f, idx) => {
+                    let osc = ctx.createOscillator(), gain = ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(f, now + idx * 0.05);
+
+                    gain.gain.setValueAtTime(0.001, now + idx * 0.05);
+                    gain.gain.exponentialRampToValueAtTime(0.25 * sfxVolume, now + idx * 0.05 + 0.15);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.05 + 2.8);
+
+                    osc.connect(gain); gain.connect(ctx.destination);
+                    osc.start(now + idx * 0.05); osc.stop(now + idx * 0.05 + 2.8);
+                });
             }
         };
 
@@ -1046,6 +1593,7 @@
         }
 
         function animateCamera(targetPanX, targetPanY, targetScale, duration = 600) {
+            if (!cinematicCameraEnabled) return;
             if (panAnimationId) cancelAnimationFrame(panAnimationId);
             const startX = panX, startY = panY, startScale = currentBoardScale;
             const startTime = performance.now();
@@ -1067,6 +1615,7 @@
         }
 
         function centerCameraOn(q, r, scale) {
+            if (!cinematicCameraEnabled) return;
             const size = 40, w = size * 1.5, h = size * Math.sqrt(3);
             const unscaledX = w * q, unscaledY = h * (r + q / 2);
             animateCamera(-unscaledX * scale, -unscaledY * scale, scale, 500);
@@ -1074,6 +1623,48 @@
 
         function zoomIn() { zoomAtPoint(window.innerWidth/2, window.innerHeight/2, Math.min(2.2, currentBoardScale + 0.15)); }
         function zoomOut() { zoomAtPoint(window.innerWidth/2, window.innerHeight/2, Math.max(0.4, currentBoardScale - 0.15)); }
+
+        function startTurnTimer() {
+            stopTurnTimer();
+            let container = document.getElementById('turn-timer-container');
+            let bar = document.getElementById('turn-timer-bar');
+
+            if (turnTimerDuration <= 0) {
+                if (container) container.style.display = 'none';
+                return;
+            }
+
+            if (container) container.style.display = 'block';
+            turnTimeRemaining = turnTimerDuration;
+            
+            if (bar) {
+                bar.style.width = '100%';
+                bar.style.backgroundColor = '#2ecc71';
+            }
+
+            turnTimerInterval = setInterval(() => {
+                turnTimeRemaining--;
+                let pct = (turnTimeRemaining / turnTimerDuration) * 100;
+                
+                if (bar) {
+                    bar.style.width = `${Math.max(0, pct)}%`;
+                    if (pct < 30) bar.style.backgroundColor = '#e74c3c';
+                    else if (pct < 60) bar.style.backgroundColor = '#f1c40f';
+                }
+
+                if (turnTimeRemaining <= 0) {
+                    stopTurnTimer();
+                    endTurn();
+                }
+            }, 1000);
+        }
+
+        function stopTurnTimer() {
+            if (turnTimerInterval) clearInterval(turnTimerInterval);
+            turnTimerInterval = null;
+            let container = document.getElementById('turn-timer-container');
+            if (container) container.style.display = 'none';
+        }
 
         function showTurnAnnouncement() {
             if (isGameOver) return;
@@ -1090,7 +1681,7 @@
 
             el.style.borderColor = curP.color;
             el.innerHTML = `<div style="font-size:0.7rem; text-transform:uppercase; color:var(--text-dim); display:flex; align-items:center; gap:6px; justify-content:center;">
-                                ${curP.type === 'human' ? getHumanIconSVG(curP.color) : getBotIconSVG(curP.color)}
+                                ${curP.type === 'human' ? getHumanIconSVG(curP.color) : getBotIconSVG(curP.color, curP.difficulty)}
                                 <span>${curP.type.toUpperCase()} TURN</span>
                             </div>
                             <div>IT'S <span style="color:${curP.color};">${curP.name.toUpperCase()}</span>'S TURN!</div>${btnHTML}`;
@@ -1098,7 +1689,7 @@
             SFX.cardAnnounce(); 
             el.classList.remove('hide-billboard'); el.classList.add('show-billboard');
 
-            if (curP.type === 'bot' && !isGameOver) {
+            if (curP.type === 'bot' && !isGameOver && (isHost || !peer)) {
                 setTimeout(async () => {
                     if (!hasRolledDiceThisTurn) await executeDiceRollAnimation();
                     await sleep(600);
@@ -1111,6 +1702,8 @@
             let curP = playersList[activePlayerIdx];
             if (curP.type !== 'bot' || isGameOver) return;
 
+            let diff = curP.difficulty || 'normal';
+
             let emptySpots = [];
             grid.forEach((_, k) => {
                 let [q, r] = k.split(',').map(Number);
@@ -1120,25 +1713,36 @@
                 });
             });
 
-            let bestMove = null;
+            let validMoves = [];
             for (let handIdx = 0; handIdx < curP.hand.length; handIdx++) {
                 let tileCopy = [...curP.hand[handIdx]];
                 for (let rot = 0; rot < 6; rot++) {
                     for (let spot of emptySpots) {
                         let res = canPlace(spot.q, spot.r, tileCopy);
                         if (res.valid) {
-                            if (!bestMove || res.matches > bestMove.matches) bestMove = { handIdx, rot, q: spot.q, r: spot.r, matches: res.matches };
+                            validMoves.push({ handIdx, rot, q: spot.q, r: spot.r, matches: res.matches });
                         }
                     }
                     tileCopy.unshift(tileCopy.pop());
                 }
             }
 
-            if (bestMove) {
-                selectedHandIndex = bestMove.handIdx;
-                for (let r = 0; r < bestMove.rot; r++) curP.hand[selectedHandIndex].unshift(curP.hand[selectedHandIndex].pop());
+            if (validMoves.length > 0) {
+                let chosenMove = null;
+                if (diff === 'easy') {
+                    chosenMove = validMoves[Math.floor(Math.random() * validMoves.length)];
+                } else if (diff === 'normal') {
+                    validMoves.sort((a, b) => b.matches - a.matches);
+                    chosenMove = validMoves[0];
+                } else if (diff === 'hard') {
+                    validMoves.sort((a, b) => b.matches - a.matches);
+                    chosenMove = validMoves[0];
+                }
+
+                selectedHandIndex = chosenMove.handIdx;
+                for (let r = 0; r < chosenMove.rot; r++) curP.hand[selectedHandIndex].unshift(curP.hand[selectedHandIndex].pop());
                 renderHand(); await sleep(400);
-                await attemptPlacement(bestMove.q, bestMove.r, null, true, selectedHandIndex);
+                await attemptPlacement(chosenMove.q, chosenMove.r, null, true, selectedHandIndex);
             } else { await sleep(500); endTurn(); }
         }
 
@@ -1161,12 +1765,14 @@
         }
 
         function startNewGameFromMenu() {
+            stopTurnTimer();
             grid.clear();
             scoredColorgons.clear();
             recentMatchWedges.clear();
             recentColorgonWedges.clear();
             activeColorgonColor = null;
             newlyPlacedKey = null;
+            activePreviewSocketKey = null;
             isGameOver = false;
             
             if (playersList.length > 0) {
@@ -1184,18 +1790,21 @@
             grid.clear(); scoredColorgons.clear(); recentMatchWedges.clear(); recentColorgonWedges.clear();
             placeTile(0, 0, generateStarterTile());
             totalTilesPlaced = 0; isGameOver = false; panX = 0; panY = 0; currentBoardScale = 1.0;
+            activePreviewSocketKey = null;
             updateMasterPanTransform(); renderBoard(); renderHand(); updateUI(); startTurnLogic();
         }
 
         function startTurnLogic() {
             let curP = playersList[activePlayerIdx];
-            while (curP.hand.length < 3) curP.hand.push(generateRandomTile());
+            while (curP.hand.length < targetHandSize) curP.hand.push(generateRandomTile());
             hasRolledDiceThisTurn = false;
             playsLeft = (totalTilesPlaced === 0) ? 2 : 1; 
             tilesPlayedThisTurn = 0; selectedHandIndex = -1;
             recentMatchWedges.clear(); recentColorgonWedges.clear(); activeColorgonColor = null; newlyPlacedKey = null;
+            activePreviewSocketKey = null;
             
             renderHand(); updateUI(); showTurnAnnouncement();
+            if (turnTimerDuration > 0) startTurnTimer();
         }
 
         async function executeDiceRollAnimation() {
@@ -1299,6 +1908,7 @@
 
             isAnimating = true; SFX.place(); 
             recentMatchWedges.clear(); recentColorgonWedges.clear(); activeColorgonColor = null; newlyPlacedKey = `${q},${r}`;
+            activePreviewSocketKey = null;
 
             if (isHost) {
                 broadcastAnimationEvent({ type: 'ANIM_PLACEMENT_START', q, r });
@@ -1478,6 +2088,7 @@
                 hostConn.send({ type: 'ACTION_END_TURN' });
                 return;
             }
+            stopTurnTimer();
             activePlayerIdx = (activePlayerIdx + 1) % playersList.length;
             animateCamera(0, 0, 1.0, 700);
             startTurnLogic();
@@ -1512,6 +2123,7 @@
             empty.forEach(k => {
                 let [q, r] = k.split(',').map(Number);
                 let x = cx + w * q, y = cy + h * (r + q/2);
+                let spotKey = `${q},${r}`;
 
                 if (isSpaceBlockedByBlack(q, r)) {
                     let g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
@@ -1537,15 +2149,25 @@
                 let isLegalSpotForCurrentTile = (activeSelectedTile) ? canPlace(q, r, activeSelectedTile).valid : false;
 
                 // SOFT SAGE-GREEN NEON SOCKET OUTLINE FOR VALID PLACEMENTS
-                if (isLegalSpotForCurrentTile) {
+                if (isLegalSpotForCurrentTile && validGuidesEnabled) {
                     let hexSpot = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
                     hexSpot.setAttribute('points', "20,-34.64 40,0 20,34.64 -20,34.64 -40,0 -20,-34.64");
                     hexSpot.setAttribute('transform', `translate(${x}, ${y})`);
-                    hexSpot.setAttribute('fill', 'rgba(46, 204, 113, 0.18)'); 
-                    hexSpot.setAttribute('stroke', 'rgba(46, 204, 113, 0.45)'); 
-                    hexSpot.setAttribute('stroke-width', '1.5');
+                    hexSpot.setAttribute('fill', spotKey === activePreviewSocketKey ? 'rgba(46, 204, 113, 0.35)' : 'rgba(46, 204, 113, 0.18)'); 
+                    hexSpot.setAttribute('stroke', spotKey === activePreviewSocketKey ? 'rgba(46, 204, 113, 0.9)' : 'rgba(46, 204, 113, 0.45)'); 
+                    hexSpot.setAttribute('stroke-width', spotKey === activePreviewSocketKey ? '2.5' : '1.5');
                     hexSpot.classList.add('legal-spot-active'); 
                     socketsLayer.appendChild(hexSpot);
+                }
+
+                // TAP PREVIEW SOCKET RENDERING (ONE TAP TO PREVIEW, SECOND TAP TO CONFIRM)
+                if (isLegalSpotForCurrentTile && activePreviewSocketKey === spotKey) {
+                    let previewGroup = createHexGroup(activeSelectedTile, q, r);
+                    previewGroup.setAttribute('transform', `translate(${x}, ${y})`);
+                    previewGroup.style.pointerEvents = 'none'; 
+                    let innerG = previewGroup.querySelector('g');
+                    if (innerG) { innerG.classList.add('hover-preview-animated'); innerG.style.pointerEvents = 'none'; }
+                    topActiveLayer.appendChild(previewGroup);
                 }
 
                 let hitArea = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
@@ -1553,22 +2175,18 @@
                 hitArea.setAttribute('transform', `translate(${x}, ${y})`);
                 hitArea.setAttribute('fill', 'rgba(0,0,0,0.001)'); hitArea.setAttribute('stroke', 'none'); hitArea.style.cursor = 'pointer';
 
-                let previewGroup = null;
-                hitArea.onmouseenter = () => {
-                    if (isLegalSpotForCurrentTile) {
-                        SFX.hover(); previewGroup = createHexGroup(activeSelectedTile, q, r);
-                        previewGroup.setAttribute('transform', `translate(${x}, ${y})`);
-                        previewGroup.style.pointerEvents = 'none'; 
-                        let innerG = previewGroup.querySelector('g');
-                        if (innerG) { innerG.classList.add('hover-preview-animated'); innerG.style.pointerEvents = 'none'; }
-                        topActiveLayer.appendChild(previewGroup);
-                    }
-                };
-                hitArea.onmouseleave = () => { if (previewGroup) { previewGroup.remove(); previewGroup = null; } };
                 hitArea.onclick = () => { 
                     if (hasDragged) return; 
-                    if (previewGroup) { previewGroup.remove(); previewGroup = null; } 
-                    attemptPlacement(q, r, hitArea, false, selectedHandIndex); 
+                    if (!isLegalSpotForCurrentTile) return;
+
+                    // ONE TAP: PREVIEW. SECOND TAP ON SAME SPOT: CONFIRM & PLACE.
+                    if (activePreviewSocketKey === spotKey) {
+                        attemptPlacement(q, r, hitArea, false, selectedHandIndex); 
+                    } else {
+                        activePreviewSocketKey = spotKey;
+                        SFX.hover();
+                        renderBoard();
+                    }
                 };
                 socketsLayer.appendChild(hitArea);
             });
@@ -1667,52 +2285,83 @@
 
         function generateStarterTile() { return ['y', 'r', 'b', 'y', 'r', 'b']; }
         
-        // SLIGHTLY LOWERED BLACK WEDGE PROBABILITY (1 IN 10 CHANCE PER WEDGE)
+        // TUNED VOID / BLACK WEDGE DENSITY PROBABILITY
         function generateRandomTile() {
-            const colors = ['r', 'r', 'r', 'b', 'b', 'b', 'y', 'y', 'w', 'k'];
+            let colors = ['r', 'r', 'r', 'b', 'b', 'b', 'y', 'y', 'w'];
+            if (voidDensitySetting === 'low') {
+                colors.push('k'); // 1 in 10
+            } else if (voidDensitySetting === 'normal') {
+                colors.push('k', 'k'); // 2 in 11
+            } else if (voidDensitySetting === 'high') {
+                colors.push('k', 'k', 'k', 'k'); // 3 in 12
+            }
             return Array.from({length: 6}, () => colors[Math.floor(Math.random()*colors.length)]);
         }
 
+        // FIXED HIGH-PRIORITY FLOATING SCORING TEXT RENDERING ENGINE
         function spawnLocalText(x, y, text, type, colorHex, duration = 800) {
             let el = document.createElement('div');
-            el.className = `floating-text ${type}`; el.innerText = text; el.style.left = x + 'px'; el.style.top = y + 'px';
-            if (colorHex) el.style.color = colorHex;
-            document.body.appendChild(el); setTimeout(() => el.remove(), duration);
+            el.className = `floating-text ${type}`; 
+            el.innerText = text; 
+            el.style.left = x + 'px'; 
+            el.style.top = y + 'px';
+            if (colorHex) {
+                el.style.color = colorHex;
+                el.style.textShadow = `0px 0px 18px ${colorHex}, 0px 0px 6px #000, 3px 3px 0px #000`;
+            }
+            document.body.appendChild(el); 
+            setTimeout(() => el.remove(), duration);
         }
 
         function spawnMatchPairText(q1, r1, dir1, q2, r2, dir2, text, type, colorHex) {
             const cx = window.innerWidth / 2, cy = window.innerHeight / 2, size = 40, w = size * 1.5, h = size * Math.sqrt(3);
             let u1X = w * q1 + wedgeOffsets[dir1].dx, u1Y = h * (r1 + q1 / 2) + wedgeOffsets[dir1].dy;
             let u2X = w * q2 + wedgeOffsets[dir2].dx, u2Y = h * (r2 + q2 / 2) + wedgeOffsets[dir2].dy;
-            let x = cx + panX + ((u1X + u2X) / 2) * currentBoardScale, y = cy + panY + ((u1Y + u2Y) / 2) * currentBoardScale;
-            spawnLocalText(x, y, text, type, colorHex, 800);
+            let screenX = cx + panX + ((u1X + u2X) / 2) * currentBoardScale;
+            let screenY = cy + panY + ((u1Y + u2Y) / 2) * currentBoardScale;
+            spawnLocalText(screenX, screenY, text, type, colorHex, 800);
         }
 
         function spawnWedgeText(q, r, dir, text, type, colorHex) {
             const cx = window.innerWidth / 2, cy = window.innerHeight / 2, size = 40, w = size * 1.5, h = size * Math.sqrt(3);
             let offset = wedgeOffsets[dir];
-            let x = cx + panX + (w * q + offset.dx) * currentBoardScale, y = cy + panY + (h * (r + q / 2) + offset.dy) * currentBoardScale;
-            spawnLocalText(x, y, text, type, colorHex, 700);
+            let screenX = cx + panX + (w * q + offset.dx) * currentBoardScale;
+            let screenY = cy + panY + (h * (r + q / 2) + offset.dy) * currentBoardScale;
+            spawnLocalText(screenX, screenY, text, type, colorHex, 700);
         }
 
         async function spawnTotalThenSwoosh(q, r, text, type, colorHex, holdDuration = 800, swooshDuration = 600, ptsEarned = 0) {
             const cx = window.innerWidth / 2, cy = window.innerHeight / 2, size = 40, w = size * 1.5, h = size * Math.sqrt(3);
-            let startX = cx + panX + (w * q) * currentBoardScale, startY = cy + panY + (h * (r + q / 2)) * currentBoardScale;
+            let startX = cx + panX + (w * q) * currentBoardScale;
+            let startY = cy + panY + (h * (r + q / 2)) * currentBoardScale;
 
             let el = document.createElement('div');
-            el.className = `floating-text ${type}`; el.innerText = text; el.style.left = startX + 'px'; el.style.top = startY + 'px';
-            if (colorHex) { el.style.color = colorHex; el.style.textShadow = `0px 0px 16px ${colorHex}, 4px 4px 0px #000`; }
+            el.className = `floating-text ${type}`; 
+            el.innerText = text; 
+            el.style.left = startX + 'px'; 
+            el.style.top = startY + 'px';
+            if (colorHex) { 
+                el.style.color = colorHex; 
+                el.style.textShadow = `0px 0px 20px ${colorHex}, 0px 0px 8px #000, 4px 4px 0px #000`; 
+            }
             document.body.appendChild(el);
 
             let popAnim = el.animate([
-                { transform: 'translate(-50%, -50%) scale(0.2)', opacity: 0 }, { transform: 'translate(-50%, -50%) scale(1.25)', opacity: 1, offset: 0.4 },
-                { transform: 'translate(-50%, -50%) scale(1.0)', opacity: 1, offset: 0.7 }, { transform: 'translate(-50%, -50%) scale(1.0)', opacity: 1, offset: 1.0 }
+                { transform: 'translate(-50%, -50%) scale(0.2)', opacity: 0 }, 
+                { transform: 'translate(-50%, -50%) scale(1.35)', opacity: 1, offset: 0.4 },
+                { transform: 'translate(-50%, -50%) scale(1.0)', opacity: 1, offset: 0.7 }, 
+                { transform: 'translate(-50%, -50%) scale(1.0)', opacity: 1, offset: 1.0 }
             ], { duration: holdDuration, easing: 'cubic-bezier(0.175, 0.885, 0.32, 1.275)', fill: 'forwards' });
 
             await popAnim.finished;
+            
             let activeCard = document.querySelector('.lb-card-inner.active');
             let targetX = 120, targetY = 140;
-            if (activeCard) { let rect = activeCard.getBoundingClientRect(); targetX = rect.left + rect.width / 2; targetY = rect.top + rect.height / 2; }
+            if (activeCard) { 
+                let rect = activeCard.getBoundingClientRect(); 
+                targetX = rect.left + rect.width / 2; 
+                targetY = rect.top + rect.height / 2; 
+            }
             let deltaX = targetX - startX, deltaY = targetY - startY;
 
             let swooshAnim = el.animate([
@@ -1741,6 +2390,7 @@
             document.getElementById('current-player-label').style.color = myP.color;
 
             let isMyTurnToPlay = (Number(activePlayerIdx) === Number(myPlayerId) || (!peer && myP.type === 'human'));
+            let isSecretHandTurn = (localSecretHandEnabled && !peer && Number(activePlayerIdx) !== Number(myPlayerId));
 
             myP.hand.forEach((tile, idx) => {
                 let svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
@@ -1748,16 +2398,17 @@
                 svg.setAttribute('class', `hand-tile ${selectedHandIndex === idx ? 'selected' : ''}`);
                 svg.style.color = myP.color;
                 
-                if (isMyTurnToPlay) {
+                if (isMyTurnToPlay && !isSecretHandTurn) {
                     svg.onclick = () => { 
                         SFX.select(); 
                         selectedHandIndex = (selectedHandIndex === idx) ? -1 : idx; 
+                        activePreviewSocketKey = null;
                         renderHand(); renderBoard(); 
                     };
                 } else {
                     svg.style.cursor = 'default';
                 }
-                svg.appendChild(createHexGroup(tile));
+                svg.appendChild(createHexGroup(tile, null, null, false, false, isSecretHandTurn));
                 handDiv.appendChild(svg);
             });
         }
@@ -1787,7 +2438,7 @@
                 lb.innerHTML = playersList.map((p, idx) => 
                     `<div class="lb-card-inner ${idx === activePlayerIdx ? 'active' : ''}" style="color:${p.color};">
                         <span class="lb-name" style="color:${p.color};">
-                            ${p.type === 'human' ? getHumanIconSVG(p.color) : getBotIconSVG(p.color)}
+                            ${p.type === 'human' ? getHumanIconSVG(p.color) : getBotIconSVG(p.color, p.difficulty)}
                             ${p.name}
                         </span>
                         <span class="lb-score">${p.score} Pts</span>
@@ -1798,13 +2449,48 @@
 
         function triggerVictoryScreen() {
             isGameOver = true;
+            stopTurnTimer();
+
+            // 1. CALCULATE WINNER AND SORTED STANDINGS
+            let sortedStandings = [...playersList].sort((a, b) => b.score - a.score);
+            let winner = sortedStandings[0] || { name: "PLAYER", score: 0, color: "#2ecc71" };
+
+            // 2. TRIGGER SUPERNOVA PARTICLE BURST
+            triggerSupernovaVictoryParticles(winner.color);
+
+            // 3. SOUND STINGER
+            SFX.victoryStinger();
+
+            // 4. POPULATE VICTORY BANNER UI
             let banner = document.getElementById('top-victory-banner');
-            if (banner) { 
-                SFX.cardAnnounce();
-                let winP = playersList.reduce((max, p) => p.score > max.score ? p : max, playersList[0]);
-                document.getElementById('victory-banner-title').innerText = `🏆 ${winP.name.toUpperCase()} WINS! (${winP.score} PTS)`; 
-                banner.classList.add('visible'); 
+            let titleEl = document.getElementById('victory-banner-title');
+            let standingsDiv = document.getElementById('victory-banner-standings');
+
+            if (titleEl) {
+                titleEl.innerText = `${winner.name.toUpperCase()} WINS!`;
+                titleEl.style.color = winner.color;
             }
+
+            if (standingsDiv) {
+                const rankBadges = ['🥇 1st', '🥈 2nd', '🥉 3rd', '4th'];
+                standingsDiv.innerHTML = sortedStandings.map((p, idx) => `
+                    <div class="victory-standing-row" style="color:${p.color}; border-left: 3px solid ${p.color};">
+                        <span>${rankBadges[idx] || (idx + 1) + 'th'} - ${p.name}</span>
+                        <span>${p.score} PTS</span>
+                    </div>
+                `).join('');
+            }
+
+            if (banner) {
+                setTimeout(() => {
+                    banner.classList.add('visible');
+                }, 400);
+            }
+        }
+
+        function hideVictoryBanner() {
+            let banner = document.getElementById('top-victory-banner');
+            if (banner) banner.classList.remove('visible');
         }
 
         // CONTROLS & LISTENERS
@@ -1861,7 +2547,7 @@
         }
         function initGame(isFirst) { initMP3AudioPlayer(); openPlayerSetup(); }
         function toggleFullscreen() { if (!document.fullscreenElement) { document.documentElement.requestFullscreen().catch(() => {}); } else { if (document.exitFullscreen) document.exitFullscreen(); } }
-        function toggleSettingsMenu() { let menu = document.getElementById('settings-dropdown'); if (menu) menu.style.display = (menu.style.display === 'flex') ? 'none' : 'flex'; }
+        function toggleSettingsMenu() { toggleSettingsModal(); }
         initGame(true);
     </script>
 </body>
