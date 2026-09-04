@@ -1,28 +1,35 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-N93LVCJ4DK"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-N93LVCJ4DK"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
 
-  gtag('config', 'G-N93LVCJ4DK');
-</script>
+        gtag('config', 'G-N93LVCJ4DK');
+    </script>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Colorgon">
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Colorgon - Ultimate Synchronized Edition</title>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@900&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@900&family=Poppins:wght@400;600;700&display=swap"
+        rel="stylesheet">
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 
     <style>
         :root {
-            --red: #e74c3c; --blue: #3498db; --yellow: #f1c40f; 
-            --white: #ffffff; --black: #2c3e50; 
+            --red: #e74c3c;
+            --blue: #3498db;
+            --yellow: #f1c40f;
+            --white: #ffffff;
+            --black: #2c3e50;
             --panel-bg: rgba(20, 20, 26, 0.85);
             --text-light: #f5f6fa;
             --text-dim: #a0aab0;
@@ -30,195 +37,1167 @@
             --hex-btn: polygon(12px 0, calc(100% - 12px) 0, 100% 50%, calc(100% - 12px) 100%, 12px 100%, 0 50%);
             --hex-shape: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
         }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; }
-        
-        body, html {
-            margin: 0; padding: 0; width: 100vw; height: 100vh; height: 100dvh;
-            overflow: hidden; font-family: 'Poppins', sans-serif; background-color: #040408;
-            color: var(--text-light); touch-action: none; overscroll-behavior: none; user-select: none;
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
         }
 
-        #board-container { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; height: 100dvh; z-index: 1; background-color: #040408; touch-action: none; }
-        #bg-canvas { position: absolute; top: 0; left: 0; width: 100vw; height: 100dvh; pointer-events: none; z-index: 0; }
-        svg#board { width: 100%; height: 100%; cursor: grab; display: block; user-select: none; touch-action: none; position: relative; z-index: 2; }
-        svg#board:active { cursor: grabbing; }
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            height: 100dvh;
+            overflow: hidden;
+            font-family: 'Poppins', sans-serif;
+            background-color: #040408;
+            color: var(--text-light);
+            touch-action: none;
+            overscroll-behavior: none;
+            user-select: none;
+        }
 
-        #master-pan { will-change: transform; transform-origin: 0 0; transition: transform 0.15s ease-out; }
-        #master-pan.dragging { transition: none !important; }
-        #master-pan.cinematic-camera { transition: transform 1.2s cubic-bezier(0.25, 1, 0.5, 1) !important; }
+        #board-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            height: 100dvh;
+            z-index: 1;
+            background-color: #040408;
+            touch-action: none;
+        }
 
-        #prematch-countdown-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; background: rgba(4, 4, 8, 0.88); backdrop-filter: blur(12px); z-index: 2200; display: none; flex-direction: column; justify-content: center; align-items: center; pointer-events: auto; }
-        #countdown-number { font-family: 'Montserrat', sans-serif; font-size: 8rem; font-weight: 900; color: #2ecc71; text-shadow: 0 0 30px #2ecc71; animation: pulseCount 0.8s infinite alternate; }
-        @keyframes pulseCount { 0% { transform: scale(0.8); } 100% { transform: scale(1.15); } }
+        #bg-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100dvh;
+            pointer-events: none;
+            z-index: 0;
+        }
 
-        #center-dice-container { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(1); z-index: 600; display: flex; gap: 16px; align-items: center; justify-content: center; background: rgba(18, 18, 24, 0.92); backdrop-filter: blur(16px); padding: 18px 28px; clip-path: var(--hex-chamfer); border: 2px solid #2ecc71; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 30px rgba(46, 204, 113, 0.3); transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); pointer-events: none; opacity: 0; display: none; }
-        #center-dice-container.visible { display: flex !important; opacity: 1; }
-        #center-dice-container.fly-to-panel { top: 50% !important; left: calc(100vw - 32px) !important; transform: translate(-50%, -50%) scale(0.25) !important; opacity: 0 !important; }
-        .center-die-wrapper { width: 60px; height: 65px; clip-path: var(--hex-shape); display: flex; justify-content: center; align-items: center; background: rgba(255, 255, 255, 0.12); transition: all 0.3s ease; }
+        svg#board {
+            width: 100%;
+            height: 100%;
+            cursor: grab;
+            display: block;
+            user-select: none;
+            touch-action: none;
+            position: relative;
+            z-index: 2;
+        }
 
-        .hud-element { position: absolute; z-index: 10; pointer-events: auto; transition: opacity 0.5s ease, transform 0.5s ease; }
-        #left-hud-wrapper { position: absolute; top: max(12px, env(safe-area-inset-top)); left: max(12px, env(safe-area-inset-left)); display: flex; flex-direction: column; gap: 8px; pointer-events: none; z-index: 10; max-width: 220px; }
-        #top-left-hud { background: var(--panel-bg); backdrop-filter: blur(12px); padding: 12px 14px; clip-path: var(--hex-chamfer); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6); border: 1px solid rgba(255, 255, 255, 0.12); display: flex; flex-direction: column; gap: 8px; width: 100%; pointer-events: auto; }
-        h1 { font-family: 'Montserrat', sans-serif; font-size: 1.6rem; margin: 0; letter-spacing: 2px; display: flex; gap: 2px; text-shadow: 0px 2px 8px rgba(0,0,0,0.4); justify-content: center; }
-        .title-c { color: var(--red); } .title-o1 { color: var(--blue); } .title-l { color: var(--yellow); } .title-o2 { color: #8196a8; } .title-r { color: var(--red); } .title-g { color: var(--blue); } .title-o3 { color: var(--yellow); } .title-n { color: #8196a8; }
+        svg#board:active {
+            cursor: grabbing;
+        }
 
-        #leaderboard-container { width: 100%; background: var(--panel-bg); backdrop-filter: blur(12px); padding: 12px 10px; clip-path: var(--hex-chamfer); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6); border: 1px solid rgba(255, 255, 255, 0.12); display: flex; flex-direction: column; gap: 8px; pointer-events: auto; }
-        .lb-header { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-dim); font-weight: 700; text-align: center; margin: 0 0 2px 0; }
-        #leaderboard-list { display: flex; flex-direction: column; gap: 6px; }
-        .lb-card-inner { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; clip-path: polygon(8px 0, calc(100% - 8px) 0, 100% 8px, 100% calc(100% - 8px), calc(100% - 8px) 100%, 8px 100%, 0 calc(100% - 8px), 0 8px); background: rgba(255, 255, 255, 0.07); border: 1px solid rgba(255, 255, 255, 0.1); width: 100%; }
-        .lb-card-inner.active { border-color: currentColor; background: rgba(255, 255, 255, 0.15); box-shadow: 0 6px 15px rgba(0, 0, 0, 0.35); }
-        .lb-name { font-size: 0.85rem; font-weight: 700; color: var(--text-light); flex-grow: 1; display: flex; align-items: center; gap: 6px; }
-        .lb-score { font-size: 1rem; font-weight: 900; color: #2ecc71; }
+        #master-pan {
+            will-change: transform;
+            transform-origin: 0 0;
+            transition: transform 0.15s ease-out;
+        }
 
-        #ui-bar { top: max(12px, env(safe-area-inset-top)); right: max(12px, env(safe-area-inset-right)); left: auto; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; background: var(--panel-bg); backdrop-filter: blur(12px); padding: 8px 14px; clip-path: var(--hex-chamfer); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6); border: 1px solid rgba(255, 255, 255, 0.12); }
-        .ui-top-row { display: flex; justify-content: flex-end; align-items: center; gap: 10px; width: 100%; }
-        .stat-group { display: flex; flex-direction: column; align-items: center; }
-        .stat-label { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-dim); font-weight: 600;}
-        .stat-val { font-size: 0.95rem; font-weight: 700; color: var(--text-light); }
+        #master-pan.dragging {
+            transition: none !important;
+        }
 
-        #turn-timer-container { width: 100%; height: 6px; background: rgba(255, 255, 255, 0.1); border-radius: 3px; overflow: hidden; display: none; margin-top: 2px; }
-        #turn-timer-bar { height: 100%; width: 100%; background: #2ecc71; transition: width 1s linear, background-color 0.5s ease; }
-        
-        #dice-panel { top: 50%; right: max(12px, env(safe-area-inset-right)); transform: translateY(-50%); background: var(--panel-bg); backdrop-filter: blur(12px); padding: 10px 8px; clip-path: var(--hex-chamfer); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6); border: 1px solid rgba(255, 255, 255, 0.12); display: flex; flex-direction: column; align-items: center; gap: 6px; }
-        #dice-area { display: flex; flex-direction: column; align-items: center; gap: 6px; justify-content: center; }
-        .die-container { width: 38px; height: 42px; clip-path: var(--hex-shape); display: flex; justify-content: center; align-items: center; box-sizing: border-box; transition: all 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275); background: rgba(255, 255, 255, 0.1); }
-        .die-container.active-die { transform: scale(1.15); filter: grayscale(0%) opacity(1); border: 2px solid #2ecc71; z-index: 2; }
-        .die-container.inactive-die { transform: scale(0.8); filter: grayscale(88%) opacity(0.38); }
+        #master-pan.cinematic-camera {
+            transition: transform 1.2s cubic-bezier(0.25, 1, 0.5, 1) !important;
+        }
 
-        #turn-announcement { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.8); z-index: 500; pointer-events: auto; font-family: 'Montserrat', sans-serif; font-size: 1.8rem; font-weight: 900; color: #ffffff; background: rgba(20, 20, 26, 0.95); backdrop-filter: blur(14px); padding: 18px 20px; clip-path: var(--hex-chamfer); border: 3px solid #2ecc71; box-shadow: 0 20px 60px rgba(0,0,0,0.8), 0 0 35px rgba(39, 174, 96, 0.4); text-align: center; opacity: 0; display: none; width: calc(100vw - max(32px, env(safe-area-inset-left) + env(safe-area-inset-right))); max-width: 420px; box-sizing: border-box; white-space: normal; word-break: break-word; transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        #turn-announcement.show-billboard { display: flex !important; flex-direction: column; align-items: center; opacity: 1; transform: translate(-50%, -50%) scale(1); }
-        #turn-announcement.hide-billboard { display: flex !important; flex-direction: column; align-items: center; opacity: 0; transform: translate(-50%, -50%) scale(1.2); pointer-events: none; }
+        #prematch-countdown-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100dvh;
+            background: rgba(4, 4, 8, 0.88);
+            backdrop-filter: blur(12px);
+            z-index: 2200;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            pointer-events: auto;
+        }
+
+        #countdown-number {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 8rem;
+            font-weight: 900;
+            color: #2ecc71;
+            text-shadow: 0 0 30px #2ecc71;
+            animation: pulseCount 0.8s infinite alternate;
+        }
+
+        @keyframes pulseCount {
+            0% {
+                transform: scale(0.8);
+            }
+
+            100% {
+                transform: scale(1.15);
+            }
+        }
+
+        #center-dice-container {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(1);
+            z-index: 600;
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            justify-content: center;
+            background: rgba(18, 18, 24, 0.92);
+            backdrop-filter: blur(16px);
+            padding: 18px 28px;
+            clip-path: var(--hex-chamfer);
+            border: 2px solid #2ecc71;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 30px rgba(46, 204, 113, 0.3);
+            transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            pointer-events: none;
+            opacity: 0;
+            display: none;
+        }
+
+        #center-dice-container.visible {
+            display: flex !important;
+            opacity: 1;
+        }
+
+        #center-dice-container.fly-to-panel {
+            top: 50% !important;
+            left: calc(100vw - 32px) !important;
+            transform: translate(-50%, -50%) scale(0.25) !important;
+            opacity: 0 !important;
+        }
+
+        .center-die-wrapper {
+            width: 60px;
+            height: 65px;
+            clip-path: var(--hex-shape);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.12);
+            transition: all 0.3s ease;
+        }
+
+        .hud-element {
+            position: absolute;
+            z-index: 10;
+            pointer-events: auto;
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        #left-hud-wrapper {
+            position: absolute;
+            top: max(12px, env(safe-area-inset-top));
+            left: max(12px, env(safe-area-inset-left));
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            pointer-events: none;
+            z-index: 10;
+            max-width: 220px;
+        }
+
+        #top-left-hud {
+            background: var(--panel-bg);
+            backdrop-filter: blur(12px);
+            padding: 12px 14px;
+            clip-path: var(--hex-chamfer);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            width: 100%;
+            pointer-events: auto;
+        }
+
+        h1 {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1.6rem;
+            margin: 0;
+            letter-spacing: 2px;
+            display: flex;
+            gap: 2px;
+            text-shadow: 0px 2px 8px rgba(0, 0, 0, 0.4);
+            justify-content: center;
+        }
+
+        .title-c {
+            color: var(--red);
+        }
+
+        .title-o1 {
+            color: var(--blue);
+        }
+
+        .title-l {
+            color: var(--yellow);
+        }
+
+        .title-o2 {
+            color: #8196a8;
+        }
+
+        .title-r {
+            color: var(--red);
+        }
+
+        .title-g {
+            color: var(--blue);
+        }
+
+        .title-o3 {
+            color: var(--yellow);
+        }
+
+        .title-n {
+            color: #8196a8;
+        }
+
+        #leaderboard-container {
+            width: 100%;
+            background: var(--panel-bg);
+            backdrop-filter: blur(12px);
+            padding: 12px 10px;
+            clip-path: var(--hex-chamfer);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            pointer-events: auto;
+        }
+
+        .lb-header {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-dim);
+            font-weight: 700;
+            text-align: center;
+            margin: 0 0 2px 0;
+        }
+
+        #leaderboard-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .lb-card-inner {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 10px;
+            clip-path: polygon(8px 0, calc(100% - 8px) 0, 100% 8px, 100% calc(100% - 8px), calc(100% - 8px) 100%, 8px 100%, 0 calc(100% - 8px), 0 8px);
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            width: 100%;
+        }
+
+        .lb-card-inner.active {
+            border-color: currentColor;
+            background: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.35);
+        }
+
+        .lb-name {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text-light);
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .lb-score {
+            font-size: 1rem;
+            font-weight: 900;
+            color: #2ecc71;
+        }
+
+        #ui-bar {
+            top: max(12px, env(safe-area-inset-top));
+            right: max(12px, env(safe-area-inset-right));
+            left: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 4px;
+            background: var(--panel-bg);
+            backdrop-filter: blur(12px);
+            padding: 8px 14px;
+            clip-path: var(--hex-chamfer);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+        }
+
+        .ui-top-row {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+        }
+
+        .stat-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .stat-label {
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-dim);
+            font-weight: 600;
+        }
+
+        .stat-val {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--text-light);
+        }
+
+        #turn-timer-container {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            overflow: hidden;
+            display: none;
+            margin-top: 2px;
+        }
+
+        #turn-timer-bar {
+            height: 100%;
+            width: 100%;
+            background: #2ecc71;
+            transition: width 1s linear, background-color 0.5s ease;
+        }
+
+        #dice-panel {
+            top: 50%;
+            right: max(12px, env(safe-area-inset-right));
+            transform: translateY(-50%);
+            background: var(--panel-bg);
+            backdrop-filter: blur(12px);
+            padding: 10px 8px;
+            clip-path: var(--hex-chamfer);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+
+        #dice-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            justify-content: center;
+        }
+
+        .die-container {
+            width: 38px;
+            height: 42px;
+            clip-path: var(--hex-shape);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-sizing: border-box;
+            transition: all 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .die-container.active-die {
+            transform: scale(1.15);
+            filter: grayscale(0%) opacity(1);
+            border: 2px solid #2ecc71;
+            z-index: 2;
+        }
+
+        .die-container.inactive-die {
+            transform: scale(0.8);
+            filter: grayscale(88%) opacity(0.38);
+        }
+
+        #turn-announcement {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.8);
+            z-index: 500;
+            pointer-events: auto;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1.8rem;
+            font-weight: 900;
+            color: #ffffff;
+            background: rgba(20, 20, 26, 0.95);
+            backdrop-filter: blur(14px);
+            padding: 18px 20px;
+            clip-path: var(--hex-chamfer);
+            border: 3px solid #2ecc71;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 0 35px rgba(39, 174, 96, 0.4);
+            text-align: center;
+            opacity: 0;
+            display: none;
+            width: calc(100vw - max(32px, env(safe-area-inset-left) + env(safe-area-inset-right)));
+            max-width: 420px;
+            box-sizing: border-box;
+            white-space: normal;
+            word-break: break-word;
+            transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        #turn-announcement.show-billboard {
+            display: flex !important;
+            flex-direction: column;
+            align-items: center;
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        #turn-announcement.hide-billboard {
+            display: flex !important;
+            flex-direction: column;
+            align-items: center;
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(1.2);
+            pointer-events: none;
+        }
 
         /* NO MOVES ALERT TOAST */
-        #no-moves-toast { position: fixed; top: 22%; left: 50%; transform: translate(-50%, -50%) scale(0.8); z-index: 1200; pointer-events: none; font-family: 'Montserrat', sans-serif; font-size: 1.1rem; font-weight: 900; color: #ffffff; background: rgba(231, 76, 60, 0.92); backdrop-filter: blur(12px); padding: 12px 22px; clip-path: var(--hex-chamfer); border: 2px solid #ff5252; box-shadow: 0 10px 30px rgba(231, 76, 60, 0.6); text-align: center; opacity: 0; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        #no-moves-toast.visible { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-
-        #hand-container { bottom: max(12px, env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); width: auto; min-width: 250px; max-width: 95vw; background: var(--panel-bg); clip-path: var(--hex-chamfer); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6); padding: 12px 24px; border: 1px solid rgba(255, 255, 255, 0.12); display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 16px; backdrop-filter: blur(12px); z-index: 40; }
-        #hand-center-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; width: 100%; }
-        #current-player-label { margin: 0; color: #2ecc71; font-size: 0.85rem; font-weight: 700; text-align: center; width: 100%; white-space: nowrap; letter-spacing: 0.5px; }
-        #hand { display: flex; flex-direction: row !important; gap: 10px !important; align-items: center; justify-content: center; min-height: 80px; }
-        
-        .hand-tile { width: 72px; height: 72px; border: 3px solid transparent; border-radius: 50%; transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.3s ease, background 0.25s ease, border-color 0.25s ease; cursor: pointer; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.25)); }
-        .hand-tile.selected { border-color: currentColor !important; transform: scale(1.15) translateY(-8px); filter: drop-shadow(0 12px 20px rgba(255,255,255,0.4)) !important; background: rgba(255, 255, 255, 0.1); }
-        .hand-tile > g { transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); transform-origin: 0 0; }
-
-        @keyframes placePopBounce { 0% { opacity: 0; transform: scale(0.3); } 65% { opacity: 1; transform: scale(1.15); } 100% { opacity: 1; transform: scale(1.0); } }
-        .placed-tile-animated { animation: placePopBounce 0.38s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; transform-origin: 0 0; }
-
-        @keyframes voidNeonGlow { 0% { stroke: #e74c3c; filter: drop-shadow(0 0 2px #ff2a4b); opacity: 0.8; } 50% { stroke: #ff2a4b; filter: drop-shadow(0 0 10px #ff2a4b); opacity: 1.0; } 100% { stroke: #e74c3c; filter: drop-shadow(0 0 2px #ff2a4b); opacity: 0.8; } }
-        .void-neon-pulse { animation: voidNeonGlow 1.8s infinite ease-in-out !important; }
-
-        @keyframes validSocketPulse { 0% { fill-opacity: 0.08; stroke-opacity: 0.25; } 100% { fill-opacity: 0.22; stroke-opacity: 0.55; } }
-        .legal-spot-active { animation: validSocketPulse 1.4s infinite alternate ease-in-out; }
-
-        @keyframes colorgonSuperGlow { 
-            0% { filter: drop-shadow(0 0 8px currentColor) brightness(1.2); opacity: 0.85; } 
-            50% { filter: drop-shadow(0 0 25px currentColor) drop-shadow(0 0 45px #ffffff) brightness(1.8); opacity: 1.0; } 
-            100% { filter: drop-shadow(0 0 8px currentColor) brightness(1.2); opacity: 0.85; } 
+        #no-moves-toast {
+            position: fixed;
+            top: 22%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.8);
+            z-index: 1200;
+            pointer-events: none;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 900;
+            color: #ffffff;
+            background: rgba(231, 76, 60, 0.92);
+            backdrop-filter: blur(12px);
+            padding: 12px 22px;
+            clip-path: var(--hex-chamfer);
+            border: 2px solid #ff5252;
+            box-shadow: 0 10px 30px rgba(231, 76, 60, 0.6);
+            text-align: center;
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
-        .wedge-colorgon-active { animation: colorgonSuperGlow 0.45s infinite ease-in-out !important; stroke: #ffffff !important; stroke-width: 1.8px !important; z-index: 100; }
+
+        #no-moves-toast.visible {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        #hand-container {
+            bottom: max(12px, env(safe-area-inset-bottom));
+            left: 50%;
+            transform: translateX(-50%);
+            width: auto;
+            min-width: 250px;
+            max-width: 95vw;
+            background: var(--panel-bg);
+            clip-path: var(--hex-chamfer);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+            padding: 12px 24px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            backdrop-filter: blur(12px);
+            z-index: 40;
+        }
+
+        #hand-center-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            width: 100%;
+        }
+
+        #current-player-label {
+            margin: 0;
+            color: #2ecc71;
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-align: center;
+            width: 100%;
+            white-space: nowrap;
+            letter-spacing: 0.5px;
+        }
+
+        #hand {
+            display: flex;
+            flex-direction: row !important;
+            gap: 10px !important;
+            align-items: center;
+            justify-content: center;
+            min-height: 80px;
+        }
+
+        .hand-tile {
+            width: 72px;
+            height: 72px;
+            border: 3px solid transparent;
+            border-radius: 50%;
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.3s ease, background 0.25s ease, border-color 0.25s ease;
+            cursor: pointer;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.25));
+        }
+
+        .hand-tile.selected {
+            border-color: currentColor !important;
+            transform: scale(1.15) translateY(-8px);
+            filter: drop-shadow(0 12px 20px rgba(255, 255, 255, 0.4)) !important;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .hand-tile>g {
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transform-origin: 0 0;
+        }
+
+        @keyframes placePopBounce {
+            0% {
+                opacity: 0;
+                transform: scale(0.3);
+            }
+
+            65% {
+                opacity: 1;
+                transform: scale(1.15);
+            }
+
+            100% {
+                opacity: 1;
+                transform: scale(1.0);
+            }
+        }
+
+        .placed-tile-animated {
+            animation: placePopBounce 0.38s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            transform-origin: 0 0;
+        }
+
+        @keyframes voidNeonGlow {
+            0% {
+                stroke: #e74c3c;
+                filter: drop-shadow(0 0 2px #ff2a4b);
+                opacity: 0.8;
+            }
+
+            50% {
+                stroke: #ff2a4b;
+                filter: drop-shadow(0 0 10px #ff2a4b);
+                opacity: 1.0;
+            }
+
+            100% {
+                stroke: #e74c3c;
+                filter: drop-shadow(0 0 2px #ff2a4b);
+                opacity: 0.8;
+            }
+        }
+
+        .void-neon-pulse {
+            animation: voidNeonGlow 1.8s infinite ease-in-out !important;
+        }
+
+        @keyframes validSocketPulse {
+            0% {
+                fill-opacity: 0.08;
+                stroke-opacity: 0.25;
+            }
+
+            100% {
+                fill-opacity: 0.22;
+                stroke-opacity: 0.55;
+            }
+        }
+
+        .legal-spot-active {
+            animation: validSocketPulse 1.4s infinite alternate ease-in-out;
+        }
+
+        @keyframes colorgonSuperGlow {
+            0% {
+                filter: drop-shadow(0 0 8px currentColor) brightness(1.2);
+                opacity: 0.85;
+            }
+
+            50% {
+                filter: drop-shadow(0 0 25px currentColor) drop-shadow(0 0 45px #ffffff) brightness(1.8);
+                opacity: 1.0;
+            }
+
+            100% {
+                filter: drop-shadow(0 0 8px currentColor) brightness(1.2);
+                opacity: 0.85;
+            }
+        }
+
+        .wedge-colorgon-active {
+            animation: colorgonSuperGlow 0.45s infinite ease-in-out !important;
+            stroke: #ffffff !important;
+            stroke-width: 1.8px !important;
+            z-index: 100;
+        }
 
         @keyframes colorgonWedgeLift {
-            0% { transform: scale(1); filter: drop-shadow(0 0 4px currentColor); }
-            50% { transform: scale(1.22); filter: drop-shadow(0 0 25px currentColor) brightness(1.5); }
-            100% { transform: scale(1.16); filter: drop-shadow(0 0 18px currentColor) brightness(1.35); }
+            0% {
+                transform: scale(1);
+                filter: drop-shadow(0 0 4px currentColor);
+            }
+
+            50% {
+                transform: scale(1.22);
+                filter: drop-shadow(0 0 25px currentColor) brightness(1.5);
+            }
+
+            100% {
+                transform: scale(1.16);
+                filter: drop-shadow(0 0 18px currentColor) brightness(1.35);
+            }
         }
-        .colorgon-wedge-lifted { animation: colorgonWedgeLift 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards !important; transform-origin: 0 0; }
+
+        .colorgon-wedge-lifted {
+            animation: colorgonWedgeLift 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards !important;
+            transform-origin: 0 0;
+        }
 
         @keyframes glassyShimmer {
-            0% { filter: brightness(1.0) drop-shadow(0 0 1px rgba(255,255,255,0.4)); }
-            50% { filter: brightness(1.6) drop-shadow(0 0 12px rgba(255,255,255,0.9)); }
-            100% { filter: brightness(1.0) drop-shadow(0 0 1px rgba(255,255,255,0.4)); }
+            0% {
+                filter: brightness(1.0) drop-shadow(0 0 1px rgba(255, 255, 255, 0.4));
+            }
+
+            50% {
+                filter: brightness(1.6) drop-shadow(0 0 12px rgba(255, 255, 255, 0.9));
+            }
+
+            100% {
+                filter: brightness(1.0) drop-shadow(0 0 1px rgba(255, 255, 255, 0.4));
+            }
         }
-        .wildcard-shimmer { animation: glassyShimmer 2.2s infinite ease-in-out !important; }
 
-        @keyframes previewBob { 0% { transform: translateY(0px) scale(1.05); } 50% { transform: translateY(-6px) scale(1.08); } 100% { transform: translateY(0px) scale(1.05); } }
-        .hover-preview-animated { animation: previewBob 1.2s infinite ease-in-out !important; filter: drop-shadow(0 10px 15px rgba(255, 255, 255, 0.6)); opacity: 0.88 !important; transform-origin: 0 0; pointer-events: none !important; }
+        .wildcard-shimmer {
+            animation: glassyShimmer 2.2s infinite ease-in-out !important;
+        }
 
-        button { padding: 8px 14px; min-height: 38px; background: linear-gradient(135deg, #2980b9, #3498db); color: white; border: none; cursor: pointer; font-size: 0.8rem; font-weight: 700; font-family: 'Poppins', sans-serif; transition: all 0.3s ease; clip-path: var(--hex-btn); box-shadow: 0 4px 10px rgba(41, 128, 185, 0.3); text-transform: uppercase; letter-spacing: 0.5px; }
-        .secondary-btn { background: linear-gradient(135deg, #e67e22, #f39c12); box-shadow: 0 4px 10px rgba(230, 126, 34, 0.3); font-size: 0.7rem; padding: 6px 10px; }
-        .highlight-btn { background: linear-gradient(135deg, #27ae60, #2ecc71) !important; }
+        @keyframes previewBob {
+            0% {
+                transform: translateY(0px) scale(1.05);
+            }
+
+            50% {
+                transform: translateY(-6px) scale(1.08);
+            }
+
+            100% {
+                transform: translateY(0px) scale(1.05);
+            }
+        }
+
+        .hover-preview-animated {
+            animation: previewBob 1.2s infinite ease-in-out !important;
+            filter: drop-shadow(0 10px 15px rgba(255, 255, 255, 0.6));
+            opacity: 0.88 !important;
+            transform-origin: 0 0;
+            pointer-events: none !important;
+        }
+
+        button {
+            padding: 8px 14px;
+            min-height: 38px;
+            background: linear-gradient(135deg, #2980b9, #3498db);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 700;
+            font-family: 'Poppins', sans-serif;
+            transition: all 0.3s ease;
+            clip-path: var(--hex-btn);
+            box-shadow: 0 4px 10px rgba(41, 128, 185, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .secondary-btn {
+            background: linear-gradient(135deg, #e67e22, #f39c12);
+            box-shadow: 0 4px 10px rgba(230, 126, 34, 0.3);
+            font-size: 0.7rem;
+            padding: 6px 10px;
+        }
+
+        .highlight-btn {
+            background: linear-gradient(135deg, #27ae60, #2ecc71) !important;
+        }
 
         @keyframes pulseEndTurnBtn {
-            0% { transform: scale(1); box-shadow: 0 0 8px #e74c3c; background: linear-gradient(135deg, #e74c3c, #c0392b) !important; }
-            50% { transform: scale(1.12); box-shadow: 0 0 25px #e74c3c, 0 0 35px #e74c3c; background: linear-gradient(135deg, #ff5252, #e74c3c) !important; }
-            100% { transform: scale(1); box-shadow: 0 0 8px #e74c3c; background: linear-gradient(135deg, #e74c3c, #c0392b) !important; }
+            0% {
+                transform: scale(1);
+                box-shadow: 0 0 8px #e74c3c;
+                background: linear-gradient(135deg, #e74c3c, #c0392b) !important;
+            }
+
+            50% {
+                transform: scale(1.12);
+                box-shadow: 0 0 25px #e74c3c, 0 0 35px #e74c3c;
+                background: linear-gradient(135deg, #ff5252, #e74c3c) !important;
+            }
+
+            100% {
+                transform: scale(1);
+                box-shadow: 0 0 8px #e74c3c;
+                background: linear-gradient(135deg, #e74c3c, #c0392b) !important;
+            }
         }
+
         .pulse-end-turn {
             animation: pulseEndTurnBtn 1.1s infinite ease-in-out !important;
             z-index: 100 !important;
         }
 
-        #zoom-controls { bottom: max(12px, env(safe-area-inset-bottom)); right: max(12px, env(safe-area-inset-right)); display: flex; flex-direction: column; gap: 6px; z-index: 100; position: absolute; }
-        .zoom-btn { width: 42px; height: 46px; min-height: 46px; padding: 0; clip-path: var(--hex-shape) !important; background: linear-gradient(135deg, #2980b9, #3498db); font-size: 1.3rem; font-weight: 900; box-shadow: 0 6px 16px rgba(0,0,0,0.5); }
-
-        svg .svg-float-text { 
-            font-family: 'Montserrat', sans-serif; 
-            font-weight: 900; 
-            text-anchor: middle; 
-            dominant-baseline: central; 
-            pointer-events: none; 
+        #zoom-controls {
+            bottom: max(12px, env(safe-area-inset-bottom));
+            right: max(12px, env(safe-area-inset-right));
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            z-index: 100;
+            position: absolute;
         }
 
-        #top-victory-banner { position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; z-index: 2500; background: rgba(8, 8, 14, 0.92); backdrop-filter: blur(20px); display: flex; flex-direction: column; justify-content: center; align-items: center; opacity: 0; pointer-events: none; transition: opacity 0.8s ease; }
-        #top-victory-banner.visible { opacity: 1; pointer-events: auto; }
-        
-        .victory-card-inner { background: rgba(18, 18, 26, 0.95); border: 2px solid #f1c40f; clip-path: var(--hex-chamfer); padding: 28px 36px; display: flex; flex-direction: column; align-items: center; gap: 12px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9), 0 0 40px rgba(241, 196, 15, 0.3); width: 480px; max-width: 90vw; text-align: center; }
-        @keyframes trophyGlowPulse { 0% { transform: scale(0.9); filter: drop-shadow(0 0 10px #f1c40f); } 50% { transform: scale(1.15); filter: drop-shadow(0 0 30px #f1c40f); } 100% { transform: scale(0.9); filter: drop-shadow(0 0 10px #f1c40f); } }
-        .victory-trophy-icon { font-size: 4.5rem; animation: trophyGlowPulse 2s infinite ease-in-out; margin-bottom: 4px; }
-        .victory-winner-title { font-family: 'Montserrat', sans-serif; font-size: 2.2rem; font-weight: 900; margin: 0; text-shadow: 0 0 20px currentColor; }
+        .zoom-btn {
+            width: 42px;
+            height: 46px;
+            min-height: 46px;
+            padding: 0;
+            clip-path: var(--hex-shape) !important;
+            background: linear-gradient(135deg, #2980b9, #3498db);
+            font-size: 1.3rem;
+            font-weight: 900;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
+        }
 
-        .victory-standings-list { width: 100%; display: flex; flex-direction: column; gap: 6px; margin: 10px 0; }
-        .victory-standing-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 12px; background: rgba(255, 255, 255, 0.06); clip-path: var(--hex-btn); border: 1px solid rgba(255, 255, 255, 0.1); font-size: 0.85rem; font-weight: 700; }
+        svg .svg-float-text {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 900;
+            text-anchor: middle;
+            dominant-baseline: central;
+            pointer-events: none;
+        }
 
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; background: rgba(12, 12, 16, 0.88); backdrop-filter: blur(12px); z-index: 1000; display: flex; justify-content: center; align-items: center; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
-        .modal-overlay.visible { opacity: 1 !important; pointer-events: auto !important; }
-        .modal-card { background: var(--panel-bg); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.12); width: 560px; max-width: 92vw; clip-path: var(--hex-chamfer); padding: 22px; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8); display: flex; flex-direction: column; align-items: center; text-align: center; position: relative; color: var(--text-light); max-height: calc(100dvh - 32px); overflow-y: auto; }
-        .setup-section-box { width: 100%; background: rgba(12, 12, 18, 0.6); border: 1px solid rgba(255, 255, 255, 0.15); clip-path: polygon(10px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px), 0 10px); padding: 14px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 8px; text-align: left; }
-        select.setup-select, input.setup-input { padding: 8px 10px; font-size: 0.85rem; font-weight: 600; font-family: 'Poppins', sans-serif; border: 1px solid rgba(255, 255, 255, 0.2); clip-path: var(--hex-btn); background: rgba(12, 12, 18, 0.9); color: var(--text-light); outline: none; cursor: pointer; width: 100%; min-height: 38px; }
-        .tab-row { display: flex; gap: 8px; width: 100%; margin-bottom: 12px; }
-        .tab-btn { flex: 1; padding: 8px; font-size: 0.75rem; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); }
-        .tab-btn.active { background: linear-gradient(135deg, #27ae60, #2ecc71); border-color: #2ecc71; }
+        #top-victory-banner {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100dvh;
+            z-index: 2500;
+            background: rgba(8, 8, 14, 0.92);
+            backdrop-filter: blur(20px);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.8s ease;
+        }
 
-        .lobby-slot-row { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.06); padding: 6px 12px; clip-path: var(--hex-btn); border: 1px solid rgba(255,255,255,0.1); width: 100%; margin-bottom: 4px; gap: 8px; }
-        .remove-slot-btn { background: #e74c3c !important; clip-path: circle() !important; min-height: 24px !important; width: 24px; height: 24px; padding: 0 !important; font-size: 0.7rem; line-height: 24px; text-align: center; box-shadow: none !important; }
-        .ready-badge { font-size: 0.65rem; font-weight: 800; padding: 2px 6px; clip-path: var(--hex-btn); text-transform: uppercase; }
-        .ready-badge.is-ready { background: #2ecc71; color: #000; }
-        .ready-badge.not-ready { background: #e74c3c; color: #fff; }
+        #top-victory-banner.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
 
-        .setting-control-row { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 6px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.08); }
-        .setting-label { font-size: 0.8rem; font-weight: 600; color: var(--text-light); }
-        .setting-slider { width: 130px; accent-color: #2ecc71; cursor: pointer; }
-        .setting-toggle-btn { padding: 4px 10px; min-height: 28px; font-size: 0.7rem; }
+        .victory-card-inner {
+            background: rgba(18, 18, 26, 0.95);
+            border: 2px solid #f1c40f;
+            clip-path: var(--hex-chamfer);
+            padding: 28px 36px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9), 0 0 40px rgba(241, 196, 15, 0.3);
+            width: 480px;
+            max-width: 90vw;
+            text-align: center;
+        }
 
-        .bot-diff-badge { font-size: 0.65rem; font-weight: 800; padding: 2px 8px; clip-path: var(--hex-btn); text-transform: uppercase; cursor: pointer; transition: all 0.25s ease; border: 1px solid transparent; }
-        .bot-diff-easy { background: rgba(46, 204, 113, 0.25); color: #2ecc71; border-color: #2ecc71; }
-        .bot-diff-normal { background: rgba(241, 196, 15, 0.25); color: #f1c40f; border-color: #f1c40f; }
-        .bot-diff-hard { background: rgba(231, 76, 60, 0.25); color: #e74c3c; border-color: #e74c3c; }
-        
-        .bot-icon-glow-easy { filter: drop-shadow(0 0 6px #2ecc71); stroke: #2ecc71 !important; }
-        .bot-icon-glow-normal { filter: drop-shadow(0 0 6px #f1c40f); stroke: #f1c40f !important; }
-        .bot-icon-glow-hard { filter: drop-shadow(0 0 6px #e74c3c); stroke: #e74c3c !important; }
+        @keyframes trophyGlowPulse {
+            0% {
+                transform: scale(0.9);
+                filter: drop-shadow(0 0 10px #f1c40f);
+            }
 
-        #chat-toggle-btn { position: relative; }
-        #chat-unread-badge { position: absolute; top: -4px; right: -4px; background: #e74c3c; color: white; font-size: 0.6rem; font-weight: 900; width: 16px; height: 16px; border-radius: 50%; display: none; justify-content: center; align-items: center; border: 1px solid #ffffff; }
-        
-        #chat-messages-log { width: 100%; height: 220px; overflow-y: auto; background: rgba(10, 10, 15, 0.8); border: 1px solid rgba(255, 255, 255, 0.12); clip-path: polygon(8px 0, calc(100% - 8px) 0, 100% 8px, 100% calc(100% - 8px), calc(100% - 8px) 100%, 8px 100%, 0 calc(100% - 8px), 0 8px); padding: 10px; display: flex; flex-direction: column; gap: 8px; text-align: left; }
-        .chat-msg-item { font-size: 0.8rem; word-break: break-word; }
-        .chat-msg-author { font-weight: 800; margin-right: 6px; }
-        .chat-msg-text { color: var(--text-light); }
+            50% {
+                transform: scale(1.15);
+                filter: drop-shadow(0 0 30px #f1c40f);
+            }
 
-        .lobby-wrapper-grid { display: flex; gap: 14px; width: 100%; max-width: 900px; justify-content: center; align-items: stretch; flex-direction: column; }
-        #lobby-side-audio-panel { width: 100%; display: none; flex-direction: column; justify-content: center; }
-        #lobby-mobile-audio-btn { display: inline-block; margin-bottom: 8px; width: 100%; }
+            100% {
+                transform: scale(0.9);
+                filter: drop-shadow(0 0 10px #f1c40f);
+            }
+        }
+
+        .victory-trophy-icon {
+            font-size: 4.5rem;
+            animation: trophyGlowPulse 2s infinite ease-in-out;
+            margin-bottom: 4px;
+        }
+
+        .victory-winner-title {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 2.2rem;
+            font-weight: 900;
+            margin: 0;
+            text-shadow: 0 0 20px currentColor;
+        }
+
+        .victory-standings-list {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin: 10px 0;
+        }
+
+        .victory-standing-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 12px;
+            background: rgba(255, 255, 255, 0.06);
+            clip-path: var(--hex-btn);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.85rem;
+            font-weight: 700;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100dvh;
+            background: rgba(12, 12, 16, 0.88);
+            backdrop-filter: blur(12px);
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.visible {
+            opacity: 1 !important;
+            pointer-events: auto !important;
+        }
+
+        .modal-card {
+            background: var(--panel-bg);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            width: 560px;
+            max-width: 92vw;
+            clip-path: var(--hex-chamfer);
+            padding: 22px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            position: relative;
+            color: var(--text-light);
+            max-height: calc(100dvh - 32px);
+            overflow-y: auto;
+        }
+
+        .setup-section-box {
+            width: 100%;
+            background: rgba(12, 12, 18, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            clip-path: polygon(10px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px), 0 10px);
+            padding: 14px;
+            margin-bottom: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            text-align: left;
+        }
+
+        select.setup-select,
+        input.setup-input {
+            padding: 8px 10px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            font-family: 'Poppins', sans-serif;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            clip-path: var(--hex-btn);
+            background: rgba(12, 12, 18, 0.9);
+            color: var(--text-light);
+            outline: none;
+            cursor: pointer;
+            width: 100%;
+            min-height: 38px;
+        }
+
+        .tab-row {
+            display: flex;
+            gap: 8px;
+            width: 100%;
+            margin-bottom: 12px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 8px;
+            font-size: 0.75rem;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, #27ae60, #2ecc71);
+            border-color: #2ecc71;
+        }
+
+        .lobby-slot-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.06);
+            padding: 6px 12px;
+            clip-path: var(--hex-btn);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            width: 100%;
+            margin-bottom: 4px;
+            gap: 8px;
+        }
+
+        .remove-slot-btn {
+            background: #e74c3c !important;
+            clip-path: circle() !important;
+            min-height: 24px !important;
+            width: 24px;
+            height: 24px;
+            padding: 0 !important;
+            font-size: 0.7rem;
+            line-height: 24px;
+            text-align: center;
+            box-shadow: none !important;
+        }
+
+        .ready-badge {
+            font-size: 0.65rem;
+            font-weight: 800;
+            padding: 2px 6px;
+            clip-path: var(--hex-btn);
+            text-transform: uppercase;
+        }
+
+        .ready-badge.is-ready {
+            background: #2ecc71;
+            color: #000;
+        }
+
+        .ready-badge.not-ready {
+            background: #e74c3c;
+            color: #fff;
+        }
+
+        .setting-control-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            padding: 6px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .setting-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-light);
+        }
+
+        .setting-slider {
+            width: 130px;
+            accent-color: #2ecc71;
+            cursor: pointer;
+        }
+
+        .setting-toggle-btn {
+            padding: 4px 10px;
+            min-height: 28px;
+            font-size: 0.7rem;
+        }
+
+        .bot-diff-badge {
+            font-size: 0.65rem;
+            font-weight: 800;
+            padding: 2px 8px;
+            clip-path: var(--hex-btn);
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            border: 1px solid transparent;
+        }
+
+        .bot-diff-easy {
+            background: rgba(46, 204, 113, 0.25);
+            color: #2ecc71;
+            border-color: #2ecc71;
+        }
+
+        .bot-diff-normal {
+            background: rgba(241, 196, 15, 0.25);
+            color: #f1c40f;
+            border-color: #f1c40f;
+        }
+
+        .bot-diff-hard {
+            background: rgba(231, 76, 60, 0.25);
+            color: #e74c3c;
+            border-color: #e74c3c;
+        }
+
+        .bot-icon-glow-easy {
+            filter: drop-shadow(0 0 6px #2ecc71);
+            stroke: #2ecc71 !important;
+        }
+
+        .bot-icon-glow-normal {
+            filter: drop-shadow(0 0 6px #f1c40f);
+            stroke: #f1c40f !important;
+        }
+
+        .bot-icon-glow-hard {
+            filter: drop-shadow(0 0 6px #e74c3c);
+            stroke: #e74c3c !important;
+        }
+
+        #chat-toggle-btn {
+            position: relative;
+        }
+
+        #chat-unread-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background: #e74c3c;
+            color: white;
+            font-size: 0.6rem;
+            font-weight: 900;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            border: 1px solid #ffffff;
+        }
+
+        #chat-messages-log {
+            width: 100%;
+            height: 220px;
+            overflow-y: auto;
+            background: rgba(10, 10, 15, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            clip-path: polygon(8px 0, calc(100% - 8px) 0, 100% 8px, 100% calc(100% - 8px), calc(100% - 8px) 100%, 8px 100%, 0 calc(100% - 8px), 0 8px);
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            text-align: left;
+        }
+
+        .chat-msg-item {
+            font-size: 0.8rem;
+            word-break: break-word;
+        }
+
+        .chat-msg-author {
+            font-weight: 800;
+            margin-right: 6px;
+        }
+
+        .chat-msg-text {
+            color: var(--text-light);
+        }
+
+        .lobby-wrapper-grid {
+            display: flex;
+            gap: 14px;
+            width: 100%;
+            max-width: 900px;
+            justify-content: center;
+            align-items: stretch;
+            flex-direction: column;
+        }
+
+        #lobby-side-audio-panel {
+            width: 100%;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        #lobby-mobile-audio-btn {
+            display: inline-block;
+            margin-bottom: 8px;
+            width: 100%;
+        }
 
         @media (min-width: 820px) {
-            .lobby-wrapper-grid { flex-direction: row; }
-            #lobby-side-audio-panel { width: 280px; display: flex; }
-            #lobby-mobile-audio-btn { display: none; }
+            .lobby-wrapper-grid {
+                flex-direction: row;
+            }
+
+            #lobby-side-audio-panel {
+                width: 280px;
+                display: flex;
+            }
+
+            #lobby-mobile-audio-btn {
+                display: none;
+            }
         }
     </style>
 </head>
+
 <body>
 
     <audio id="bgm-player" preload="auto" style="display:none;"></audio>
@@ -228,15 +1207,15 @@
         <svg id="board">
             <defs>
                 <linearGradient id="wedgeLight" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stop-color="#ffffff" stop-opacity="0.28"/>
-                    <stop offset="45%" stop-color="#ffffff" stop-opacity="0.05"/>
-                    <stop offset="70%" stop-color="#000000" stop-opacity="0.10"/>
-                    <stop offset="100%" stop-color="#000000" stop-opacity="0.38"/>
+                    <stop offset="0%" stop-color="#ffffff" stop-opacity="0.28" />
+                    <stop offset="45%" stop-color="#ffffff" stop-opacity="0.05" />
+                    <stop offset="70%" stop-color="#000000" stop-opacity="0.10" />
+                    <stop offset="100%" stop-color="#000000" stop-opacity="0.38" />
                 </linearGradient>
                 <filter id="colorgonBrightGlow" x="-50%" y="-50%" width="200%" height="200%">
                     <feGaussianBlur stdDeviation="6" result="blur" />
                     <feComponentTransfer in="blur" result="glow1">
-                        <feFuncA type="linear" slope="2.5"/>
+                        <feFuncA type="linear" slope="2.5" />
                     </feComponentTransfer>
                     <feMerge>
                         <feMergeNode in="glow1" />
@@ -251,7 +1230,8 @@
 
     <div id="prematch-countdown-overlay">
         <div id="countdown-number">3</div>
-        <div style="font-family:'Montserrat'; font-size:1.2rem; color:#fff; letter-spacing:4px; margin-top:10px;">GET READY!</div>
+        <div style="font-family:'Montserrat'; font-size:1.2rem; color:#fff; letter-spacing:4px; margin-top:10px;">GET
+            READY!</div>
     </div>
 
     <div id="center-dice-container">
@@ -263,7 +1243,9 @@
     <div id="left-hud-wrapper">
         <div id="top-left-hud">
             <h1>
-                <span class="title-c">C</span><span class="title-o1">O</span><span class="title-l">L</span><span class="title-o2">O</span><span class="title-r">R</span><span class="title-g">G</span><span class="title-o3">O</span><span class="title-n">N</span>
+                <span class="title-c">C</span><span class="title-o1">O</span><span class="title-l">L</span><span
+                    class="title-o2">O</span><span class="title-r">R</span><span class="title-g">G</span><span
+                    class="title-o3">O</span><span class="title-n">N</span>
             </h1>
         </div>
         <div id="leaderboard-container">
@@ -300,44 +1282,53 @@
     <div id="settings-overlay" class="modal-overlay">
         <div class="modal-card">
             <h2 style="font-family:'Montserrat'; color:#2ecc71; margin-bottom:12px;">GAME SETTINGS ⚙️</h2>
-            
+
             <div class="setup-section-box">
                 <div style="font-size:0.8rem; font-weight:700; color:#2ecc71; margin-bottom:4px;">🔊 Audio Control</div>
                 <div class="setting-control-row">
                     <span class="setting-label">Music Volume 🎵</span>
-                    <input type="range" class="setting-slider music-vol-input" min="0" max="1" step="0.05" value="0.35" oninput="updateMusicVolume(this.value)">
+                    <input type="range" class="setting-slider music-vol-input" min="0" max="1" step="0.05" value="0.35"
+                        oninput="updateMusicVolume(this.value)">
                 </div>
                 <div class="setting-control-row">
                     <span class="setting-label">SFX Volume 🔔</span>
-                    <input type="range" class="setting-slider sfx-vol-input" min="0" max="1" step="0.05" value="1.0" oninput="updateSFXVolume(this.value)">
+                    <input type="range" class="setting-slider sfx-vol-input" min="0" max="1" step="0.05" value="1.0"
+                        oninput="updateSFXVolume(this.value)">
                 </div>
                 <div class="setting-control-row">
                     <span class="setting-label">Master Sound</span>
-                    <button class="setting-toggle-btn highlight-btn master-mute-toggle-btn" onclick="toggleMasterMute()">Unmuted 🔊</button>
+                    <button class="setting-toggle-btn highlight-btn master-mute-toggle-btn"
+                        onclick="toggleMasterMute()">Unmuted 🔊</button>
                 </div>
             </div>
 
             <div class="setup-section-box">
-                <div style="font-size:0.8rem; font-weight:700; color:#2ecc71; margin-bottom:4px;">✨ Visuals & Assists</div>
+                <div style="font-size:0.8rem; font-weight:700; color:#2ecc71; margin-bottom:4px;">✨ Visuals & Assists
+                </div>
                 <div class="setting-control-row">
                     <span class="setting-label">Space FX (Mist/Stars)</span>
-                    <button id="particles-toggle-btn" class="setting-toggle-btn highlight-btn" onclick="toggleParticleFX()">Enabled ON</button>
+                    <button id="particles-toggle-btn" class="setting-toggle-btn highlight-btn"
+                        onclick="toggleParticleFX()">Enabled ON</button>
                 </div>
                 <div class="setting-control-row">
                     <span class="setting-label">Legal Spot Guides 💡</span>
-                    <button id="guides-toggle-btn" class="setting-toggle-btn highlight-btn" onclick="toggleValidGuides()">Enabled ON</button>
+                    <button id="guides-toggle-btn" class="setting-toggle-btn highlight-btn"
+                        onclick="toggleValidGuides()">Enabled ON</button>
                 </div>
                 <div class="setting-control-row">
                     <span class="setting-label">Cinematic Pan 🎥</span>
-                    <button id="camera-toggle-btn" class="setting-toggle-btn highlight-btn" onclick="toggleCinematicCamera()">Enabled ON</button>
+                    <button id="camera-toggle-btn" class="setting-toggle-btn highlight-btn"
+                        onclick="toggleCinematicCamera()">Enabled ON</button>
                 </div>
             </div>
 
             <div style="display:flex; gap:10px; width:100%; margin-top:8px;">
-                <button onclick="startNewGameFromMenu(); toggleSettingsModal();" style="flex:1; background: linear-gradient(135deg, #e74c3c, #c0392b);">Start New Game 🔄</button>
+                <button onclick="startNewGameFromMenu(); toggleSettingsModal();"
+                    style="flex:1; background: linear-gradient(135deg, #e74c3c, #c0392b);">Start New Game 🔄</button>
                 <button class="secondary-btn" onclick="toggleFullscreen();" style="flex:1;">Fullscreen ⛶</button>
             </div>
-            <button onclick="toggleSettingsModal();" style="width:100%; margin-top:8px;" class="highlight-btn">Close Menu ✕</button>
+            <button onclick="toggleSettingsModal();" style="width:100%; margin-top:8px;" class="highlight-btn">Close
+                Menu ✕</button>
         </div>
     </div>
 
@@ -346,10 +1337,12 @@
             <h2 style="font-family:'Montserrat'; color:#3498db; margin-bottom:12px;">MATCH CHAT 💬</h2>
             <div id="chat-messages-log"></div>
             <div style="display:flex; gap:8px; width:100%; margin-top:10px;">
-                <input type="text" id="chat-input-text" placeholder="Type a message..." class="setup-input" style="flex:1;" onkeydown="if(event.key==='Enter') sendChatMessage();">
+                <input type="text" id="chat-input-text" placeholder="Type a message..." class="setup-input"
+                    style="flex:1;" onkeydown="if(event.key==='Enter') sendChatMessage();">
                 <button onclick="sendChatMessage()" class="highlight-btn">Send</button>
             </div>
-            <button onclick="toggleChatModal()" style="width:100%; margin-top:10px;" class="secondary-btn">Close Chat ✕</button>
+            <button onclick="toggleChatModal()" style="width:100%; margin-top:10px;" class="secondary-btn">Close Chat
+                ✕</button>
         </div>
     </div>
 
@@ -385,13 +1378,16 @@
         <div class="victory-card-inner">
             <div class="victory-trophy-icon">🏆</div>
             <h2 class="victory-winner-title" id="victory-banner-title">PLAYER 1 WINS!</h2>
-            <div style="font-size: 0.85rem; color: var(--text-dim);" id="victory-banner-subtitle">MATCH FINAL STANDINGS</div>
-            
+            <div style="font-size: 0.85rem; color: var(--text-dim);" id="victory-banner-subtitle">MATCH FINAL STANDINGS
+            </div>
+
             <div class="victory-standings-list" id="victory-banner-standings"></div>
 
             <div style="display: flex; gap: 10px; width: 100%; margin-top: 10px;">
-                <button onclick="confirmPlayerSetup(); hideVictoryBanner();" class="highlight-btn" style="flex:1;">Rematch 🚀</button>
-                <button onclick="hideVictoryBanner(); openPlayerSetup();" class="secondary-btn" style="flex:1;">Lobby Menu 🏠</button>
+                <button onclick="confirmPlayerSetup(); hideVictoryBanner();" class="highlight-btn"
+                    style="flex:1;">Rematch 🚀</button>
+                <button onclick="hideVictoryBanner(); openPlayerSetup();" class="secondary-btn" style="flex:1;">Lobby
+                    Menu 🏠</button>
             </div>
         </div>
     </div>
@@ -400,22 +1396,27 @@
         <div class="lobby-wrapper-grid">
             <div id="setup-card" class="modal-card">
                 <h2 style="font-family:'Montserrat'; color:#2ecc71; margin-bottom:12px;">COLORGON LOBBY</h2>
-                
-                <button id="lobby-mobile-audio-btn" class="secondary-btn" onclick="toggleMobileLobbyAudioPanel()">🔊 Audio Settings</button>
-                
+
+                <button id="lobby-mobile-audio-btn" class="secondary-btn" onclick="toggleMobileLobbyAudioPanel()">🔊
+                    Audio Settings</button>
+
                 <div id="mobile-lobby-audio-box" class="setup-section-box" style="display:none; margin-bottom:10px;">
-                    <div style="font-size:0.8rem; font-weight:700; color:#2ecc71; margin-bottom:4px;">🔊 Audio Control</div>
+                    <div style="font-size:0.8rem; font-weight:700; color:#2ecc71; margin-bottom:4px;">🔊 Audio Control
+                    </div>
                     <div class="setting-control-row">
                         <span class="setting-label">Music Volume 🎵</span>
-                        <input type="range" class="setting-slider music-vol-input" min="0" max="1" step="0.05" value="0.35" oninput="updateMusicVolume(this.value)">
+                        <input type="range" class="setting-slider music-vol-input" min="0" max="1" step="0.05"
+                            value="0.35" oninput="updateMusicVolume(this.value)">
                     </div>
                     <div class="setting-control-row">
                         <span class="setting-label">SFX Volume 🔔</span>
-                        <input type="range" class="setting-slider sfx-vol-input" min="0" max="1" step="0.05" value="1.0" oninput="updateSFXVolume(this.value)">
+                        <input type="range" class="setting-slider sfx-vol-input" min="0" max="1" step="0.05" value="1.0"
+                            oninput="updateSFXVolume(this.value)">
                     </div>
                     <div class="setting-control-row">
                         <span class="setting-label">Master Sound</span>
-                        <button class="setting-toggle-btn highlight-btn master-mute-toggle-btn" onclick="toggleMasterMute()">Unmuted 🔊</button>
+                        <button class="setting-toggle-btn highlight-btn master-mute-toggle-btn"
+                            onclick="toggleMasterMute()">Unmuted 🔊</button>
                     </div>
                 </div>
 
@@ -430,13 +1431,15 @@
                     <div style="font-size:0.8rem; font-weight:700; color:#2ecc71;">🌐 Create Online Room</div>
                     <div style="display:flex; gap:8px; align-items:center; margin-top:4px;">
                         <span style="font-size: 0.8rem; color: var(--text-dim);">Host Name:</span>
-                        <input type="text" id="host-player-name" value="Host (P1)" onfocus="this.select()" onchange="updateHostProfile()" class="setup-input" style="flex:1;">
+                        <input type="text" id="host-player-name" value="Host (P1)" onfocus="this.select()"
+                            onchange="updateHostProfile()" class="setup-input" style="flex:1;">
                     </div>
                     <div style="display:flex; gap:8px; align-items:center; margin-top:4px;">
                         <span style="font-size: 0.8rem; color: var(--text-dim);">Host Color:</span>
-                        <input type="color" id="host-player-color" value="#2ecc71" onchange="updateHostProfile()" class="setup-input" style="width:50px; padding:2px; height:38px;">
+                        <input type="color" id="host-player-color" value="#2ecc71" onchange="updateHostProfile()"
+                            class="setup-input" style="width:50px; padding:2px; height:38px;">
                     </div>
-                    
+
                     <div style="font-size: 0.8rem; color: var(--text-dim); margin-top:6px;">Match Mode & Target:</div>
                     <select id="win-condition-type" class="setup-select" onchange="handleTargetModeSelect('host')">
                         <option value="score">Target Score Mode</option>
@@ -445,15 +1448,17 @@
 
                     <div style="display: flex; align-items: center; gap: 8px; margin-top:2px;">
                         <span style="font-size: 0.8rem; color: var(--text-dim);">Goal Value:</span>
-                        <select id="host-target-preset" class="setup-select" style="flex:1;" onchange="handlePresetTargetChange('host')">
+                        <select id="host-target-preset" class="setup-select" style="flex:1;"
+                            onchange="handlePresetTargetChange('host')">
                             <option value="50">50 Points / Tiles</option>
                             <option value="100" selected>100 Points / Tiles</option>
                             <option value="150">150 Points / Tiles</option>
                             <option value="custom">Custom Value...</option>
                         </select>
-                        <input type="number" id="host-custom-target-val" value="100" class="setup-input" style="width:80px; display:none;">
+                        <input type="number" id="host-custom-target-val" value="100" class="setup-input"
+                            style="width:80px; display:none;">
                     </div>
-                    
+
                     <div style="display:flex; gap:8px; align-items:center; margin-top:4px;">
                         <span style="font-size: 0.8rem; color: var(--text-dim);">Hand Limit:</span>
                         <select id="host-hand-limit" class="setup-select" style="flex:1;">
@@ -485,75 +1490,97 @@
                     <div id="host-bots-wrapper" style="display:none; flex-direction:column; gap:4px; margin-top:6px;">
                         <div style="font-size:0.75rem; color:#2ecc71; font-weight:700;">AI Bots in Room:</div>
                         <div id="host-bots-list" style="display:flex; flex-direction:column; gap:4px;"></div>
-                        <button class="secondary-btn" onclick="addHostBotSlot()" style="width:100%; margin-top:4px; font-size:0.65rem;">+ Add AI Bot 🤖</button>
+                        <button class="secondary-btn" onclick="addHostBotSlot()"
+                            style="width:100%; margin-top:4px; font-size:0.65rem;">+ Add AI Bot 🤖</button>
                     </div>
 
-                    <div id="host-code-wrap" style="display:none; flex-direction:column; gap:4px; align-items:center; margin-top:8px;">
+                    <div id="host-code-wrap"
+                        style="display:none; flex-direction:column; gap:4px; align-items:center; margin-top:8px;">
                         <div style="font-size:0.7rem; color:var(--text-dim);">SHARE 4-DIGIT ROOM CODE:</div>
                         <div class="code-display" id="host-room-code">----</div>
-                        <div id="lobby-connected-count" style="font-size:0.75rem; color:#2ecc71; margin-top:4px;">Connected Players: 1</div>
+                        <div id="lobby-connected-count" style="font-size:0.75rem; color:#2ecc71; margin-top:4px;">
+                            Connected Players: 1</div>
                     </div>
 
-                    <div id="online-participants-list" style="display:none; flex-direction:column; gap:4px; margin-top:8px;"></div>
+                    <div id="online-participants-list"
+                        style="display:none; flex-direction:column; gap:4px; margin-top:8px;"></div>
 
-                    <button id="create-room-btn" onclick="startHostingRoom()" style="width:100%; margin-top:8px;">Create Room</button>
-                    <button id="start-hosted-game-btn" onclick="launchMultiplayerGame()" style="width:100%; margin-top:8px; display:none;" class="highlight-btn" disabled>Start Game 🚀 (Waiting for Ready)</button>
+                    <button id="create-room-btn" onclick="startHostingRoom()" style="width:100%; margin-top:8px;">Create
+                        Room</button>
+                    <button id="start-hosted-game-btn" onclick="launchMultiplayerGame()"
+                        style="width:100%; margin-top:8px; display:none;" class="highlight-btn" disabled>Start Game 🚀
+                        (Waiting for Ready)</button>
                 </div>
 
                 <!-- ONLINE JOIN TAB -->
                 <div id="panel-join" class="setup-section-box" style="display:none;">
                     <div style="font-size:0.8rem; font-weight:700; color:#2ecc71;">🔗 Join Online Room</div>
-                    
+
                     <div id="join-input-section">
                         <div style="display:flex; gap:8px; align-items:center;">
                             <span style="font-size: 0.8rem; color: var(--text-dim);">Your Name:</span>
-                            <input type="text" id="join-player-name" value="Player 2" onfocus="this.select()" class="setup-input" style="flex:1;">
+                            <input type="text" id="join-player-name" value="Player 2" onfocus="this.select()"
+                                class="setup-input" style="flex:1;">
                         </div>
                         <div style="display:flex; gap:8px; align-items:center; margin-top:4px;">
                             <span style="font-size: 0.8rem; color: var(--text-dim);">Theme:</span>
-                            <input type="color" id="join-player-color" value="#3498db" class="setup-input" style="width:50px; padding:2px; height:38px;">
+                            <input type="color" id="join-player-color" value="#3498db" class="setup-input"
+                                style="width:50px; padding:2px; height:38px;">
                         </div>
                         <div style="display:flex; gap:8px; align-items:center; margin-top:4px;">
                             <span style="font-size: 0.8rem; color: var(--text-dim);">4-Digit Code:</span>
-                            <input type="number" id="join-room-code-input" placeholder="1234" class="setup-input" style="flex:1; font-size:1.2rem; font-weight:900; letter-spacing:4px; text-align:center;" onfocus="this.select()">
+                            <input type="number" id="join-room-code-input" placeholder="1234" class="setup-input"
+                                style="flex:1; font-size:1.2rem; font-weight:900; letter-spacing:4px; text-align:center;"
+                                onfocus="this.select()">
                         </div>
-                        <div id="join-status-msg" style="font-size:0.75rem; color:#f1c40f; text-align:center; min-height:18px; margin-top:4px;"></div>
-                        <button id="join-btn" onclick="joinRoomByCode()" style="width:100%; margin-top:8px;">Join Room</button>
+                        <div id="join-status-msg"
+                            style="font-size:0.75rem; color:#f1c40f; text-align:center; min-height:18px; margin-top:4px;">
+                        </div>
+                        <button id="join-btn" onclick="joinRoomByCode()" style="width:100%; margin-top:8px;">Join
+                            Room</button>
                     </div>
 
                     <div id="join-lobby-section" style="display:none; flex-direction:column; gap:8px;">
-                        <div style="font-size:0.75rem; color:#2ecc71; text-align:center; font-weight:700;">CONNECTED TO ROOM LOBBY</div>
+                        <div style="font-size:0.75rem; color:#2ecc71; text-align:center; font-weight:700;">CONNECTED TO
+                            ROOM LOBBY</div>
                         <div id="joined-participants-list" style="display:flex; flex-direction:column; gap:4px;"></div>
-                        <button id="ready-toggle-btn" onclick="toggleReadyStatus()" style="width:100%; margin-top:8px;" class="highlight-btn">Ready Up 👍</button>
+                        <button id="ready-toggle-btn" onclick="toggleReadyStatus()" style="width:100%; margin-top:8px;"
+                            class="highlight-btn">Ready Up 👍</button>
                     </div>
                 </div>
 
                 <!-- LOCAL & BOTS TAB -->
                 <div id="panel-local" class="setup-section-box" style="display:none;">
                     <div style="font-size:0.8rem; font-weight:700; color:#2ecc71;">🎮 Single Device & AI Bots</div>
-                    <div id="local-player-slots-list" style="display: flex; flex-direction: column; gap: 4px; width: 100%;"></div>
-                    
+                    <div id="local-player-slots-list"
+                        style="display: flex; flex-direction: column; gap: 4px; width: 100%;"></div>
+
                     <div style="display:flex; gap:8px; margin-top:8px;">
-                        <button onclick="addLocalPlayerSlot('human')" style="flex:1; font-size:0.65rem; padding:6px;">+ Add Human</button>
-                        <button class="secondary-btn" onclick="addLocalPlayerSlot('bot')" style="flex:1; font-size:0.65rem; padding:6px;">+ Add AI Bot 🤖</button>
+                        <button onclick="addLocalPlayerSlot('human')" style="flex:1; font-size:0.65rem; padding:6px;">+
+                            Add Human</button>
+                        <button class="secondary-btn" onclick="addLocalPlayerSlot('bot')"
+                            style="flex:1; font-size:0.65rem; padding:6px;">+ Add AI Bot 🤖</button>
                     </div>
 
                     <div style="font-size: 0.8rem; color: var(--text-dim); margin-top:8px;">Local Game Options:</div>
-                    
-                    <select id="local-win-condition-type" class="setup-select" style="margin-top:2px;" onchange="handleTargetModeSelect('local')">
+
+                    <select id="local-win-condition-type" class="setup-select" style="margin-top:2px;"
+                        onchange="handleTargetModeSelect('local')">
                         <option value="score">Target Score Mode</option>
                         <option value="tiles">Tile Limit Mode</option>
                     </select>
 
                     <div style="display: flex; align-items: center; gap: 8px; margin-top:2px;">
                         <span style="font-size: 0.8rem; color: var(--text-dim);">Goal Value:</span>
-                        <select id="local-target-preset" class="setup-select" style="flex:1;" onchange="handlePresetTargetChange('local')">
+                        <select id="local-target-preset" class="setup-select" style="flex:1;"
+                            onchange="handlePresetTargetChange('local')">
                             <option value="50">50 Points / Tiles</option>
                             <option value="100" selected>100 Points / Tiles</option>
                             <option value="150">150 Points / Tiles</option>
                             <option value="custom">Custom Value...</option>
                         </select>
-                        <input type="number" id="local-custom-target-val" value="100" class="setup-input" style="width:80px; display:none;">
+                        <input type="number" id="local-custom-target-val" value="100" class="setup-input"
+                            style="width:80px; display:none;">
                     </div>
 
                     <div style="display:flex; gap:8px; align-items:center; margin-top:2px;">
@@ -583,25 +1610,30 @@
                         </select>
                     </div>
 
-                    <button onclick="confirmLocalSetup()" style="width:100%; margin-top:12px;" class="highlight-btn">Start Match 🚀</button>
+                    <button onclick="confirmLocalSetup()" style="width:100%; margin-top:12px;"
+                        class="highlight-btn">Start Match 🚀</button>
                 </div>
 
             </div>
 
             <!-- SIDE AUDIO PANEL IN GAME LOBBY SETUP -->
             <div id="lobby-side-audio-panel" class="setup-section-box" style="margin-bottom:0;">
-                <div style="font-size:0.85rem; font-weight:700; color:#2ecc71; margin-bottom:6px; text-align:center;">🔊 AUDIO SETTINGS</div>
+                <div style="font-size:0.85rem; font-weight:700; color:#2ecc71; margin-bottom:6px; text-align:center;">🔊
+                    AUDIO SETTINGS</div>
                 <div class="setting-control-row">
                     <span class="setting-label">Music Volume 🎵</span>
-                    <input type="range" class="setting-slider music-vol-input" min="0" max="1" step="0.05" value="0.35" oninput="updateMusicVolume(this.value)">
+                    <input type="range" class="setting-slider music-vol-input" min="0" max="1" step="0.05" value="0.35"
+                        oninput="updateMusicVolume(this.value)">
                 </div>
                 <div class="setting-control-row">
                     <span class="setting-label">SFX Volume 🔔</span>
-                    <input type="range" class="setting-slider sfx-vol-input" min="0" max="1" step="0.05" value="1.0" oninput="updateSFXVolume(this.value)">
+                    <input type="range" class="setting-slider sfx-vol-input" min="0" max="1" step="0.05" value="1.0"
+                        oninput="updateSFXVolume(this.value)">
                 </div>
                 <div class="setting-control-row">
                     <span class="setting-label">Master Sound</span>
-                    <button class="setting-toggle-btn highlight-btn master-mute-toggle-btn" onclick="toggleMasterMute()">Unmuted 🔊</button>
+                    <button class="setting-toggle-btn highlight-btn master-mute-toggle-btn"
+                        onclick="toggleMasterMute()">Unmuted 🔊</button>
                 </div>
             </div>
         </div>
@@ -621,7 +1653,7 @@
         let myPlayerId = 0;
 
         let winConditionType = 'score', winTargetValue = 100, targetHandSize = 3;
-        let voidDensitySetting = 'normal'; 
+        let voidDensitySetting = 'normal';
         let turnTimerDuration = 0, turnTimerInterval = null, turnTimeRemaining = 0;
         let localSecretHandEnabled = false;
 
@@ -642,7 +1674,7 @@
 
         let recentMatchWedges = new Set();
         let recentColorgonWedges = new Set();
-        let activeColorgonColor = null; 
+        let activeColorgonColor = null;
         let scoredColorgons = new Set();
         let newlyPlacedKey = null;
 
@@ -822,16 +1854,28 @@
             }
         }
 
+        // Global PeerJS ICE Server Configuration
+        const peerConfig = {
+            config: {
+                iceServers: [
+                    { urls: 'stun:stun.l.google.com:19302' },
+                    { urls: 'stun:stun1.l.google.com:19302' },
+                    { urls: 'stun:stun2.l.google.com:19302' }
+                ]
+            }
+        };
+
         function startHostingRoom() {
             isHost = true; myPlayerId = 0;
             roomCode = Math.floor(1000 + Math.random() * 9000).toString();
-            
+
             let hName = document.getElementById('host-player-name') ? document.getElementById('host-player-name').value.trim() : "Host (P1)";
             let hColor = document.getElementById('host-player-color') ? document.getElementById('host-player-color').value : "#2ecc71";
 
             try {
                 if (peer) peer.destroy();
-                peer = new Peer('COLORGON-NUM-' + roomCode);
+                // Updated with peerConfig
+                peer = new Peer('COLORGON-NUM-' + roomCode, peerConfig);
 
                 peer.on('open', () => {
                     document.getElementById('host-room-code').innerText = roomCode;
@@ -840,7 +1884,7 @@
                     document.getElementById('start-hosted-game-btn').style.display = 'block';
                     document.getElementById('online-participants-list').style.display = 'flex';
                     document.getElementById('host-bots-wrapper').style.display = 'flex';
-                    
+
                     playersList = [{ id: 0, name: hName || "Host (P1)", color: hColor || "#2ecc71", type: "human", isReady: true, score: 0, hand: [] }];
                     hostBotSlots = [];
                     renderHostBotSlots();
@@ -874,12 +1918,13 @@
 
             try {
                 if (peer) peer.destroy();
-                peer = new Peer();
-                
+                // Updated with peerConfig
+                peer = new Peer(peerConfig);
+
                 peer.on('open', () => {
                     document.getElementById('join-status-msg').innerText = "Connecting to room...";
                     hostConn = peer.connect('COLORGON-NUM-' + code);
-                    
+
                     hostConn.on('open', () => {
                         document.getElementById('join-input-section').style.display = 'none';
                         document.getElementById('join-lobby-section').style.display = 'flex';
@@ -896,7 +1941,6 @@
                 document.getElementById('join-status-msg').innerText = "WebRTC unavailable on file:// protocol.";
             }
         }
-
         function toggleReadyStatus() {
             isReady = !isReady;
             let btn = document.getElementById('ready-toggle-btn');
@@ -927,8 +1971,8 @@
                     });
                 } else if (data.type === 'ACTION_PLACE') { attemptPlacement(data.q, data.r, null, true, data.handIndex, data.tile); }
                 else if (data.type === 'ACTION_END_TURN') { endTurn(true); }
-                else if (data.type === 'ACTION_ROLL') { 
-                    executeDiceRollAnimation(); 
+                else if (data.type === 'ACTION_ROLL') {
+                    executeDiceRollAnimation();
                     if (connections.length > 0) {
                         connections.forEach(c => {
                             c.send({ type: 'TRIGGER_ROLL' });
@@ -937,10 +1981,10 @@
                 }
             } else {
                 if (data.type === 'ASSIGN_ID') { myPlayerId = Number(data.myPlayerId); }
-                else if (data.type === 'LOBBY_UPDATE') { 
-                    playersList = data.playersList; 
+                else if (data.type === 'LOBBY_UPDATE') {
+                    playersList = data.playersList;
                     renderJoinedParticipants();
-                    updateUI(); 
+                    updateUI();
                 }
                 else if (data.type === 'START_GAME') { applySyncedState(data.state); document.getElementById('tutorial-overlay').classList.remove('visible'); }
                 else if (data.type === 'SYNC_STATE') { applySyncedState(data.state); }
@@ -1015,7 +2059,7 @@
 
         function applySyncedState(state) {
             grid = new Map(state.grid);
-            
+
             if (state.playersList) {
                 state.playersList.forEach((incomingP, idx) => {
                     if (playersList[idx]) {
@@ -1030,17 +2074,17 @@
             }
 
             activePlayerIdx = Number(state.activePlayerIdx);
-            playsLeft = state.playsLeft; 
+            playsLeft = state.playsLeft;
             tilesPlayedThisTurn = state.tilesPlayedThisTurn;
-            hasRolledDiceThisTurn = state.hasRolledDiceThisTurn; 
+            hasRolledDiceThisTurn = state.hasRolledDiceThisTurn;
             diceActive = state.diceActive;
             if (state.lastDiceValues) lastDiceValues = state.lastDiceValues;
 
-            renderBoard(); 
-            renderHand(); 
-            updateUI(); 
+            renderBoard();
+            renderHand();
+            updateUI();
             checkNoMoreMoves();
-            
+
             if (hasRolledDiceThisTurn) {
                 hideTurnAnnouncement();
             } else {
@@ -1058,12 +2102,12 @@
 
             document.getElementById('tutorial-overlay').classList.remove('visible');
             grid.clear(); placeTile(0, 0, generateStarterTile());
-            playersList.forEach(p => { 
+            playersList.forEach(p => {
                 p.hand = [];
-                for(let i=0; i<targetHandSize; i++) p.hand.push(generateRandomTile());
+                for (let i = 0; i < targetHandSize; i++) p.hand.push(generateRandomTile());
             });
             activePlayerIdx = 0;
-            let state = { grid: Array.from(grid.entries()), playersList, activePlayerIdx, winConditionType, winTargetValue, playsLeft: 2, tilesPlayedThisTurn: 0, hasRolledDiceThisTurn: false, diceActive: [], lastDiceValues: {r:1, b:1, y:1} };
+            let state = { grid: Array.from(grid.entries()), playersList, activePlayerIdx, winConditionType, winTargetValue, playsLeft: 2, tilesPlayedThisTurn: 0, hasRolledDiceThisTurn: false, diceActive: [], lastDiceValues: { r: 1, b: 1, y: 1 } };
             connections.forEach(conn => conn.send({ type: 'START_GAME', state }));
             renderBoard(); renderHand(); updateUI(); startTurnLogic();
         }
@@ -1165,10 +2209,10 @@
                     x: Math.random() * bgCanvas.width * 0.8,
                     y: Math.random() * bgCanvas.height * 0.4,
                     len: Math.random() * 70 + 50,
-                    speed: Math.random() * 1.4 + 1.8, 
+                    speed: Math.random() * 1.4 + 1.8,
                     angle: Math.PI / 4 + (Math.random() - 0.5) * 0.2,
                     life: 0,
-                    maxLife: Math.floor(Math.random() * 100 + 120) 
+                    maxLife: Math.floor(Math.random() * 100 + 120)
                 });
             }
         }
@@ -1183,7 +2227,7 @@
                 const size = 40, w = size * 1.5, h = size * Math.sqrt(3);
                 let px = cx + (w * q) * currentBoardScale;
                 let py = cy + (h * (r + q / 2)) * currentBoardScale;
-                
+
                 let dirAngle = Math.random() * Math.PI * 2;
                 let driftSpeed = Math.random() * 0.4 + 0.15;
 
@@ -1247,8 +2291,8 @@
                 if (orb.x < -100 || orb.x > bgCanvas.width + 100) orb.vx *= -1;
                 if (orb.y < -100 || orb.y > bgCanvas.height + 100) orb.vy *= -1;
                 let grad = bgCtx.createRadialGradient(orb.x, orb.y, 0, orb.x, orb.y, orb.r);
-                grad.addColorStop(0, `hsla(${orb.hue}, 90%, 65%, 0.18)`); 
-                grad.addColorStop(0.5, `hsla(${orb.hue}, 85%, 50%, 0.08)`); 
+                grad.addColorStop(0, `hsla(${orb.hue}, 90%, 65%, 0.18)`);
+                grad.addColorStop(0.5, `hsla(${orb.hue}, 85%, 50%, 0.08)`);
                 grad.addColorStop(1, 'hsla(0, 0%, 0%, 0)');
                 bgCtx.fillStyle = grad; bgCtx.beginPath(); bgCtx.arc(orb.x, orb.y, orb.r, 0, Math.PI * 2); bgCtx.fill();
             });
@@ -1297,7 +2341,7 @@
 
         // MP3 AUDIO MUSIC ENGINE
         let musicPlaying = true;
-        
+
         const bgmPlaylist = [
             "Charting_the_Periphery.mp3",
             "Patterns_Of_A_Distant_Sun.mp3",
@@ -1323,7 +2367,7 @@
             player.onended = () => {
                 currentTrackIdx = (currentTrackIdx + 1) % bgmPlaylist.length;
                 player.src = bgmPlaylist[currentTrackIdx];
-                if (musicPlaying && !masterSoundMuted) player.play().catch(() => {});
+                if (musicPlaying && !masterSoundMuted) player.play().catch(() => { });
             };
 
             player.onerror = () => {
@@ -1333,15 +2377,15 @@
 
         window.addEventListener('pointerdown', () => {
             getAudioContext();
-            
+
             // AUTO FULLSCREEN DEFAULT ON FIRST INTERACTION
             if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen().catch(() => {});
+                document.documentElement.requestFullscreen().catch(() => { });
             }
 
             const player = document.getElementById('bgm-player');
             if (player && musicPlaying && !masterSoundMuted && player.paused) {
-                player.play().catch(() => {});
+                player.play().catch(() => { });
             }
         }, { once: false });
 
@@ -1369,7 +2413,7 @@
                 if (masterSoundMuted) {
                     player.pause();
                 } else if (musicPlaying) {
-                    player.play().catch(() => {});
+                    player.play().catch(() => { });
                 }
             }
         }
@@ -1404,7 +2448,7 @@
             if (btn) btn.innerText = musicPlaying ? "Music On 🎵" : "Music Off 🔇";
             if (player) {
                 if (musicPlaying && !masterSoundMuted) {
-                    player.play().catch(() => {});
+                    player.play().catch(() => { });
                 } else {
                     player.pause();
                 }
@@ -1418,7 +2462,7 @@
 
         function getDieSVG(val, colorHex) {
             let svg = `<svg width="100%" height="100%" viewBox="0 0 100 100" style="background:${colorHex}; border-radius:6px;">`;
-            const coords = { 1: [{cx:50, cy:50}], 2: [{cx:25, cy:25}, {cx:75, cy:75}], 3: [{cx:25, cy:25}, {cx:50, cy:50}, {cx:75, cy:75}], 4: [{cx:25, cy:25}, {cx:75, cy:25}, {cx:25, cy:75}, {cx:75, cy:75}], 5: [{cx:25, cy:25}, {cx:75, cy:25}, {cx:50, cy:50}, {cx:25, cy:75}, {cx:75, cy:75}], 6: [{cx:25, cy:25}, {cx:75, cy:25}, {cx:25, cy:50}, {cx:75, cy:50}, {cx:25, cy:75}, {cx:75, cy:75}] };
+            const coords = { 1: [{ cx: 50, cy: 50 }], 2: [{ cx: 25, cy: 25 }, { cx: 75, cy: 75 }], 3: [{ cx: 25, cy: 25 }, { cx: 50, cy: 50 }, { cx: 75, cy: 75 }], 4: [{ cx: 25, cy: 25 }, { cx: 75, cy: 25 }, { cx: 25, cy: 75 }, { cx: 75, cy: 75 }], 5: [{ cx: 25, cy: 25 }, { cx: 75, cy: 25 }, { cx: 50, cy: 50 }, { cx: 25, cy: 75 }, { cx: 75, cy: 75 }], 6: [{ cx: 25, cy: 25 }, { cx: 75, cy: 25 }, { cx: 25, cy: 50 }, { cx: 75, cy: 50 }, { cx: 25, cy: 75 }, { cx: 75, cy: 75 }] };
             if (coords[val]) coords[val].forEach(p => { svg += `<circle cx="${p.cx}" cy="${p.cy}" r="12" fill="white" />`; });
             return svg + `</svg>`;
         }
@@ -1482,7 +2526,7 @@
                 let now = ctx.currentTime;
                 const baseFreqs = [523.25, 659.25, 783.99, 1046.50, 1318.51];
                 let freq = baseFreqs[stepIndex % baseFreqs.length];
-                
+
                 [freq, freq * 1.5].forEach((f) => {
                     let osc = ctx.createOscillator(), gain = ctx.createGain();
                     osc.type = 'sine';
@@ -1493,30 +2537,30 @@
                     osc.start(now); osc.stop(now + 0.3);
                 });
             },
-            cardAnnounce() { 
+            cardAnnounce() {
                 if (masterSoundMuted || sfxVolume <= 0) return;
-                let ctx = getAudioContext(); if (!ctx) return; 
+                let ctx = getAudioContext(); if (!ctx) return;
                 let now = ctx.currentTime;
-                let osc = ctx.createOscillator(), gain = ctx.createGain(); 
-                osc.type = 'sine'; 
-                osc.frequency.setValueAtTime(320, now); 
-                osc.frequency.exponentialRampToValueAtTime(640, now + 0.18); 
-                gain.gain.setValueAtTime(0.25 * sfxVolume, now); 
-                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.18); 
-                osc.connect(gain); gain.connect(ctx.destination); 
-                osc.start(now); osc.stop(now + 0.18); 
+                let osc = ctx.createOscillator(), gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(320, now);
+                osc.frequency.exponentialRampToValueAtTime(640, now + 0.18);
+                gain.gain.setValueAtTime(0.25 * sfxVolume, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.18);
+                osc.connect(gain); gain.connect(ctx.destination);
+                osc.start(now); osc.stop(now + 0.18);
             },
-            diceRoll() { 
+            diceRoll() {
                 if (masterSoundMuted || sfxVolume <= 0) return;
-                let ctx = getAudioContext(); if (!ctx) return; 
+                let ctx = getAudioContext(); if (!ctx) return;
                 let now = ctx.currentTime;
-                let osc = ctx.createOscillator(), gain = ctx.createGain(); 
-                osc.type = 'triangle'; 
-                osc.frequency.setValueAtTime(250 + Math.random() * 200, now); 
-                gain.gain.setValueAtTime(0.18 * sfxVolume, now); 
-                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05); 
-                osc.connect(gain); gain.connect(ctx.destination); 
-                osc.start(now); osc.stop(now + 0.05); 
+                let osc = ctx.createOscillator(), gain = ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(250 + Math.random() * 200, now);
+                gain.gain.setValueAtTime(0.18 * sfxVolume, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+                osc.connect(gain); gain.connect(ctx.destination);
+                osc.start(now); osc.stop(now + 0.05);
             },
             hover() {
                 if (masterSoundMuted || sfxVolume <= 0) return;
@@ -1627,7 +2671,7 @@
             function step(now) {
                 let elapsed = now - startTime;
                 let progress = Math.min(1, elapsed / duration);
-                let ease = 1 - Math.pow(1 - progress, 3); 
+                let ease = 1 - Math.pow(1 - progress, 3);
                 panX = startX + (targetPanX - startX) * ease;
                 panY = startY + (targetPanY - startY) * ease;
                 currentBoardScale = startScale + (targetScale - startScale) * ease;
@@ -1645,8 +2689,8 @@
             animateCamera(-unscaledX * scale, -unscaledY * scale, scale, 500);
         }
 
-        function zoomIn() { zoomAtPoint(window.innerWidth/2, window.innerHeight/2, Math.min(2.2, currentBoardScale + 0.15)); }
-        function zoomOut() { zoomAtPoint(window.innerWidth/2, window.innerHeight/2, Math.max(0.4, currentBoardScale - 0.15)); }
+        function zoomIn() { zoomAtPoint(window.innerWidth / 2, window.innerHeight / 2, Math.min(2.2, currentBoardScale + 0.15)); }
+        function zoomOut() { zoomAtPoint(window.innerWidth / 2, window.innerHeight / 2, Math.max(0.4, currentBoardScale - 0.15)); }
 
         function startTurnTimer() {
             stopTurnTimer();
@@ -1660,7 +2704,7 @@
 
             if (container) container.style.display = 'block';
             turnTimeRemaining = turnTimerDuration;
-            
+
             if (bar) {
                 bar.style.width = '100%';
                 bar.style.backgroundColor = '#2ecc71';
@@ -1669,7 +2713,7 @@
             turnTimerInterval = setInterval(() => {
                 turnTimeRemaining--;
                 let pct = (turnTimeRemaining / turnTimerDuration) * 100;
-                
+
                 if (bar) {
                     bar.style.width = `${Math.max(0, pct)}%`;
                     if (pct < 30) bar.style.backgroundColor = '#e74c3c';
@@ -1710,8 +2754,8 @@
                 grid.forEach((_, k) => {
                     let [q, r] = k.split(',').map(Number);
                     neighbors.forEach(n => {
-                        let nk = `${q+n.dq},${r+n.dr}`;
-                        if (!grid.has(nk) && !isSpaceBlockedByBlack(q+n.dq, r+n.dr)) emptySpots.push({q: q+n.dq, r: r+n.dr});
+                        let nk = `${q + n.dq},${r + n.dr}`;
+                        if (!grid.has(nk) && !isSpaceBlockedByBlack(q + n.dq, r + n.dr)) emptySpots.push({ q: q + n.dq, r: r + n.dr });
                     });
                 });
 
@@ -1749,10 +2793,10 @@
             if (centerContainer) { centerContainer.classList.remove('visible'); centerContainer.style.display = 'none'; }
             if (!el) return;
             let curP = playersList[activePlayerIdx];
-            
+
             let canRoll = (!hasRolledDiceThisTurn && (!peer || Number(curP.id) === Number(myPlayerId)));
-            let btnHTML = canRoll 
-                ? `<button id="billboard-roll-btn" class="highlight-btn" onclick="triggerManualRoll()" style="margin-top: 14px; font-size: 0.85rem; padding: 8px 18px; position: relative; z-index: 700;">ROLL DICE 🎲</button>` 
+            let btnHTML = canRoll
+                ? `<button id="billboard-roll-btn" class="highlight-btn" onclick="triggerManualRoll()" style="margin-top: 14px; font-size: 0.85rem; padding: 8px 18px; position: relative; z-index: 700;">ROLL DICE 🎲</button>`
                 : '';
 
             el.style.borderColor = curP.color;
@@ -1761,8 +2805,8 @@
                                 <span>${curP.type.toUpperCase()} TURN</span>
                             </div>
                             <div>IT'S <span style="color:${curP.color};">${curP.name.toUpperCase()}</span>'S TURN!</div>${btnHTML}`;
-            
-            SFX.cardAnnounce(); 
+
+            SFX.cardAnnounce();
             el.classList.remove('hide-billboard'); el.classList.add('show-billboard');
 
             if (curP.type === 'bot' && !isGameOver && (isHost || !peer)) {
@@ -1784,8 +2828,8 @@
             grid.forEach((_, k) => {
                 let [q, r] = k.split(',').map(Number);
                 neighbors.forEach(n => {
-                    let nk = `${q+n.dq},${r+n.dr}`;
-                    if (!grid.has(nk) && !isSpaceBlockedByBlack(q+n.dq, r+n.dr)) emptySpots.push({q: q+n.dq, r: r+n.dr});
+                    let nk = `${q + n.dq},${r + n.dr}`;
+                    if (!grid.has(nk) && !isSpaceBlockedByBlack(q + n.dq, r + n.dr)) emptySpots.push({ q: q + n.dq, r: r + n.dr });
                 });
             });
 
@@ -1827,7 +2871,7 @@
             if (el) { el.classList.remove('show-billboard'); el.classList.add('hide-billboard'); }
         }
 
-        function triggerManualRoll() { 
+        function triggerManualRoll() {
             if (hasRolledDiceThisTurn || isGameOver) return;
             if (peer && !isHost) {
                 hostConn.send({ type: 'ACTION_ROLL' });
@@ -1837,7 +2881,7 @@
                 connections.forEach(c => c.send({ type: 'TRIGGER_ROLL' }));
             }
             isRolling = false; isAnimating = false;
-            executeDiceRollAnimation(); 
+            executeDiceRollAnimation();
         }
 
         function startNewGameFromMenu() {
@@ -1850,7 +2894,7 @@
             newlyPlacedKey = null;
             activePreviewSocketKey = null;
             isGameOver = false;
-            
+
             let btn = document.getElementById('end-turn-btn');
             if (btn) btn.classList.remove('pulse-end-turn');
             let toast = document.getElementById('no-moves-toast');
@@ -1859,10 +2903,10 @@
             if (playersList.length > 0) {
                 playersList.forEach(p => { p.score = 0; p.hand = []; });
             }
-            
+
             panX = 0; panY = 0; currentBoardScale = 1.0;
             updateMasterPanTransform();
-            
+
             openPlayerSetup();
         }
 
@@ -1872,7 +2916,7 @@
             placeTile(0, 0, generateStarterTile());
             totalTilesPlaced = 0; isGameOver = false; panX = 0; panY = 0; currentBoardScale = 1.0;
             activePreviewSocketKey = null;
-            
+
             let btn = document.getElementById('end-turn-btn');
             if (btn) btn.classList.remove('pulse-end-turn');
             let toast = document.getElementById('no-moves-toast');
@@ -1885,13 +2929,13 @@
             let curP = playersList[activePlayerIdx];
             while (curP.hand.length < targetHandSize) curP.hand.push(generateRandomTile());
             hasRolledDiceThisTurn = false;
-            
+
             // STRICT GAME RULE: 2 PLAYS ON VERY FIRST PLACEMENT OF GAME, 1 PLAY ON SUBSEQUENT TURNS
-            playsLeft = (totalTilesPlaced === 0) ? 2 : 1; 
+            playsLeft = (totalTilesPlaced === 0) ? 2 : 1;
             tilesPlayedThisTurn = 0; selectedHandIndex = -1;
             recentMatchWedges.clear(); recentColorgonWedges.clear(); activeColorgonColor = null; newlyPlacedKey = null;
             activePreviewSocketKey = null;
-            
+
             let btn = document.getElementById('end-turn-btn');
             if (btn) btn.classList.remove('pulse-end-turn');
             let toast = document.getElementById('no-moves-toast');
@@ -1902,8 +2946,8 @@
         }
 
         async function executeDiceRollAnimation() {
-            isRolling = true; 
-            hideTurnAnnouncement(); 
+            isRolling = true;
+            hideTurnAnnouncement();
             await sleep(100);
 
             let centerContainer = document.getElementById('center-dice-container');
@@ -1916,7 +2960,7 @@
                 if (dieR) dieR.innerHTML = getDieSVG(randR, colorMap['r']);
                 if (dieB) dieB.innerHTML = getDieSVG(randB, colorMap['b']);
                 if (dieY) dieY.innerHTML = getDieSVG(randY, colorMap['y']);
-                if (SFX.diceRoll) SFX.diceRoll(); 
+                if (SFX.diceRoll) SFX.diceRoll();
             }, 60);
 
             await sleep(600); clearInterval(rollInterval);
@@ -1944,8 +2988,8 @@
         function rotateSelectedTileCW() {
             if (selectedHandIndex === -1 || !hasRolledDiceThisTurn) return;
             let curP = playersList[activePlayerIdx];
-            let tile = curP.hand[selectedHandIndex]; 
-            tile.unshift(tile.pop()); SFX.rotate(); 
+            let tile = curP.hand[selectedHandIndex];
+            tile.unshift(tile.pop()); SFX.rotate();
 
             let selectedTileSvg = document.querySelectorAll('.hand-tile')[selectedHandIndex];
             if (selectedTileSvg) {
@@ -1966,8 +3010,8 @@
         function rotateSelectedTileCCW() {
             if (selectedHandIndex === -1 || !hasRolledDiceThisTurn) return;
             let curP = playersList[activePlayerIdx];
-            let tile = curP.hand[selectedHandIndex]; 
-            tile.push(tile.shift()); SFX.rotate(); 
+            let tile = curP.hand[selectedHandIndex];
+            tile.push(tile.shift()); SFX.rotate();
 
             let selectedTileSvg = document.querySelectorAll('.hand-tile')[selectedHandIndex];
             if (selectedTileSvg) {
@@ -2002,7 +3046,7 @@
                 return;
             }
 
-            isAnimating = true; SFX.place(); 
+            isAnimating = true; SFX.place();
             recentMatchWedges.clear(); recentColorgonWedges.clear(); activeColorgonColor = null; newlyPlacedKey = `${q},${r}`;
             activePreviewSocketKey = null;
 
@@ -2015,8 +3059,8 @@
             placeTile(q, r, tile);
             curP.hand.splice(tileIdx, 1);
             selectedHandIndex = -1;
-            tilesPlayedThisTurn++; totalTilesPlaced++; 
-            
+            tilesPlayedThisTurn++; totalTilesPlaced++;
+
             // DECREMENT BASE PLAY COUNTER FOR TILE PLACEMENT
             playsLeft--;
 
@@ -2030,7 +3074,7 @@
             if (val.matches >= 2) {
                 matchPts = val.matches;
                 // STRICT RULE: AWARD +1 EXTRA PLAY ONLY WHEN MATCHING 2 OR MORE SIDES
-                playsLeft++; 
+                playsLeft++;
                 let matchColorHex = curP.color;
 
                 recentMatchWedges.clear();
@@ -2039,10 +3083,10 @@
                     recentMatchWedges.add(`${m.neighborQ},${m.neighborR},${m.neighborDir}`);
                 });
 
-                renderBoard(); 
+                renderBoard();
                 SFX.sideMatch(val.matches);
                 spawnSVGText(q, r, `+${matchPts}`, 36, matchColorHex, 900);
-                
+
                 if (isHost) {
                     broadcastAnimationEvent({
                         type: 'ANIM_MATCH_BURST', q, r,
@@ -2063,14 +3107,14 @@
             if (colorgonData.points > 0) {
                 let origPanX = panX, origPanY = panY, origScale = currentBoardScale;
                 for (let gInfo of colorgonData.groups) {
-                    activeColorgonColor = gInfo.targetColor; 
+                    activeColorgonColor = gInfo.targetColor;
                     let gColorHex = vibrantColorMap[gInfo.targetColor] || colorMap[gInfo.targetColor];
                     recentColorgonWedges.clear();
-                    
+
                     let sumQ = 0, sumR = 0;
                     gInfo.wedges.forEach(wId => { let pts = wId.split(','); sumQ += Number(pts[0]); sumR += Number(pts[1]); });
                     let avgQ = sumQ / gInfo.wedges.length, avgR = sumR / gInfo.wedges.length;
-                    
+
                     centerCameraOn(avgQ, avgR, Math.max(currentBoardScale, 1.4));
                     await sleep(400);
 
@@ -2078,11 +3122,11 @@
                     for (let wId of gInfo.wedges) {
                         let parts = wId.split(',');
                         let wq = Number(parts[0]), wr = Number(parts[1]), wdir = Number(parts[2]);
-                        recentColorgonWedges.add(`${wq},${wr},${wdir}`); 
-                        renderBoard(); 
+                        recentColorgonWedges.add(`${wq},${wr},${wdir}`);
+                        renderBoard();
                         SFX.wedgeStep(stepCount);
                         spawnSVGText(wq, wr, "+1", 22, gColorHex, 700);
-                        
+
                         if (isHost) {
                             broadcastAnimationEvent({
                                 type: 'ANIM_COLORGON_STEP', targetColor: gInfo.targetColor,
@@ -2094,7 +3138,7 @@
                     }
 
                     await sleep(200); SFX.colorgonChord(gInfo.wedges.length);
-                    
+
                     if (isHost) {
                         broadcastAnimationEvent({ type: 'ANIM_COLORGON_COMPLETE', wedgesCount: gInfo.wedges.length });
                         broadcastAnimationEvent({ type: 'ANIM_SWOOSH', q: avgQ, r: avgR, text: `+${gInfo.wedges.length} COLORGON!`, styleType: 'float-colorgon', colorHex: gColorHex });
@@ -2110,7 +3154,7 @@
 
             isAnimating = false;
 
-            if (winConditionType === 'score' && curP.score >= winTargetValue) { triggerVictoryScreen(); return; } 
+            if (winConditionType === 'score' && curP.score >= winTargetValue) { triggerVictoryScreen(); return; }
             else if (winConditionType === 'tiles' && totalTilesPlaced >= winTargetValue) { triggerVictoryScreen(); return; }
 
             checkNoMoreMoves();
@@ -2128,7 +3172,7 @@
                         let wedgeColor = tile[dir], wedgeId = `${q},${r},${dir}`;
                         if (visited.has(wedgeId) || (wedgeColor !== targetColor && wedgeColor !== 'w')) continue;
 
-                        let stack = [ {q, r, dir} ], componentGroup = [], canExpand = false;
+                        let stack = [{ q, r, dir }], componentGroup = [], canExpand = false;
                         while (stack.length > 0) {
                             let curr = stack.pop(), cid = `${curr.q},${curr.r},${curr.dir}`;
                             if (visited.has(cid)) continue;
@@ -2136,13 +3180,13 @@
 
                             let d1 = (curr.dir + 1) % 6, d2 = (curr.dir + 5) % 6;
                             let tTile = grid.get(`${curr.q},${curr.r}`);
-                            if (tTile[d1] === targetColor || tTile[d1] === 'w') stack.push({q: curr.q, r: curr.r, dir: d1});
-                            if (tTile[d2] === targetColor || tTile[d2] === 'w') stack.push({q: curr.q, r: curr.r, dir: d2});
+                            if (tTile[d1] === targetColor || tTile[d1] === 'w') stack.push({ q: curr.q, r: curr.r, dir: d1 });
+                            if (tTile[d2] === targetColor || tTile[d2] === 'w') stack.push({ q: curr.q, r: curr.r, dir: d2 });
 
                             let n = neighbors[curr.dir], nq = curr.q + n.dq, nr = curr.r + n.dr, nKey = `${nq},${nr}`;
                             if (grid.has(nKey)) {
                                 let oppColor = grid.get(nKey)[n.opp];
-                                if (oppColor === targetColor || oppColor === 'w') stack.push({q: nq, r: nr, dir: n.opp});
+                                if (oppColor === targetColor || oppColor === 'w') stack.push({ q: nq, r: nr, dir: n.opp });
                             } else { if (!isSpaceBlockedByBlack(nq, nr)) canExpand = true; }
                         }
 
@@ -2207,7 +3251,7 @@
             if (!masterPan) { masterPan = document.createElementNS('http://www.w3.org/2000/svg', 'g'); masterPan.id = 'master-pan'; board.appendChild(masterPan); }
             masterPan.innerHTML = '';
 
-            const cx = window.innerWidth / 2, cy = window.innerHeight / 2, size = 40, w = size * 1.5, h = size * Math.sqrt(3);   
+            const cx = window.innerWidth / 2, cy = window.innerHeight / 2, size = 40, w = size * 1.5, h = size * Math.sqrt(3);
             updateMasterPanTransform();
 
             let socketsLayer = document.createElementNS('http://www.w3.org/2000/svg', 'g');
@@ -2219,7 +3263,7 @@
             let empty = new Set();
             grid.forEach((_, k) => {
                 let [q, r] = k.split(',').map(Number);
-                neighbors.forEach(n => { let nk = `${q+n.dq},${r+n.dr}`; if (!grid.has(nk)) empty.add(nk); });
+                neighbors.forEach(n => { let nk = `${q + n.dq},${r + n.dr}`; if (!grid.has(nk)) empty.add(nk); });
             });
 
             let curP = playersList[activePlayerIdx];
@@ -2230,7 +3274,7 @@
 
             empty.forEach(k => {
                 let [q, r] = k.split(',').map(Number);
-                let x = cx + w * q, y = cy + h * (r + q/2);
+                let x = cx + w * q, y = cy + h * (r + q / 2);
                 let spotKey = `${q},${r}`;
 
                 if (isSpaceBlockedByBlack(q, r)) {
@@ -2239,7 +3283,7 @@
 
                     let lip = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
                     lip.setAttribute('points', "20,-34.64 40,0 20,34.64 -20,34.64 -40,0 -20,-34.64");
-                    lip.setAttribute('fill', 'rgba(20, 10, 20, 0.95)'); 
+                    lip.setAttribute('fill', 'rgba(20, 10, 20, 0.95)');
                     lip.setAttribute('stroke-width', '2.5'); lip.classList.add('void-neon-pulse'); g.appendChild(lip);
 
                     let voidHex = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
@@ -2248,8 +3292,8 @@
                     g.appendChild(voidHex);
 
                     let text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-                    text.setAttribute('x', '0'); text.setAttribute('y', '8'); text.setAttribute('text-anchor', 'middle'); 
-                    text.setAttribute('fill', '#ff2a4b'); text.setAttribute('font-size', '26'); text.setAttribute('font-weight', '900'); 
+                    text.setAttribute('x', '0'); text.setAttribute('y', '8'); text.setAttribute('text-anchor', 'middle');
+                    text.setAttribute('fill', '#ff2a4b'); text.setAttribute('font-size', '26'); text.setAttribute('font-weight', '900');
                     text.classList.add('void-neon-pulse'); text.textContent = '✕';
                     g.appendChild(text); socketsLayer.appendChild(g); return;
                 }
@@ -2260,17 +3304,17 @@
                     let hexSpot = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
                     hexSpot.setAttribute('points', "20,-34.64 40,0 20,34.64 -20,34.64 -40,0 -20,-34.64");
                     hexSpot.setAttribute('transform', `translate(${x}, ${y})`);
-                    hexSpot.setAttribute('fill', spotKey === activePreviewSocketKey ? 'rgba(46, 204, 113, 0.35)' : 'rgba(46, 204, 113, 0.18)'); 
-                    hexSpot.setAttribute('stroke', spotKey === activePreviewSocketKey ? 'rgba(46, 204, 113, 0.9)' : 'rgba(46, 204, 113, 0.45)'); 
+                    hexSpot.setAttribute('fill', spotKey === activePreviewSocketKey ? 'rgba(46, 204, 113, 0.35)' : 'rgba(46, 204, 113, 0.18)');
+                    hexSpot.setAttribute('stroke', spotKey === activePreviewSocketKey ? 'rgba(46, 204, 113, 0.9)' : 'rgba(46, 204, 113, 0.45)');
                     hexSpot.setAttribute('stroke-width', spotKey === activePreviewSocketKey ? '2.5' : '1.5');
-                    hexSpot.classList.add('legal-spot-active'); 
+                    hexSpot.classList.add('legal-spot-active');
                     socketsLayer.appendChild(hexSpot);
                 }
 
                 if (isTouchDevice && isLegalSpotForCurrentTile && activePreviewSocketKey === spotKey) {
                     let previewGroup = createHexGroup(activeSelectedTile, q, r);
                     previewGroup.setAttribute('transform', `translate(${x}, ${y})`);
-                    previewGroup.style.pointerEvents = 'none'; 
+                    previewGroup.style.pointerEvents = 'none';
                     let innerG = previewGroup.querySelector('g');
                     if (innerG) { innerG.classList.add('hover-preview-animated'); innerG.style.pointerEvents = 'none'; }
                     topActiveLayer.appendChild(previewGroup);
@@ -2288,26 +3332,26 @@
                         if (isLegalSpotForCurrentTile) {
                             SFX.hover(); previewGroup = createHexGroup(activeSelectedTile, q, r);
                             previewGroup.setAttribute('transform', `translate(${x}, ${y})`);
-                            previewGroup.style.pointerEvents = 'none'; 
+                            previewGroup.style.pointerEvents = 'none';
                             let innerG = previewGroup.querySelector('g');
                             if (innerG) { innerG.classList.add('hover-preview-animated'); innerG.style.pointerEvents = 'none'; }
                             topActiveLayer.appendChild(previewGroup);
                         }
                     };
                     hitArea.onmouseleave = () => { if (previewGroup) { previewGroup.remove(); previewGroup = null; } };
-                    hitArea.onclick = () => { 
-                        if (hasDragged) return; 
+                    hitArea.onclick = () => {
+                        if (hasDragged) return;
                         if (!isLegalSpotForCurrentTile) return;
-                        if (previewGroup) { previewGroup.remove(); previewGroup = null; } 
-                        attemptPlacement(q, r, hitArea, false, selectedHandIndex); 
+                        if (previewGroup) { previewGroup.remove(); previewGroup = null; }
+                        attemptPlacement(q, r, hitArea, false, selectedHandIndex);
                     };
                 } else {
-                    hitArea.onclick = () => { 
-                        if (hasDragged) return; 
+                    hitArea.onclick = () => {
+                        if (hasDragged) return;
                         if (!isLegalSpotForCurrentTile) return;
 
                         if (activePreviewSocketKey === spotKey) {
-                            attemptPlacement(q, r, hitArea, false, selectedHandIndex); 
+                            attemptPlacement(q, r, hitArea, false, selectedHandIndex);
                         } else {
                             activePreviewSocketKey = spotKey;
                             SFX.hover();
@@ -2320,7 +3364,7 @@
 
             grid.forEach((tile, k) => {
                 let [q, r] = k.split(',').map(Number);
-                let x = cx + w * q, y = cy + h * (r + q/2);
+                let x = cx + w * q, y = cy + h * (r + q / 2);
                 let isNewlyPlaced = (k === newlyPlacedKey);
                 let isCenterLogoTile = (q === 0 && r === 0);
 
@@ -2336,14 +3380,14 @@
             outerG.style.pointerEvents = 'none';
             let innerG = document.createElementNS('http://www.w3.org/2000/svg', 'g');
             innerG.style.pointerEvents = 'none';
-            
-            if (isNewlyPlaced) innerG.classList.add('placed-tile-animated'); 
+
+            if (isNewlyPlaced) innerG.classList.add('placed-tile-animated');
 
             if (isSecretBack) {
                 let backHex = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
                 backHex.setAttribute('points', "20,-34.64 40,0 20,34.64 -20,34.64 -40,0 -20,-34.64");
-                backHex.setAttribute('fill', '#12121a'); 
-                backHex.setAttribute('stroke', '#2c3e50'); 
+                backHex.setAttribute('fill', '#12121a');
+                backHex.setAttribute('stroke', '#2c3e50');
                 backHex.setAttribute('stroke-width', '2');
                 innerG.appendChild(backHex);
 
@@ -2356,7 +3400,7 @@
                 return outerG;
             }
 
-            for(let i=0; i<6; i++) {
+            for (let i = 0; i < 6; i++) {
                 let path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
                 path.setAttribute('d', wedges[i]); path.style.pointerEvents = 'none';
                 let rawColorKey = tile[i], wedgeKey = `${q},${r},${i}`;
@@ -2404,7 +3448,7 @@
             centerCap.setAttribute('points', "4,-6.93 8,0 4,6.93 -4,6.93 -8,0 -4,-6.93");
             centerCap.setAttribute('fill', '#0a0a12'); centerCap.setAttribute('stroke', '#1d1d28'); centerCap.setAttribute('stroke-width', '1');
             centerCap.style.pointerEvents = 'none'; innerG.appendChild(centerCap);
-            
+
             outerG.appendChild(innerG);
             return outerG;
         }
@@ -2423,14 +3467,14 @@
             } else {
                 pool = [...colors, 'r', 'b', 'y', 'k'];
             }
-            return Array.from({length: 6}, () => pool[Math.floor(Math.random()*pool.length)]);
+            return Array.from({ length: 6 }, () => pool[Math.floor(Math.random() * pool.length)]);
         }
 
         // SVG FLOATING SCORING TEXT RENDERING ENGINE (LOCKED IN PERFECT SYNC WITH BOARD CAMERA)
         function spawnSVGText(q, r, text, fontSize = 28, colorHex = '#ffffff', duration = 800) {
             let masterPan = document.getElementById('master-pan');
             if (!masterPan) return;
-            
+
             let textLayer = document.getElementById('svg-text-layer');
             if (!textLayer) {
                 textLayer = document.createElementNS('http://www.w3.org/2000/svg', 'g');
@@ -2493,7 +3537,7 @@
             let handDiv = document.getElementById('hand');
             if (!handDiv) return;
             handDiv.innerHTML = '';
-            
+
             let myP = playersList[myPlayerId] || playersList[activePlayerIdx];
             document.getElementById('current-player-label').innerText = `${myP.name}'s Hand`;
             document.getElementById('current-player-label').style.color = myP.color;
@@ -2506,13 +3550,13 @@
                 svg.setAttribute('viewBox', '-50 -50 100 100');
                 svg.setAttribute('class', `hand-tile ${selectedHandIndex === idx ? 'selected' : ''}`);
                 svg.style.color = myP.color;
-                
+
                 if (isMyTurnToPlay && !isSecretHandTurn) {
-                    svg.onclick = () => { 
-                        SFX.select(); 
-                        selectedHandIndex = (selectedHandIndex === idx) ? -1 : idx; 
+                    svg.onclick = () => {
+                        SFX.select();
+                        selectedHandIndex = (selectedHandIndex === idx) ? -1 : idx;
                         activePreviewSocketKey = null;
-                        renderHand(); renderBoard(); 
+                        renderHand(); renderBoard();
                     };
                 } else {
                     svg.style.cursor = 'default';
@@ -2524,9 +3568,9 @@
 
         function updateUI() {
             document.getElementById('goal-display').innerText = `${winTargetValue} Pts`;
-            document.getElementById('plays-left').innerText = playsLeft; 
+            document.getElementById('plays-left').innerText = playsLeft;
             document.getElementById('tiles-played').innerText = tilesPlayedThisTurn;
-            
+
             let wrapR = document.getElementById('die-wrap-r');
             let wrapB = document.getElementById('die-wrap-b');
             let wrapY = document.getElementById('die-wrap-y');
@@ -2544,7 +3588,7 @@
 
             let lb = document.getElementById('leaderboard-list');
             if (lb) {
-                lb.innerHTML = playersList.map((p, idx) => 
+                lb.innerHTML = playersList.map((p, idx) =>
                     `<div class="lb-card-inner ${idx === activePlayerIdx ? 'active' : ''}" style="color:${p.color};">
                         <span class="lb-name" style="color:${p.color};">
                             ${p.type === 'human' ? getHumanIconSVG(p.color) : getBotIconSVG(p.color, p.difficulty)}
@@ -2607,8 +3651,8 @@
             if (panAnimationId) { cancelAnimationFrame(panAnimationId); panAnimationId = null; }
             activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
             let masterPan = document.getElementById('master-pan');
-            if (masterPan) masterPan.classList.add('dragging'); 
-            if (activePointers.size === 2) { isPinching = true; initialPinchDist = getPinchDistance(); initialScale = currentBoardScale; } 
+            if (masterPan) masterPan.classList.add('dragging');
+            if (activePointers.size === 2) { isPinching = true; initialPinchDist = getPinchDistance(); initialScale = currentBoardScale; }
             else if (activePointers.size === 1) { isPinching = false; isDragging = true; hasDragged = false; dragStartX = e.clientX - panX; dragStartY = e.clientY - panY; }
         });
 
@@ -2625,21 +3669,21 @@
             }
             if (isDragging && activePointers.size === 1) {
                 let dx = e.clientX - (dragStartX + panX), dy = e.clientY - (dragStartY + panY);
-                if (Math.abs(dx) > 3 || Math.abs(dy) > 3) { if (!hasDragged) { hasDragged = true; try { boardSvg.setPointerCapture(e.pointerId); } catch(err){} } }
+                if (Math.abs(dx) > 3 || Math.abs(dy) > 3) { if (!hasDragged) { hasDragged = true; try { boardSvg.setPointerCapture(e.pointerId); } catch (err) { } } }
                 panX = e.clientX - dragStartX; panY = e.clientY - dragStartY; updateMasterPanTransform();
             }
         });
 
-        boardSvg.addEventListener('pointerup', (e) => { 
+        boardSvg.addEventListener('pointerup', (e) => {
             activePointers.delete(e.pointerId);
             if (activePointers.size < 2) isPinching = false;
-            if (activePointers.size === 0) { isDragging = false; try { boardSvg.releasePointerCapture(e.pointerId); } catch(err){} let masterPan = document.getElementById('master-pan'); if (masterPan) masterPan.classList.remove('dragging'); setTimeout(() => { hasDragged = false; }, 100); }
+            if (activePointers.size === 0) { isDragging = false; try { boardSvg.releasePointerCapture(e.pointerId); } catch (err) { } let masterPan = document.getElementById('master-pan'); if (masterPan) masterPan.classList.remove('dragging'); setTimeout(() => { hasDragged = false; }, 100); }
         });
 
-        boardSvg.addEventListener('pointercancel', (e) => { 
+        boardSvg.addEventListener('pointercancel', (e) => {
             activePointers.delete(e.pointerId);
             if (activePointers.size < 2) isPinching = false;
-            if (activePointers.size === 0) { isDragging = false; try { boardSvg.releasePointerCapture(e.pointerId); } catch(err){} let masterPan = document.getElementById('master-pan'); if (masterPan) masterPan.classList.remove('dragging'); }
+            if (activePointers.size === 0) { isDragging = false; try { boardSvg.releasePointerCapture(e.pointerId); } catch (err) { } let masterPan = document.getElementById('master-pan'); if (masterPan) masterPan.classList.remove('dragging'); }
         });
 
         boardSvg.addEventListener('wheel', (e) => {
@@ -2654,9 +3698,10 @@
             switchLobbyTab('local');
         }
         function initGame(isFirst) { initMP3AudioPlayer(); openPlayerSetup(); }
-        function toggleFullscreen() { if (!document.fullscreenElement) { document.documentElement.requestFullscreen().catch(() => {}); } else { if (document.exitFullscreen) document.exitFullscreen(); } }
+        function toggleFullscreen() { if (!document.fullscreenElement) { document.documentElement.requestFullscreen().catch(() => { }); } else { if (document.exitFullscreen) document.exitFullscreen(); } }
         function toggleSettingsMenu() { toggleSettingsModal(); }
         initGame(true);
     </script>
 </body>
+
 </html>
