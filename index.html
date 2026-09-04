@@ -25,6 +25,18 @@
     <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
 
     <style>
+        /* Automatically triggers when entering full screen mode */
+        :fullscreen #hand-container,
+        :-webkit-full-screen #hand-container {
+            animation: avoidFullscreenBanner 3.5s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+        }
+
+        /* Automatically triggers when entering full screen mode */
+        :fullscreen #hand-container,
+        :-webkit-full-screen #hand-container {
+            animation: avoidFullscreenBanner 3.5s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+        }
+
         :root {
             --red: #e74c3c;
             --blue: #3498db;
@@ -531,6 +543,7 @@
             gap: 16px;
             backdrop-filter: blur(12px);
             z-index: 40;
+            position: absolute;
         }
 
         #hand-center-wrapper {
@@ -540,9 +553,19 @@
             justify-content: center;
             gap: 4px;
             width: 100%;
+            position: static;
         }
 
         #current-player-label {
+            position: static;
+            top: auto;
+            left: auto;
+            transform: none;
+            background: transparent;
+            padding: 0;
+            clip-path: none;
+            border: none;
+            box-shadow: none;
             margin: 0;
             color: #2ecc71;
             font-size: 0.85rem;
@@ -560,6 +583,7 @@
             align-items: center;
             justify-content: center;
             min-height: 80px;
+            margin-top: 0 !important;
         }
 
         .hand-tile {
@@ -786,7 +810,7 @@
         }
 
         #zoom-controls {
-            bottom: max(12px, env(safe-area-inset-bottom));
+            bottom: max(42px, calc(env(safe-area-inset-bottom) + 32px));
             right: max(12px, env(safe-area-inset-right));
             display: flex;
             flex-direction: column;
@@ -2673,9 +2697,12 @@
             if (!btn) return;
 
             let curP = playersList[activePlayerIdx];
+            if (!curP) return;
+
             let isMyTurn = (Number(activePlayerIdx) === Number(myPlayerId) || (!isOnlineGame && curP.type === 'human'));
 
-            if (!isMyTurn || isGameOver) {
+            // Hide banner and exit if it's not your turn, game is over, or animations are running
+            if (!isMyTurn || isGameOver || isAnimating) {
                 btn.classList.remove('pulse-end-turn');
                 if (toast) toast.classList.remove('visible');
                 return;
@@ -2991,7 +3018,10 @@
             curP.hand.splice(tileIdx, 1);
             selectedHandIndex = -1;
             tilesPlayedThisTurn++; totalTilesPlaced++;
-            playsLeft--;
+
+            // Calculate match bonus play immediately so playsLeft doesn't temporarily drop to 0
+            let hasBonusPlay = (val.matches >= 2);
+            playsLeft = playsLeft - 1 + (hasBonusPlay ? 1 : 0);
 
             renderBoard(); renderHand();
             if (isHost && isOnlineGame) broadcastState();
@@ -3001,7 +3031,6 @@
             let matchPts = 0;
             if (val.matches >= 2) {
                 matchPts = val.matches;
-                playsLeft++;
                 let matchColorHex = curP.color;
 
                 recentMatchWedges.clear();
@@ -3153,6 +3182,12 @@
         function placeTile(q, r, tile) { grid.set(`${q},${r}`, tile); }
 
         function endTurn(isRemote = false) {
+            let curP = playersList[activePlayerIdx];
+            let isMyTurn = (Number(activePlayerIdx) === Number(myPlayerId) || (!isOnlineGame && curP.type === 'human'));
+
+            // Prevent action if it's not your turn
+            if (!isMyTurn && !isRemote) return;
+
             if (!isRemote && isOnlineGame && !isHost) {
                 publishNetworkData({ type: 'ACTION_END_TURN', fromId: myPlayerId });
                 return;
@@ -3480,6 +3515,16 @@
             document.getElementById('plays-left').innerText = playsLeft;
             document.getElementById('tiles-played').innerText = tilesPlayedThisTurn;
 
+            // Toggle End Turn button interactive state based on active turn
+            let curP = playersList[activePlayerIdx];
+            let isMyTurn = (Number(activePlayerIdx) === Number(myPlayerId) || (!isOnlineGame && curP.type === 'human'));
+            let endTurnBtn = document.getElementById('end-turn-btn');
+            if (endTurnBtn) {
+                endTurnBtn.disabled = !isMyTurn;
+                endTurnBtn.style.opacity = isMyTurn ? '1' : '0.4';
+                endTurnBtn.style.cursor = isMyTurn ? 'pointer' : 'not-allowed';
+            }
+
             let wrapR = document.getElementById('die-wrap-r');
             let wrapB = document.getElementById('die-wrap-b');
             let wrapY = document.getElementById('die-wrap-y');
@@ -3499,12 +3544,12 @@
             if (lb) {
                 lb.innerHTML = playersList.map((p, idx) =>
                     `<div class="lb-card-inner ${idx === activePlayerIdx ? 'active' : ''}" style="color:${p.color};">
-                        <span class="lb-name" style="color:${p.color};">
-                            ${p.type === 'human' ? getHumanIconSVG(p.color) : getBotIconSVG(p.color, p.difficulty)}
-                            ${p.name}
-                        </span>
-                        <span class="lb-score">${p.score} Pts</span>
-                    </div>`
+                <span class="lb-name" style="color:${p.color};">
+                    ${p.type === 'human' ? getHumanIconSVG(p.color) : getBotIconSVG(p.color, p.difficulty)}
+                    ${p.name}
+                </span>
+                <span class="lb-score">${p.score} Pts</span>
+            </div>`
                 ).join('');
             }
         }
