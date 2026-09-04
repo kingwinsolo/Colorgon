@@ -8,7 +8,6 @@
         window.dataLayer = window.dataLayer || [];
         function gtag() { dataLayer.push(arguments); }
         gtag('js', new Date());
-
         gtag('config', 'G-N93LVCJ4DK');
     </script>
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -21,7 +20,9 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Montserrat:wght@900&family=Poppins:wght@400;600;700&display=swap"
         rel="stylesheet">
-    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+
+    <!-- Free Public MQTT WebSocket Library -->
+    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
 
     <style>
         :root {
@@ -484,7 +485,6 @@
             pointer-events: none;
         }
 
-        /* NO MOVES ALERT TOAST */
         #no-moves-toast {
             position: fixed;
             top: 22%;
@@ -1380,9 +1380,7 @@
             <h2 class="victory-winner-title" id="victory-banner-title">PLAYER 1 WINS!</h2>
             <div style="font-size: 0.85rem; color: var(--text-dim);" id="victory-banner-subtitle">MATCH FINAL STANDINGS
             </div>
-
             <div class="victory-standings-list" id="victory-banner-standings"></div>
-
             <div style="display: flex; gap: 10px; width: 100%; margin-top: 10px;">
                 <button onclick="confirmPlayerSetup(); hideVictoryBanner();" class="highlight-btn"
                     style="flex:1;">Rematch 🚀</button>
@@ -1640,9 +1638,39 @@
     </div>
 
     <script>
+        // =========================================================================
+        // PUBLIC MQTT WEBSOCKET CONNECTION (Zero Registration / 100% Free)
+        // =========================================================================
+        const myClientId = 'client_' + Math.random().toString(36).substr(2, 9);
+        const mqttClient = mqtt.connect('wss://broker.hivemq.com:8884/mqtt', {
+            clientId: myClientId,
+            clean: true,
+            keepalive: 30
+        });
+
+        let roomCode = '';
+        let mqttTopic = '';
+        let isHost = false;
+        let isOnlineGame = false;
+
+        mqttClient.on('connect', () => {
+            console.log("Connected to public MQTT WebSocket broker!");
+        });
+
+        mqttClient.on('message', (topic, message) => {
+            if (topic !== mqttTopic) return;
+            try {
+                let data = JSON.parse(message.toString());
+                if (data.senderId === myClientId) return; // Ignore own published messages
+                handleNetworkData(data);
+            } catch (err) {
+                console.error("MQTT Message Error:", err);
+            }
+        });
+
+        // Game Constants
         const colorMap = { 'r': '#e74c3c', 'b': '#3498db', 'y': '#f1c40f', 'w': '#ffffff', 'k': '#2c3e50' };
         const vibrantColorMap = { 'r': '#ff0033', 'b': '#00e5ff', 'y': '#ffe600' };
-
         const wedges = ["M0,0 L20,-34.64 L40,0 Z", "M0,0 L40,0 L20,34.64 Z", "M0,0 L20,34.64 L-20,34.64 Z", "M0,0 L-20,34.64 L-40,0 Z", "M0,0 L-40,0 L-20,-34.64 Z", "M0,0 L-20,-34.64 L20,-34.64 Z"];
         const wedgeOffsets = [{ dx: 15, dy: -18 }, { dx: 22, dy: 12 }, { dx: 0, dy: 25 }, { dx: -22, dy: 12 }, { dx: -22, dy: -18 }, { dx: 0, dy: -25 }];
         const neighbors = [{ dq: 1, dr: -1, edge: 0, opp: 3 }, { dq: 1, dr: 0, edge: 1, opp: 4 }, { dq: 0, dr: 1, edge: 2, opp: 5 }, { dq: -1, dr: 1, edge: 3, opp: 0 }, { dq: -1, dr: 0, edge: 4, opp: 1 }, { dq: 0, dr: -1, edge: 5, opp: 2 }];
@@ -1666,12 +1694,9 @@
         let chatMessages = [];
         let unreadChatCount = 0;
         let isChatOpen = false;
-
         let hostBotSlots = [];
 
-        // MOBILE TAP SELECT MECHANICS
         let activePreviewSocketKey = null;
-
         let recentMatchWedges = new Set();
         let recentColorgonWedges = new Set();
         let activeColorgonColor = null;
@@ -1680,29 +1705,248 @@
 
         const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
+        function updateHostProfile() {
+            let nameInput = document.getElementById('host-player-name');
+            let colorInput = document.getElementById('host-player-color');
+            let hName = nameInput ? nameInput.value.trim() || "Host (P1)" : "Host (P1)";
+            let hColor = colorInput ? colorInput.value : "#2ecc71";
+
+            if (playersList.length > 0 && playersList[0]) {
+                playersList[0].name = hName;
+                playersList[0].color = hColor;
+                renderOnlineParticipants();
+                if (isHost && isOnlineGame) broadcastLobby();
+            }
+        }
+
+        function startHostingRoom() {
+            isHost = true;
+            isOnlineGame = true;
+            myPlayerId = 0;
+            roomCode = Math.floor(1000 + Math.random() * 9000).toString();
+            mqttTopic = 'colorgon/room/' + roomCode;
+
+            let hName = document.getElementById('host-player-name') ? document.getElementById('host-player-name').value.trim() : "Host (P1)";
+            let hColor = document.getElementById('host-player-color') ? document.getElementById('host-player-color').value : "#2ecc71";
+
+            playersList = [{ id: 0, name: hName || "Host (P1)", color: hColor || "#2ecc71", type: "human", isReady: true, score: 0, hand: [] }];
+            hostBotSlots = [];
+
+            mqttClient.subscribe(mqttTopic, () => {
+                document.getElementById('host-room-code').innerText = roomCode;
+                document.getElementById('host-code-wrap').style.display = 'flex';
+                document.getElementById('create-room-btn').style.display = 'none';
+                document.getElementById('start-hosted-game-btn').style.display = 'block';
+                document.getElementById('online-participants-list').style.display = 'flex';
+                document.getElementById('host-bots-wrapper').style.display = 'flex';
+
+                renderHostBotSlots();
+                renderOnlineParticipants();
+                broadcastLobby();
+            });
+        }
+
+        function joinRoomByCode() {
+            isHost = false;
+            isOnlineGame = true;
+            let code = document.getElementById('join-room-code-input').value.toString().trim();
+            let myName = document.getElementById('join-player-name').value || "Player 2";
+            let myColor = document.getElementById('join-player-color').value || "#3498db";
+
+            if (!code || code.length !== 4) {
+                document.getElementById('join-status-msg').innerText = "Enter a valid 4-digit code!";
+                return;
+            }
+
+            document.getElementById('join-status-msg').innerText = "Connecting to room...";
+            roomCode = code;
+            mqttTopic = 'colorgon/room/' + roomCode;
+
+            mqttClient.subscribe(mqttTopic, () => {
+                publishNetworkData({ type: 'JOIN', name: myName, color: myColor });
+            });
+        }
+
+        function publishNetworkData(packet) {
+            if (!isOnlineGame || !mqttTopic) return;
+            packet.senderId = myClientId;
+            mqttClient.publish(mqttTopic, JSON.stringify(packet));
+        }
+
+        function broadcastLobby() {
+            if (isHost && isOnlineGame) {
+                publishNetworkData({ type: 'LOBBY_UPDATE', playersList });
+            }
+        }
+
+        function broadcastState() {
+            if (isHost && isOnlineGame) {
+                let state = {
+                    grid: Array.from(grid.entries()),
+                    playersList,
+                    activePlayerIdx,
+                    playsLeft,
+                    tilesPlayedThisTurn,
+                    hasRolledDiceThisTurn,
+                    diceActive,
+                    lastDiceValues
+                };
+                publishNetworkData({ type: 'SYNC_STATE', state });
+            }
+        }
+
+        function broadcastAnimationEvent(eventData) {
+            if (isHost && isOnlineGame) {
+                publishNetworkData(eventData);
+            }
+        }
+
+        function toggleReadyStatus() {
+            isReady = !isReady;
+            let btn = document.getElementById('ready-toggle-btn');
+            btn.innerText = isReady ? "Unready ↩" : "Ready Up 👍";
+            if (isOnlineGame) {
+                publishNetworkData({ type: 'READY_CHANGE', isReady, fromId: myPlayerId });
+            }
+        }
+
+        function sendChatMessage() {
+            let input = document.getElementById('chat-input-text');
+            if (!input) return;
+            let msg = input.value.trim();
+            if (!msg) return;
+
+            let myP = playersList[myPlayerId] || { name: "Player", color: "#2ecc71" };
+            receiveChatMessage(myP.name, myP.color, msg);
+
+            if (isOnlineGame) {
+                publishNetworkData({ type: 'CHAT_MSG', sender: myP.name, color: myP.color, text: msg });
+            }
+            input.value = '';
+        }
+
+        function handleNetworkData(data) {
+            if (isHost) {
+                if (data.type === 'JOIN') {
+                    let newId = playersList.length;
+                    playersList.push({ id: newId, name: data.name, color: data.color, type: 'human', isReady: false, score: 0, hand: [] });
+                    publishNetworkData({ type: 'ASSIGN_ID', myPlayerId: newId, targetSenderId: data.senderId });
+                    renderOnlineParticipants(); broadcastLobby();
+                } else if (data.type === 'READY_CHANGE') {
+                    let p = playersList.find(x => x.id === data.fromId);
+                    if (p) p.isReady = data.isReady;
+                    renderOnlineParticipants(); broadcastLobby();
+                } else if (data.type === 'CHAT_MSG') {
+                    receiveChatMessage(data.sender, data.color, data.text);
+                } else if (data.type === 'ACTION_PLACE') { attemptPlacement(data.q, data.r, null, true, data.handIndex, data.tile); }
+                else if (data.type === 'ACTION_END_TURN') { endTurn(true); }
+                else if (data.type === 'ACTION_ROLL') { executeDiceRollAnimation(); broadcastAnimationEvent({ type: 'TRIGGER_ROLL' }); }
+            } else {
+                if (data.type === 'ASSIGN_ID') {
+                    if (data.targetSenderId === myClientId) {
+                        myPlayerId = Number(data.myPlayerId);
+                        document.getElementById('join-input-section').style.display = 'none';
+                        document.getElementById('join-lobby-section').style.display = 'flex';
+                    }
+                }
+                else if (data.type === 'LOBBY_UPDATE') {
+                    playersList = data.playersList;
+                    renderJoinedParticipants();
+                    updateUI();
+                }
+                else if (data.type === 'START_GAME') { applySyncedState(data.state); document.getElementById('tutorial-overlay').classList.remove('visible'); }
+                else if (data.type === 'SYNC_STATE') { applySyncedState(data.state); }
+                else if (data.type === 'TRIGGER_ROLL') { executeDiceRollAnimation(); }
+                else if (data.type === 'CHAT_MSG') { receiveChatMessage(data.sender, data.color, data.text); }
+                else if (data.type === 'GAME_OVER') { triggerVictoryScreen(data.winner, data.standings); }
+                else if (data.type === 'ANIM_CAMERA_PAN') { animateCamera(data.targetPanX, data.targetPanY, data.targetScale, data.duration); }
+                else if (data.type === 'ANIM_PLACEMENT_START') { centerCameraOn(data.q, data.r, 1.3); }
+                else if (data.type === 'ANIM_MATCH_BURST') {
+                    recentMatchWedges.clear();
+                    data.matchingEdges.forEach(m => {
+                        recentMatchWedges.add(`${data.q},${data.r},${m.myDir}`);
+                        recentMatchWedges.add(`${m.neighborQ},${m.neighborR},${m.neighborDir}`);
+                    });
+                    renderBoard(); SFX.sideMatch(data.matches);
+                    spawnSVGText(data.q, data.r, `+${data.matches}`, 36, data.colorHex, 900);
+                }
+                else if (data.type === 'ANIM_SWOOSH') spawnSVGText(data.q, data.r, data.text, 36, data.colorHex, 900);
+                else if (data.type === 'ANIM_COLORGON_STEP') {
+                    activeColorgonColor = data.targetColor;
+                    recentColorgonWedges.add(`${data.wq},${data.wr},${data.wdir}`);
+                    renderBoard(); SFX.wedgeStep(data.stepCount);
+                    spawnSVGText(data.wq, data.wr, "+1", 22, data.gColorHex, 700);
+                }
+                else if (data.type === 'ANIM_COLORGON_COMPLETE') {
+                    SFX.colorgonChord(data.wedgesCount);
+                    recentColorgonWedges.clear(); activeColorgonColor = null; renderBoard();
+                }
+            }
+        }
+
+        function renderOnlineParticipants() {
+            let container = document.getElementById('online-participants-list');
+            if (!container) return;
+            container.innerHTML = playersList.map(p => `
+                <div class="lobby-slot-row">
+                    <span style="font-weight:700; color:${p.color};">${p.name} ${p.type === 'bot' ? '🤖' : ''}</span>
+                    <span class="ready-badge ${p.isReady ? 'is-ready' : 'not-ready'}">${p.isReady ? 'READY' : 'NOT READY'}</span>
+                </div>
+            `).join('');
+
+            let allReady = playersList.length > 1 && playersList.every(p => p.isReady);
+            let startBtn = document.getElementById('start-hosted-game-btn');
+            if (startBtn) startBtn.disabled = !allReady;
+        }
+
+        function renderJoinedParticipants() {
+            let container = document.getElementById('joined-participants-list');
+            if (!container) return;
+            container.innerHTML = playersList.map(p => `
+                <div class="lobby-slot-row">
+                    <span style="font-weight:700; color:${p.color};">${p.name} ${p.type === 'bot' ? '🤖' : ''}</span>
+                    <span class="ready-badge ${p.isReady ? 'is-ready' : 'not-ready'}">${p.isReady ? 'READY' : 'NOT READY'}</span>
+                </div>
+            `).join('');
+        }
+
+        function launchMultiplayerGame() {
+            if (!isHost) return;
+            winConditionType = document.getElementById('win-condition-type').value;
+            winTargetValue = getTargetValFromUI('host');
+            targetHandSize = parseInt(document.getElementById('host-hand-limit') ? document.getElementById('host-hand-limit').value : 3) || 3;
+            voidDensitySetting = document.getElementById('host-void-density') ? document.getElementById('host-void-density').value : 'normal';
+            turnTimerDuration = parseInt(document.getElementById('host-turn-timer') ? document.getElementById('host-turn-timer').value : 0) || 0;
+
+            document.getElementById('tutorial-overlay').classList.remove('visible');
+            grid.clear(); placeTile(0, 0, generateStarterTile());
+            playersList.forEach(p => {
+                p.hand = [];
+                for (let i = 0; i < targetHandSize; i++) p.hand.push(generateRandomTile());
+            });
+            activePlayerIdx = 0;
+
+            let state = { grid: Array.from(grid.entries()), playersList, activePlayerIdx, winConditionType, winTargetValue, playsLeft: 2, tilesPlayedThisTurn: 0, hasRolledDiceThisTurn: false, diceActive: [], lastDiceValues: { r: 1, b: 1, y: 1 } };
+            publishNetworkData({ type: 'START_GAME', state });
+
+            renderBoard(); renderHand(); updateUI(); startTurnLogic();
+        }
+
         function toggleMobileLobbyAudioPanel() {
             let box = document.getElementById('mobile-lobby-audio-box');
-            if (box) {
-                box.style.display = (box.style.display === 'none') ? 'flex' : 'none';
-            }
+            if (box) box.style.display = (box.style.display === 'none') ? 'flex' : 'none';
         }
 
         function handlePresetTargetChange(prefix) {
             let select = document.getElementById(`${prefix}-target-preset`);
             let customInput = document.getElementById(`${prefix}-custom-target-val`);
             if (select && customInput) {
-                if (select.value === 'custom') {
-                    customInput.style.display = 'inline-block';
-                } else {
-                    customInput.style.display = 'none';
-                    customInput.value = select.value;
-                }
+                if (select.value === 'custom') customInput.style.display = 'inline-block';
+                else { customInput.style.display = 'none'; customInput.value = select.value; }
             }
         }
 
-        function handleTargetModeSelect(prefix) {
-            handlePresetTargetChange(prefix);
-        }
+        function handleTargetModeSelect(prefix) { handlePresetTargetChange(prefix); }
 
         function getTargetValFromUI(prefix) {
             let select = document.getElementById(`${prefix}-target-preset`);
@@ -1836,322 +2080,8 @@
             if (tab === 'local') renderLocalSetupSlots();
         }
 
-        // NETWORKING ENGINE WITH SYNCHRONIZED ANIMATION DISPATCHING
-        let peer = null, connections = [], hostConn = null, isHost = false, roomCode = '';
-        let isReady = false;
-
-        function updateHostProfile() {
-            let nameInput = document.getElementById('host-player-name');
-            let colorInput = document.getElementById('host-player-color');
-            let hName = nameInput ? nameInput.value.trim() || "Host (P1)" : "Host (P1)";
-            let hColor = colorInput ? colorInput.value : "#2ecc71";
-
-            if (playersList.length > 0 && playersList[0]) {
-                playersList[0].name = hName;
-                playersList[0].color = hColor;
-                renderOnlineParticipants();
-                if (isHost) broadcastLobby();
-            }
-        }
-
-        // 1. WebRTC & PeerJS Configuration
-        const peerConfig = {
-            config: {
-                sdpSemantics: 'unified-plan',
-                iceServers: [
-                    { urls: 'stun:stun.l.google.com:19302' },
-                    { urls: 'stun:global.stun.twilio.com:3478' },
-                    {
-                        urls: 'turn:openrelay.metered.ca:80',
-                        username: 'openrelay',
-                        credential: 'openrelay'
-                    },
-                    {
-                        urls: 'turn:openrelay.metered.ca:443',
-                        username: 'openrelay',
-                        credential: 'openrelay'
-                    }
-                ]
-            }
-        };
-
-        // 2. Host Function
-        function startHostingRoom() {
-            isHost = true;
-            myPlayerId = 0;
-            roomCode = Math.floor(1000 + Math.random() * 9000).toString();
-
-            let hName = document.getElementById('host-player-name') ? document.getElementById('host-player-name').value.trim() : "Host (P1)";
-            let hColor = document.getElementById('host-player-color') ? document.getElementById('host-player-color').value : "#2ecc71";
-
-            try {
-                if (peer) peer.destroy();
-                peer = new Peer('COLORGON-NUM-' + roomCode, peerConfig);
-
-                peer.on('open', () => {
-                    document.getElementById('host-room-code').innerText = roomCode;
-                    document.getElementById('host-code-wrap').style.display = 'flex';
-                    document.getElementById('create-room-btn').style.display = 'none';
-                    document.getElementById('start-hosted-game-btn').style.display = 'block';
-                    document.getElementById('online-participants-list').style.display = 'flex';
-                    document.getElementById('host-bots-wrapper').style.display = 'flex';
-
-                    playersList = [{ id: 0, name: hName || "Host (P1)", color: hColor || "#2ecc71", type: "human", isReady: true, score: 0, hand: [] }];
-                    hostBotSlots = [];
-                    renderHostBotSlots();
-                    renderOnlineParticipants();
-                });
-
-                peer.on('error', (err) => {
-                    alert("PeerJS Error: " + err.type);
-                });
-
-                peer.on('connection', (conn) => {
-                    const registerConn = () => {
-                        if (!connections.includes(conn)) {
-                            connections.push(conn);
-                        }
-                    };
-
-                    if (conn.open) {
-                        registerConn();
-                    } else {
-                        conn.on('open', registerConn);
-                    }
-
-                    conn.on('data', (data) => handleNetworkData(data, conn));
-
-                    conn.on('close', () => {
-                        connections = connections.filter(c => c !== conn);
-                        renderOnlineParticipants();
-                        broadcastLobby();
-                    });
-
-                    conn.on('error', (err) => {
-                        console.error("Connection error:", err);
-                    });
-                });
-            } catch (err) {
-                alert("Online hosting requires HTTPS or a local web server.");
-            }
-        }
-
-        // 3. Join Function
-        function joinRoomByCode() {
-            isHost = false;
-            let code = document.getElementById('join-room-code-input').value.toString().trim();
-            let myName = document.getElementById('join-player-name').value || "Player";
-            let myColor = document.getElementById('join-player-color').value || "#3498db";
-
-            if (!code || code.length !== 4) {
-                document.getElementById('join-status-msg').innerText = "Enter a valid 4-digit code!";
-                return;
-            }
-
-            try {
-                if (peer) peer.destroy();
-                peer = new Peer(peerConfig);
-
-                peer.on('open', () => {
-                    document.getElementById('join-status-msg').innerText = "Connecting to room...";
-
-                    hostConn = peer.connect('COLORGON-NUM-' + code, {
-                        reliable: true,
-                        serialization: 'json'
-                    });
-
-                    hostConn.on('open', () => {
-                        document.getElementById('join-input-section').style.display = 'none';
-                        document.getElementById('join-lobby-section').style.display = 'flex';
-                        safeSendToHost({ type: 'JOIN', name: myName, color: myColor });
-                    });
-
-                    hostConn.on('data', (data) => handleNetworkData(data, hostConn));
-
-                    hostConn.on('close', () => {
-                        document.getElementById('join-status-msg').innerText = "Disconnected from host.";
-                    });
-
-                    hostConn.on('error', (err) => {
-                        document.getElementById('join-status-msg').innerText = "Connection error: " + err;
-                    });
-                });
-
-                peer.on('error', (err) => {
-                    document.getElementById('join-status-msg').innerText = "Peer error: " + err.type;
-                });
-            } catch (err) {
-                document.getElementById('join-status-msg').innerText = "WebRTC unavailable on file:// protocol.";
-            }
-        }
-
-        // 4. Safe Broadcast Helpers
-        function broadcastLobby() {
-            if (!isHost) return;
-            connections.forEach(c => {
-                if (c && c.open) {
-                    c.send({ type: 'LOBBY_UPDATE', playersList });
-                }
-            });
-        }
-
-        function broadcastState() {
-            if (!isHost) return;
-            let state = {
-                grid: Array.from(grid.entries()),
-                playersList,
-                activePlayerIdx,
-                playsLeft,
-                tilesPlayedThisTurn,
-                hasRolledDiceThisTurn,
-                diceActive,
-                lastDiceValues
-            };
-            connections.forEach(c => {
-                if (c && c.open) {
-                    c.send({ type: 'SYNC_STATE', state });
-                }
-            });
-        }
-
-        function broadcastAnimationEvent(eventData) {
-            if (!isHost) return;
-            connections.forEach(c => {
-                if (c && c.open) {
-                    c.send(eventData);
-                }
-            });
-        }
-
-        function safeSendToHost(data) {
-            if (hostConn && hostConn.open) {
-                hostConn.send(data);
-            }
-        }
-
-        function toggleReadyStatus() {
-            isReady = !isReady;
-            let btn = document.getElementById('ready-toggle-btn');
-            btn.innerText = isReady ? "Unready ↩" : "Ready Up 👍";
-            safeSendToHost({ type: 'READY_CHANGE', isReady });
-        }
-
-        function handleNetworkData(data, conn) {
-            if (isHost) {
-                if (data.type === 'JOIN') {
-                    let newId = playersList.length;
-                    playersList.push({ id: newId, name: data.name, color: data.color, type: 'human', isReady: false, score: 0, hand: [] });
-                    if (conn && conn.open) conn.send({ type: 'ASSIGN_ID', myPlayerId: newId });
-                    renderOnlineParticipants(); broadcastLobby();
-                } else if (data.type === 'READY_CHANGE') {
-                    let p = playersList.find(x => x.id === conn.peerId || playersList.indexOf(x) > 0);
-                    if (p) p.isReady = data.isReady;
-                    renderOnlineParticipants(); broadcastLobby();
-                } else if (data.type === 'CHAT_MSG') {
-                    receiveChatMessage(data.sender, data.color, data.text);
-                    connections.forEach(c => {
-                        if (c !== conn && c && c.open) c.send(data);
-                    });
-                } else if (data.type === 'ACTION_PLACE') { attemptPlacement(data.q, data.r, null, true, data.handIndex, data.tile); }
-                else if (data.type === 'ACTION_END_TURN') { endTurn(true); }
-                else if (data.type === 'ACTION_ROLL') {
-                    executeDiceRollAnimation();
-                    broadcastAnimationEvent({ type: 'TRIGGER_ROLL' });
-                }
-            } else {
-                if (data.type === 'ASSIGN_ID') { myPlayerId = Number(data.myPlayerId); }
-                else if (data.type === 'LOBBY_UPDATE') {
-                    playersList = data.playersList;
-                    renderJoinedParticipants();
-                    updateUI();
-                }
-                else if (data.type === 'START_GAME') { applySyncedState(data.state); document.getElementById('tutorial-overlay').classList.remove('visible'); }
-                else if (data.type === 'SYNC_STATE') { applySyncedState(data.state); }
-                else if (data.type === 'TRIGGER_ROLL') { executeDiceRollAnimation(); }
-                else if (data.type === 'CHAT_MSG') { receiveChatMessage(data.sender, data.color, data.text); }
-                else if (data.type === 'GAME_OVER') { triggerVictoryScreen(data.winner, data.standings); }
-                else if (data.type === 'ANIM_CAMERA_PAN') { animateCamera(data.targetPanX, data.targetPanY, data.targetScale, data.duration); }
-                else if (data.type === 'ANIM_PLACEMENT_START') {
-                    centerCameraOn(data.q, data.r, 1.3);
-                } else if (data.type === 'ANIM_MATCH_BURST') {
-                    recentMatchWedges.clear();
-                    data.matchingEdges.forEach(m => {
-                        recentMatchWedges.add(`${data.q},${data.r},${m.myDir}`);
-                        recentMatchWedges.add(`${m.neighborQ},${m.neighborR},${m.neighborDir}`);
-                    });
-                    renderBoard();
-                    SFX.sideMatch(data.matches);
-                    spawnSVGText(data.q, data.r, `+${data.matches}`, 36, data.colorHex, 900);
-                } else if (data.type === 'ANIM_SWOOSH') {
-                    spawnSVGText(data.q, data.r, data.text, 36, data.colorHex, 900);
-                } else if (data.type === 'ANIM_COLORGON_STEP') {
-                    activeColorgonColor = data.targetColor;
-                    recentColorgonWedges.add(`${data.wq},${data.wr},${data.wdir}`);
-                    renderBoard();
-                    SFX.wedgeStep(data.stepCount);
-                    spawnSVGText(data.wq, data.wr, "+1", 22, data.gColorHex, 700);
-                } else if (data.type === 'ANIM_COLORGON_COMPLETE') {
-                    SFX.colorgonChord(data.wedgesCount);
-                    recentColorgonWedges.clear();
-                    activeColorgonColor = null;
-                    renderBoard();
-                }
-            }
-        }
-
-        function renderOnlineParticipants() {
-            let container = document.getElementById('online-participants-list');
-            if (!container) return;
-            container.innerHTML = playersList.map(p => `
-                <div class="lobby-slot-row">
-                    <span style="font-weight:700; color:${p.color};">${p.name} ${p.type === 'bot' ? '🤖' : ''}</span>
-                    <span class="ready-badge ${p.isReady ? 'is-ready' : 'not-ready'}">${p.isReady ? 'READY' : 'NOT READY'}</span>
-                </div>
-            `).join('');
-
-            let allReady = playersList.length > 1 && playersList.every(p => p.isReady);
-            let startBtn = document.getElementById('start-hosted-game-btn');
-            if (startBtn) startBtn.disabled = !allReady;
-        }
-
-        function renderJoinedParticipants() {
-            let container = document.getElementById('joined-participants-list');
-            if (!container) return;
-            container.innerHTML = playersList.map(p => `
-                <div class="lobby-slot-row">
-                    <span style="font-weight:700; color:${p.color};">${p.name} ${p.type === 'bot' ? '🤖' : ''}</span>
-                    <span class="ready-badge ${p.isReady ? 'is-ready' : 'not-ready'}">${p.isReady ? 'READY' : 'NOT READY'}</span>
-                </div>
-            `).join('');
-        }
-
-        function launchMultiplayerGame() {
-            if (!isHost) return;
-            winConditionType = document.getElementById('win-condition-type').value;
-            winTargetValue = getTargetValFromUI('host');
-            targetHandSize = parseInt(document.getElementById('host-hand-limit') ? document.getElementById('host-hand-limit').value : 3) || 3;
-            voidDensitySetting = document.getElementById('host-void-density') ? document.getElementById('host-void-density').value : 'normal';
-            turnTimerDuration = parseInt(document.getElementById('host-turn-timer') ? document.getElementById('host-turn-timer').value : 0) || 0;
-
-            document.getElementById('tutorial-overlay').classList.remove('visible');
-            grid.clear(); placeTile(0, 0, generateStarterTile());
-            playersList.forEach(p => {
-                p.hand = [];
-                for (let i = 0; i < targetHandSize; i++) p.hand.push(generateRandomTile());
-            });
-            activePlayerIdx = 0;
-            let state = { grid: Array.from(grid.entries()), playersList, activePlayerIdx, winConditionType, winTargetValue, playsLeft: 2, tilesPlayedThisTurn: 0, hasRolledDiceThisTurn: false, diceActive: [], lastDiceValues: { r: 1, b: 1, y: 1 } };
-
-            connections.forEach(c => {
-                if (c && c.open) c.send({ type: 'START_GAME', state });
-            });
-
-            renderBoard(); renderHand(); updateUI(); startTurnLogic();
-        }
-
         function applySyncedState(state) {
             grid = new Map(state.grid);
-
             if (state.playersList) {
                 state.playersList.forEach((incomingP, idx) => {
                     if (playersList[idx]) {
@@ -2177,15 +2107,13 @@
             updateUI();
             checkNoMoreMoves();
 
-            if (hasRolledDiceThisTurn) {
-                hideTurnAnnouncement();
-            } else {
-                showTurnAnnouncement();
-            }
+            if (hasRolledDiceThisTurn) hideTurnAnnouncement();
+            else showTurnAnnouncement();
         }
 
         function confirmLocalSetup() {
             myPlayerId = 0;
+            isOnlineGame = false;
             winConditionType = document.getElementById('local-win-condition-type') ? document.getElementById('local-win-condition-type').value : 'score';
             winTargetValue = getTargetValFromUI('local');
             targetHandSize = 3;
@@ -2199,7 +2127,6 @@
             confirmPlayerSetup();
         }
 
-        // MULTIPLAYER CHAT FUNCTIONS
         function toggleChatModal() {
             let overlay = document.getElementById('chat-overlay');
             if (!overlay) return;
@@ -2209,29 +2136,6 @@
                 unreadChatCount = 0;
                 updateChatBadge();
             }
-        }
-
-        function sendChatMessage() {
-            let input = document.getElementById('chat-input-text');
-            if (!input) return;
-            let msg = input.value.trim();
-            if (!msg) return;
-
-            let myP = playersList[myPlayerId] || { name: "Player", color: "#2ecc71" };
-            receiveChatMessage(myP.name, myP.color, msg);
-
-            if (peer) {
-                let packet = { type: 'CHAT_MSG', sender: myP.name, color: myP.color, text: msg };
-                if (isHost) {
-                    connections.forEach(c => {
-                        if (c && c.open) c.send(packet);
-                    });
-                } else if (hostConn && hostConn.open) {
-                    hostConn.send(packet);
-                }
-            }
-
-            input.value = '';
         }
 
         function receiveChatMessage(sender, color, text) {
@@ -2343,13 +2247,10 @@
                 let angle = Math.random() * Math.PI * 2;
                 let speed = Math.random() * 8 + 2;
                 shootingStars.push({
-                    x: cx,
-                    y: cy,
+                    x: cx, y: cy,
                     len: Math.random() * 40 + 20,
-                    speed: speed,
-                    angle: angle,
-                    life: 0,
-                    maxLife: Math.floor(Math.random() * 80 + 60)
+                    speed: speed, angle: angle,
+                    life: 0, maxLife: Math.floor(Math.random() * 80 + 60)
                 });
             }
         }
@@ -2358,7 +2259,6 @@
             if (!bgCtx || !bgCanvas) return;
             bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
 
-            // 1. AURORA BACKGROUND ORBS
             bgCtx.globalCompositeOperation = 'lighter';
             ambientOrbs.forEach(orb => {
                 orb.x += orb.vx; orb.y += orb.vy;
@@ -2373,13 +2273,11 @@
             bgCtx.globalCompositeOperation = 'source-over';
 
             if (particleFXEnabled) {
-                // 2. AMBIENT STARS
                 ambientStars.forEach(s => {
                     s.alpha += s.speed; if (s.alpha > 1 || s.alpha < 0.1) s.speed *= -1;
                     bgCtx.fillStyle = `rgba(255, 255, 255, ${Math.abs(s.alpha)})`; bgCtx.beginPath(); bgCtx.arc(s.x, s.y, s.r, 0, Math.PI * 2); bgCtx.fill();
                 });
 
-                // 3. SHOOTING STARS & SUPERNOVA FX
                 spawnShootingStar();
                 for (let i = shootingStars.length - 1; i >= 0; i--) {
                     let ss = shootingStars[i];
@@ -2404,7 +2302,6 @@
                     bgCtx.stroke();
                 }
 
-                // 4. MIST
                 updateAndRenderMist();
             }
 
@@ -2415,7 +2312,6 @@
 
         // MP3 AUDIO MUSIC ENGINE
         let musicPlaying = true;
-
         const bgmPlaylist = [
             "Charting_the_Periphery.mp3",
             "Patterns_Of_A_Distant_Sun.mp3",
@@ -2423,8 +2319,8 @@
             "The_Quiet_Birth_Of_Suns.mp3"
         ];
         let currentTrackIdx = 0;
-
         let audioCtx = null;
+
         function getAudioContext() {
             if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             if (audioCtx.state === 'suspended') audioCtx.resume();
@@ -2444,19 +2340,14 @@
                 if (musicPlaying && !masterSoundMuted) player.play().catch(() => { });
             };
 
-            player.onerror = () => {
-                // Silently bypass errors if audio decoding is blocked
-            };
+            player.onerror = () => { };
         }
 
         window.addEventListener('pointerdown', () => {
             getAudioContext();
-
-            // AUTO FULLSCREEN DEFAULT ON FIRST INTERACTION
             if (!document.fullscreenElement) {
                 document.documentElement.requestFullscreen().catch(() => { });
             }
-
             const player = document.getElementById('bgm-player');
             if (player && musicPlaying && !masterSoundMuted && player.paused) {
                 player.play().catch(() => { });
@@ -2484,11 +2375,8 @@
             });
 
             if (player) {
-                if (masterSoundMuted) {
-                    player.pause();
-                } else if (musicPlaying) {
-                    player.play().catch(() => { });
-                }
+                if (masterSoundMuted) player.pause();
+                else if (musicPlaying) player.play().catch(() => { });
             }
         }
 
@@ -2514,21 +2402,6 @@
             if (btn) btn.className = cinematicCameraEnabled ? "setting-toggle-btn highlight-btn" : "setting-toggle-btn secondary-btn";
         }
 
-        function toggleMusic() {
-            musicPlaying = !musicPlaying;
-            let btn = document.getElementById('music-toggle-btn');
-            const player = document.getElementById('bgm-player');
-
-            if (btn) btn.innerText = musicPlaying ? "Music On 🎵" : "Music Off 🔇";
-            if (player) {
-                if (musicPlaying && !masterSoundMuted) {
-                    player.play().catch(() => { });
-                } else {
-                    player.pause();
-                }
-            }
-        }
-
         function toggleSettingsModal() {
             let overlay = document.getElementById('settings-overlay');
             if (overlay) overlay.classList.toggle('visible');
@@ -2541,7 +2414,7 @@
             return svg + `</svg>`;
         }
 
-        // COSMIC SYNTHESIZED SOUND EFFECTS ENGINE
+        // SFX Engine
         const SFX = {
             select() {
                 if (masterSoundMuted || sfxVolume <= 0) return;
@@ -2549,8 +2422,7 @@
                 let now = ctx.currentTime;
                 [1200, 1800, 2400].forEach((freq, i) => {
                     let osc = ctx.createOscillator(), gain = ctx.createGain();
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(freq, now + i * 0.02);
+                    osc.type = 'sine'; osc.frequency.setValueAtTime(freq, now + i * 0.02);
                     gain.gain.setValueAtTime(0.12 * sfxVolume, now + i * 0.02);
                     gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.02 + 0.25);
                     osc.connect(gain); gain.connect(ctx.destination);
@@ -2562,11 +2434,9 @@
                 let ctx = getAudioContext(); if (!ctx) return;
                 let now = ctx.currentTime;
                 let osc = ctx.createOscillator(), filter = ctx.createBiquadFilter(), gain = ctx.createGain();
-                osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(280, now);
+                osc.type = 'sawtooth'; osc.frequency.setValueAtTime(280, now);
                 osc.frequency.exponentialRampToValueAtTime(520, now + 0.12);
-                filter.type = 'lowpass';
-                filter.frequency.setValueAtTime(600, now);
+                filter.type = 'lowpass'; filter.frequency.setValueAtTime(600, now);
                 filter.frequency.exponentialRampToValueAtTime(1800, now + 0.12);
                 gain.gain.setValueAtTime(0.15 * sfxVolume, now);
                 gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
@@ -2578,8 +2448,7 @@
                 let ctx = getAudioContext(); if (!ctx) return;
                 let now = ctx.currentTime;
                 let sub = ctx.createOscillator(), subGain = ctx.createGain();
-                sub.type = 'sine';
-                sub.frequency.setValueAtTime(160, now);
+                sub.type = 'sine'; sub.frequency.setValueAtTime(160, now);
                 sub.frequency.exponentialRampToValueAtTime(40, now + 0.25);
                 subGain.gain.setValueAtTime(0.5 * sfxVolume, now);
                 subGain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
@@ -2587,8 +2456,7 @@
                 sub.start(now); sub.stop(now + 0.25);
 
                 let ring = ctx.createOscillator(), ringGain = ctx.createGain();
-                ring.type = 'triangle';
-                ring.frequency.setValueAtTime(987.77, now);
+                ring.type = 'triangle'; ring.frequency.setValueAtTime(987.77, now);
                 ringGain.gain.setValueAtTime(0.2 * sfxVolume, now);
                 ringGain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
                 ring.connect(ringGain); ringGain.connect(ctx.destination);
@@ -2603,8 +2471,7 @@
 
                 [freq, freq * 1.5].forEach((f) => {
                     let osc = ctx.createOscillator(), gain = ctx.createGain();
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(f, now);
+                    osc.type = 'sine'; osc.frequency.setValueAtTime(f, now);
                     gain.gain.setValueAtTime(0.2 * sfxVolume, now);
                     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
                     osc.connect(gain); gain.connect(ctx.destination);
@@ -2616,8 +2483,7 @@
                 let ctx = getAudioContext(); if (!ctx) return;
                 let now = ctx.currentTime;
                 let osc = ctx.createOscillator(), gain = ctx.createGain();
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(320, now);
+                osc.type = 'sine'; osc.frequency.setValueAtTime(320, now);
                 osc.frequency.exponentialRampToValueAtTime(640, now + 0.18);
                 gain.gain.setValueAtTime(0.25 * sfxVolume, now);
                 gain.gain.exponentialRampToValueAtTime(0.01, now + 0.18);
@@ -2629,8 +2495,7 @@
                 let ctx = getAudioContext(); if (!ctx) return;
                 let now = ctx.currentTime;
                 let osc = ctx.createOscillator(), gain = ctx.createGain();
-                osc.type = 'triangle';
-                osc.frequency.setValueAtTime(250 + Math.random() * 200, now);
+                osc.type = 'triangle'; osc.frequency.setValueAtTime(250 + Math.random() * 200, now);
                 gain.gain.setValueAtTime(0.18 * sfxVolume, now);
                 gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
                 osc.connect(gain); gain.connect(ctx.destination);
@@ -2641,8 +2506,7 @@
                 let ctx = getAudioContext(); if (!ctx) return;
                 let now = ctx.currentTime;
                 let osc = ctx.createOscillator(), gain = ctx.createGain();
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(523.25, now);
+                osc.type = 'sine'; osc.frequency.setValueAtTime(523.25, now);
                 gain.gain.setValueAtTime(0.04 * sfxVolume, now);
                 gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
                 osc.connect(gain); gain.connect(ctx.destination);
@@ -2656,16 +2520,14 @@
                 let freq = freqs[stepIndex % freqs.length];
 
                 let pOsc = ctx.createOscillator(), pGain = ctx.createGain();
-                pOsc.type = 'triangle';
-                pOsc.frequency.setValueAtTime(freq / 2, now);
+                pOsc.type = 'triangle'; pOsc.frequency.setValueAtTime(freq / 2, now);
                 pGain.gain.setValueAtTime(0.3 * sfxVolume, now);
                 pGain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
                 pOsc.connect(pGain); pGain.connect(ctx.destination);
                 pOsc.start(now); pOsc.stop(now + 0.35);
 
                 let cOsc = ctx.createOscillator(), cGain = ctx.createGain();
-                cOsc.type = 'sine';
-                cOsc.frequency.setValueAtTime(freq * 2, now);
+                cOsc.type = 'sine'; cOsc.frequency.setValueAtTime(freq * 2, now);
                 cGain.gain.setValueAtTime(0.15 * sfxVolume, now);
                 cGain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
                 cOsc.connect(cGain); cGain.connect(ctx.destination);
@@ -2682,11 +2544,9 @@
                     let osc = ctx.createOscillator(), gain = ctx.createGain();
                     osc.type = (i % 2 === 0) ? 'sine' : 'triangle';
                     osc.frequency.setValueAtTime(chord[i], now + i * 0.03);
-
                     gain.gain.setValueAtTime(0.001, now + i * 0.03);
                     gain.gain.exponentialRampToValueAtTime(0.18 * sfxVolume, now + i * 0.03 + 0.1);
                     gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.03 + 1.4);
-
                     osc.connect(gain); gain.connect(ctx.destination);
                     osc.start(now + i * 0.03); osc.stop(now + i * 0.03 + 1.4);
                 }
@@ -2698,13 +2558,10 @@
                 const grandChord = [261.63, 329.63, 392.00, 523.25, 659.25, 783.99, 1046.50];
                 grandChord.forEach((f, idx) => {
                     let osc = ctx.createOscillator(), gain = ctx.createGain();
-                    osc.type = 'triangle';
-                    osc.frequency.setValueAtTime(f, now + idx * 0.05);
-
+                    osc.type = 'triangle'; osc.frequency.setValueAtTime(f, now + idx * 0.05);
                     gain.gain.setValueAtTime(0.001, now + idx * 0.05);
                     gain.gain.exponentialRampToValueAtTime(0.25 * sfxVolume, now + idx * 0.05 + 0.15);
                     gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.05 + 2.8);
-
                     osc.connect(gain); gain.connect(ctx.destination);
                     osc.start(now + idx * 0.05); osc.stop(now + idx * 0.05 + 2.8);
                 });
@@ -2733,7 +2590,7 @@
 
         function animateCamera(targetPanX, targetPanY, targetScale, duration = 600) {
             if (!cinematicCameraEnabled) return;
-            if (isHost) {
+            if (isHost && isOnlineGame) {
                 broadcastAnimationEvent({ type: 'ANIM_CAMERA_PAN', targetPanX, targetPanY, targetScale, duration });
             }
             if (panAnimationId) cancelAnimationFrame(panAnimationId);
@@ -2814,7 +2671,7 @@
             if (!btn) return;
 
             let curP = playersList[activePlayerIdx];
-            let isMyTurn = (Number(activePlayerIdx) === Number(myPlayerId) || (!peer && curP.type === 'human'));
+            let isMyTurn = (Number(activePlayerIdx) === Number(myPlayerId) || (!isOnlineGame && curP.type === 'human'));
 
             if (!isMyTurn || isGameOver) {
                 btn.classList.remove('pulse-end-turn');
@@ -2868,7 +2725,7 @@
             if (!el) return;
             let curP = playersList[activePlayerIdx];
 
-            let canRoll = (!hasRolledDiceThisTurn && (!peer || Number(curP.id) === Number(myPlayerId)));
+            let canRoll = (!hasRolledDiceThisTurn && (!isOnlineGame || Number(curP.id) === Number(myPlayerId)));
             let btnHTML = canRoll
                 ? `<button id="billboard-roll-btn" class="highlight-btn" onclick="triggerManualRoll()" style="margin-top: 14px; font-size: 0.85rem; padding: 8px 18px; position: relative; z-index: 700;">ROLL DICE 🎲</button>`
                 : '';
@@ -2883,7 +2740,7 @@
             SFX.cardAnnounce();
             el.classList.remove('hide-billboard'); el.classList.add('show-billboard');
 
-            if (curP.type === 'bot' && !isGameOver && (isHost || !peer)) {
+            if (curP.type === 'bot' && !isGameOver && (isHost || !isOnlineGame)) {
                 setTimeout(async () => {
                     if (!hasRolledDiceThisTurn) await executeDiceRollAnimation();
                     await sleep(600);
@@ -2897,7 +2754,6 @@
             if (curP.type !== 'bot' || isGameOver) return;
 
             let diff = curP.difficulty || 'normal';
-
             let emptySpots = [];
             grid.forEach((_, k) => {
                 let [q, r] = k.split(',').map(Number);
@@ -2925,10 +2781,7 @@
                 let chosenMove = null;
                 if (diff === 'easy') {
                     chosenMove = validMoves[Math.floor(Math.random() * validMoves.length)];
-                } else if (diff === 'normal') {
-                    validMoves.sort((a, b) => b.matches - a.matches);
-                    chosenMove = validMoves[0];
-                } else if (diff === 'hard') {
+                } else {
                     validMoves.sort((a, b) => b.matches - a.matches);
                     chosenMove = validMoves[0];
                 }
@@ -2947,11 +2800,11 @@
 
         function triggerManualRoll() {
             if (hasRolledDiceThisTurn || isGameOver) return;
-            if (peer && !isHost) {
-                safeSendToHost({ type: 'ACTION_ROLL' });
+            if (isOnlineGame && !isHost) {
+                publishNetworkData({ type: 'ACTION_ROLL', fromId: myPlayerId });
                 return;
             }
-            if (isHost && connections.length > 0) {
+            if (isHost && isOnlineGame) {
                 broadcastAnimationEvent({ type: 'TRIGGER_ROLL' });
             }
             isRolling = false; isAnimating = false;
@@ -2980,7 +2833,6 @@
 
             panX = 0; panY = 0; currentBoardScale = 1.0;
             updateMasterPanTransform();
-
             openPlayerSetup();
         }
 
@@ -3004,7 +2856,6 @@
             while (curP.hand.length < targetHandSize) curP.hand.push(generateRandomTile());
             hasRolledDiceThisTurn = false;
 
-            // STRICT GAME RULE: 2 PLAYS ON VERY FIRST PLACEMENT OF GAME, 1 PLAY ON SUBSEQUENT TURNS
             playsLeft = (totalTilesPlaced === 0) ? 2 : 1;
             tilesPlayedThisTurn = 0; selectedHandIndex = -1;
             recentMatchWedges.clear(); recentColorgonWedges.clear(); activeColorgonColor = null; newlyPlacedKey = null;
@@ -3056,7 +2907,7 @@
             if (centerContainer) { centerContainer.className = ''; centerContainer.style.display = 'none'; }
 
             hasRolledDiceThisTurn = true; isRolling = false; updateUI(); checkNoMoreMoves();
-            if (isHost) broadcastState();
+            if (isHost && isOnlineGame) broadcastState();
         }
 
         function rotateSelectedTileCW() {
@@ -3078,7 +2929,7 @@
                 } else { renderHand(); renderBoard(); }
             } else { renderHand(); renderBoard(); }
             checkNoMoreMoves();
-            if (isHost) broadcastState();
+            if (isHost && isOnlineGame) broadcastState();
         }
 
         function rotateSelectedTileCCW() {
@@ -3100,7 +2951,7 @@
                 } else { renderHand(); renderBoard(); }
             } else { renderHand(); renderBoard(); }
             checkNoMoreMoves();
-            if (isHost) broadcastState();
+            if (isHost && isOnlineGame) broadcastState();
         }
 
         async function attemptPlacement(q, r, socketEl, isRemote = false, remoteHandIndex = null, remoteTile = null) {
@@ -3115,8 +2966,12 @@
             let val = canPlace(q, r, tile);
             if (!val.valid) return;
 
-            if (!isRemote && peer && !isHost) {
-                safeSendToHost({ type: 'ACTION_PLACE', q, r, handIndex: selectedHandIndex, tile: tile });
+            if (!isRemote && isOnlineGame && !isHost) {
+                publishNetworkData({
+                    type: 'ACTION_PLACE',
+                    fromId: myPlayerId,
+                    q, r, handIndex: selectedHandIndex, tile
+                });
                 return;
             }
 
@@ -3124,7 +2979,7 @@
             recentMatchWedges.clear(); recentColorgonWedges.clear(); activeColorgonColor = null; newlyPlacedKey = `${q},${r}`;
             activePreviewSocketKey = null;
 
-            if (isHost) {
+            if (isHost && isOnlineGame) {
                 broadcastAnimationEvent({ type: 'ANIM_PLACEMENT_START', q, r });
             }
 
@@ -3134,20 +2989,16 @@
             curP.hand.splice(tileIdx, 1);
             selectedHandIndex = -1;
             tilesPlayedThisTurn++; totalTilesPlaced++;
-
-            // DECREMENT BASE PLAY COUNTER FOR TILE PLACEMENT
             playsLeft--;
 
             renderBoard(); renderHand();
-            if (isHost) broadcastState();
+            if (isHost && isOnlineGame) broadcastState();
 
             setTimeout(() => { newlyPlacedKey = null; }, 400);
 
-            // SIMULTANEOUS EDGE MATCH BURST & UNIFIED SCORE POPUP
             let matchPts = 0;
             if (val.matches >= 2) {
                 matchPts = val.matches;
-                // STRICT RULE: AWARD +1 EXTRA PLAY ONLY WHEN MATCHING 2 OR MORE SIDES
                 playsLeft++;
                 let matchColorHex = curP.color;
 
@@ -3157,11 +3008,10 @@
                     recentMatchWedges.add(`${m.neighborQ},${m.neighborR},${m.neighborDir}`);
                 });
 
-                renderBoard();
-                SFX.sideMatch(val.matches);
+                renderBoard(); SFX.sideMatch(val.matches);
                 spawnSVGText(q, r, `+${matchPts}`, 36, matchColorHex, 900);
 
-                if (isHost) {
+                if (isHost && isOnlineGame) {
                     broadcastAnimationEvent({
                         type: 'ANIM_MATCH_BURST', q, r,
                         matchingEdges: val.matchingEdges,
@@ -3197,23 +3047,21 @@
                         let parts = wId.split(',');
                         let wq = Number(parts[0]), wr = Number(parts[1]), wdir = Number(parts[2]);
                         recentColorgonWedges.add(`${wq},${wr},${wdir}`);
-                        renderBoard();
-                        SFX.wedgeStep(stepCount);
+                        renderBoard(); SFX.wedgeStep(stepCount);
                         spawnSVGText(wq, wr, "+1", 22, gColorHex, 700);
 
-                        if (isHost) {
+                        if (isHost && isOnlineGame) {
                             broadcastAnimationEvent({
                                 type: 'ANIM_COLORGON_STEP', targetColor: gInfo.targetColor,
                                 wq, wr, wdir, stepCount, gColorHex
                             });
                         }
-
                         stepCount++; await sleep(250);
                     }
 
                     await sleep(200); SFX.colorgonChord(gInfo.wedges.length);
 
-                    if (isHost) {
+                    if (isHost && isOnlineGame) {
                         broadcastAnimationEvent({ type: 'ANIM_COLORGON_COMPLETE', wedgesCount: gInfo.wedges.length });
                         broadcastAnimationEvent({ type: 'ANIM_SWOOSH', q: avgQ, r: avgR, text: `+${gInfo.wedges.length} COLORGON!`, styleType: 'float-colorgon', colorHex: gColorHex });
                     }
@@ -3232,7 +3080,7 @@
             else if (winConditionType === 'tiles' && totalTilesPlaced >= winTargetValue) { triggerVictoryScreen(); return; }
 
             checkNoMoreMoves();
-            if (isHost) broadcastState();
+            if (isHost && isOnlineGame) broadcastState();
             if (curP.type === 'bot' && playsLeft > 0) setTimeout(runBotTurnLogic, 600);
         }
 
@@ -3303,8 +3151,8 @@
         function placeTile(q, r, tile) { grid.set(`${q},${r}`, tile); }
 
         function endTurn(isRemote = false) {
-            if (!isRemote && peer && !isHost) {
-                safeSendToHost({ type: 'ACTION_END_TURN' });
+            if (!isRemote && isOnlineGame && !isHost) {
+                publishNetworkData({ type: 'ACTION_END_TURN', fromId: myPlayerId });
                 return;
             }
             stopTurnTimer();
@@ -3316,7 +3164,7 @@
             activePlayerIdx = (activePlayerIdx + 1) % playersList.length;
             animateCamera(0, 0, 1.0, 700);
             startTurnLogic();
-            if (isHost) broadcastState();
+            if (isHost && isOnlineGame) broadcastState();
         }
 
         function renderBoard() {
@@ -3341,7 +3189,7 @@
             });
 
             let curP = playersList[activePlayerIdx];
-            let isMyTurn = (Number(activePlayerIdx) === Number(myPlayerId) || (!peer && curP.type === 'human'));
+            let isMyTurn = (Number(activePlayerIdx) === Number(myPlayerId) || (!isOnlineGame && curP.type === 'human'));
             let activeSelectedTile = (selectedHandIndex !== -1 && selectedHandIndex < curP.hand.length && hasRolledDiceThisTurn && isMyTurn) ? curP.hand[selectedHandIndex] : null;
 
             let isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || window.matchMedia('(pointer: coarse)').matches;
@@ -3544,7 +3392,6 @@
             return Array.from({ length: 6 }, () => pool[Math.floor(Math.random() * pool.length)]);
         }
 
-        // SVG FLOATING SCORING TEXT RENDERING ENGINE (LOCKED IN PERFECT SYNC WITH BOARD CAMERA)
         function spawnSVGText(q, r, text, fontSize = 28, colorHex = '#ffffff', duration = 800) {
             let masterPan = document.getElementById('master-pan');
             if (!masterPan) return;
@@ -3573,7 +3420,6 @@
             t.textContent = text;
 
             textLayer.appendChild(t);
-
             let startTime = performance.now();
 
             function animateSVGText(now) {
@@ -3594,19 +3440,6 @@
             requestAnimationFrame(animateSVGText);
         }
 
-        function spawnMatchPairText(q1, r1, dir1, q2, r2, dir2, text, type, colorHex) {
-            spawnSVGText(q1, r1, text, 28, colorHex, 800);
-        }
-
-        function spawnWedgeText(q, r, dir, text, type, colorHex) {
-            spawnSVGText(q, r, text, 22, colorHex, 700);
-        }
-
-        function spawnTotalThenSwoosh(q, r, text, type, colorHex, holdDuration = 800, swooshDuration = 600, ptsEarned = 0) {
-            spawnSVGText(q, r, text, 32, colorHex, holdDuration + swooshDuration);
-            return Promise.resolve();
-        }
-
         function renderHand() {
             let handDiv = document.getElementById('hand');
             if (!handDiv) return;
@@ -3616,8 +3449,8 @@
             document.getElementById('current-player-label').innerText = `${myP.name}'s Hand`;
             document.getElementById('current-player-label').style.color = myP.color;
 
-            let isMyTurnToPlay = (Number(activePlayerIdx) === Number(myPlayerId) || (!peer && myP.type === 'human'));
-            let isSecretHandTurn = (localSecretHandEnabled && !peer && Number(activePlayerIdx) !== Number(myPlayerId));
+            let isMyTurnToPlay = (Number(activePlayerIdx) === Number(myPlayerId) || (!isOnlineGame && myP.type === 'human'));
+            let isSecretHandTurn = (localSecretHandEnabled && !isOnlineGame && Number(activePlayerIdx) !== Number(myPlayerId));
 
             myP.hand.forEach((tile, idx) => {
                 let svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
@@ -3684,7 +3517,7 @@
             triggerSupernovaVictoryParticles(winner.color);
             SFX.victoryStinger();
 
-            if (isHost) {
+            if (isHost && isOnlineGame) {
                 broadcastAnimationEvent({ type: 'GAME_OVER', winner, standings: sortedStandings });
             }
 
