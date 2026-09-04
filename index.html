@@ -1638,6 +1638,7 @@
     </div>
 
     <script>
+
         // =========================================================================
         // PUBLIC MQTT WEBSOCKET CONNECTION (Zero Registration / 100% Free)
         // =========================================================================
@@ -1652,6 +1653,7 @@
         let mqttTopic = '';
         let isHost = false;
         let isOnlineGame = false;
+        let isReady = false; // <-- ADD THIS LINE
 
         mqttClient.on('connect', () => {
             console.log("Connected to public MQTT WebSocket broker!");
