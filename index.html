@@ -1854,12 +1854,13 @@
             }
         }
 
-        // Global PeerJS ICE Server Configuration
+        // 1. WebRTC & PeerJS Configuration
         const peerConfig = {
             config: {
+                sdpSemantics: 'unified-plan',
                 iceServers: [
                     { urls: 'stun:stun.l.google.com:19302' },
-                    { urls: 'stun:openrelay.metered.ca:80' },
+                    { urls: 'stun:global.stun.twilio.com:3478' },
                     {
                         urls: 'turn:openrelay.metered.ca:80',
                         username: 'openrelay',
@@ -1869,18 +1870,15 @@
                         urls: 'turn:openrelay.metered.ca:443',
                         username: 'openrelay',
                         credential: 'openrelay'
-                    },
-                    {
-                        urls: 'turn:openrelay.metered.ca:443?transport=tcp',
-                        username: 'openrelay',
-                        credential: 'openrelay'
                     }
                 ]
-            },
-            debug: 2
+            }
         };
+
+        // 2. Host Function
         function startHostingRoom() {
-            isHost = true; myPlayerId = 0;
+            isHost = true;
+            myPlayerId = 0;
             roomCode = Math.floor(1000 + Math.random() * 9000).toString();
 
             let hName = document.getElementById('host-player-name') ? document.getElementById('host-player-name').value.trim() : "Host (P1)";
@@ -1888,7 +1886,6 @@
 
             try {
                 if (peer) peer.destroy();
-                // Updated with peerConfig
                 peer = new Peer('COLORGON-NUM-' + roomCode, peerConfig);
 
                 peer.on('open', () => {
@@ -1906,19 +1903,40 @@
                 });
 
                 peer.on('error', (err) => {
-                    alert("Online hosting requires running on a live web server or local HTTP server (not raw file://).");
+                    alert("PeerJS Error: " + err.type);
                 });
 
                 peer.on('connection', (conn) => {
-                    connections.push(conn);
+                    const registerConn = () => {
+                        if (!connections.includes(conn)) {
+                            connections.push(conn);
+                        }
+                    };
+
+                    if (conn.open) {
+                        registerConn();
+                    } else {
+                        conn.on('open', registerConn);
+                    }
+
                     conn.on('data', (data) => handleNetworkData(data, conn));
-                    conn.on('close', () => { connections = connections.filter(c => c !== conn); renderOnlineParticipants(); broadcastLobby(); });
+
+                    conn.on('close', () => {
+                        connections = connections.filter(c => c !== conn);
+                        renderOnlineParticipants();
+                        broadcastLobby();
+                    });
+
+                    conn.on('error', (err) => {
+                        console.error("Connection error:", err);
+                    });
                 });
             } catch (err) {
-                alert("Online hosting is unavailable on raw file:// protocol. Please serve over HTTP/HTTPS or play Local & Bots mode.");
+                alert("Online hosting requires HTTPS or a local web server.");
             }
         }
 
+        // 3. Join Function
         function joinRoomByCode() {
             isHost = false;
             let code = document.getElementById('join-room-code-input').value.toString().trim();
@@ -1937,7 +1955,6 @@
                 peer.on('open', () => {
                     document.getElementById('join-status-msg').innerText = "Connecting to room...";
 
-                    // Explicit connection options required for iOS Safari WebKit
                     hostConn = peer.connect('COLORGON-NUM-' + code, {
                         reliable: true,
                         serialization: 'json'
@@ -1946,10 +1963,14 @@
                     hostConn.on('open', () => {
                         document.getElementById('join-input-section').style.display = 'none';
                         document.getElementById('join-lobby-section').style.display = 'flex';
-                        hostConn.send({ type: 'JOIN', name: myName, color: myColor });
+                        safeSendToHost({ type: 'JOIN', name: myName, color: myColor });
                     });
 
                     hostConn.on('data', (data) => handleNetworkData(data, hostConn));
+
+                    hostConn.on('close', () => {
+                        document.getElementById('join-status-msg').innerText = "Disconnected from host.";
+                    });
 
                     hostConn.on('error', (err) => {
                         document.getElementById('join-status-msg').innerText = "Connection error: " + err;
@@ -1962,16 +1983,57 @@
             } catch (err) {
                 document.getElementById('join-status-msg').innerText = "WebRTC unavailable on file:// protocol.";
             }
-        } function toggleReadyStatus() {
-            isReady = !isReady;
-            let btn = document.getElementById('ready-toggle-btn');
-            btn.innerText = isReady ? "Unready ↩" : "Ready Up 👍";
-            if (hostConn) hostConn.send({ type: 'READY_CHANGE', isReady });
+        }
+
+        // 4. Safe Broadcast Helpers
+        function broadcastLobby() {
+            if (!isHost) return;
+            connections.forEach(c => {
+                if (c && c.open) {
+                    c.send({ type: 'LOBBY_UPDATE', playersList });
+                }
+            });
+        }
+
+        function broadcastState() {
+            if (!isHost) return;
+            let state = {
+                grid: Array.from(grid.entries()),
+                playersList,
+                activePlayerIdx,
+                playsLeft,
+                tilesPlayedThisTurn,
+                hasRolledDiceThisTurn,
+                diceActive,
+                lastDiceValues
+            };
+            connections.forEach(c => {
+                if (c && c.open) {
+                    c.send({ type: 'SYNC_STATE', state });
+                }
+            });
         }
 
         function broadcastAnimationEvent(eventData) {
             if (!isHost) return;
-            connections.forEach(c => c.send(eventData));
+            connections.forEach(c => {
+                if (c && c.open) {
+                    c.send(eventData);
+                }
+            });
+        }
+
+        function safeSendToHost(data) {
+            if (hostConn && hostConn.open) {
+                hostConn.send(data);
+            }
+        }
+
+        function toggleReadyStatus() {
+            isReady = !isReady;
+            let btn = document.getElementById('ready-toggle-btn');
+            btn.innerText = isReady ? "Unready ↩" : "Ready Up 👍";
+            safeSendToHost({ type: 'READY_CHANGE', isReady });
         }
 
         function handleNetworkData(data, conn) {
@@ -1979,7 +2041,7 @@
                 if (data.type === 'JOIN') {
                     let newId = playersList.length;
                     playersList.push({ id: newId, name: data.name, color: data.color, type: 'human', isReady: false, score: 0, hand: [] });
-                    conn.send({ type: 'ASSIGN_ID', myPlayerId: newId });
+                    if (conn && conn.open) conn.send({ type: 'ASSIGN_ID', myPlayerId: newId });
                     renderOnlineParticipants(); broadcastLobby();
                 } else if (data.type === 'READY_CHANGE') {
                     let p = playersList.find(x => x.id === conn.peerId || playersList.indexOf(x) > 0);
@@ -1988,17 +2050,13 @@
                 } else if (data.type === 'CHAT_MSG') {
                     receiveChatMessage(data.sender, data.color, data.text);
                     connections.forEach(c => {
-                        if (c !== conn) c.send(data);
+                        if (c !== conn && c && c.open) c.send(data);
                     });
                 } else if (data.type === 'ACTION_PLACE') { attemptPlacement(data.q, data.r, null, true, data.handIndex, data.tile); }
                 else if (data.type === 'ACTION_END_TURN') { endTurn(true); }
                 else if (data.type === 'ACTION_ROLL') {
                     executeDiceRollAnimation();
-                    if (connections.length > 0) {
-                        connections.forEach(c => {
-                            c.send({ type: 'TRIGGER_ROLL' });
-                        });
-                    }
+                    broadcastAnimationEvent({ type: 'TRIGGER_ROLL' });
                 }
             } else {
                 if (data.type === 'ASSIGN_ID') { myPlayerId = Number(data.myPlayerId); }
@@ -2067,15 +2125,28 @@
             `).join('');
         }
 
-        function broadcastLobby() {
+        function launchMultiplayerGame() {
             if (!isHost) return;
-            connections.forEach(c => c.send({ type: 'LOBBY_UPDATE', playersList }));
-        }
+            winConditionType = document.getElementById('win-condition-type').value;
+            winTargetValue = getTargetValFromUI('host');
+            targetHandSize = parseInt(document.getElementById('host-hand-limit') ? document.getElementById('host-hand-limit').value : 3) || 3;
+            voidDensitySetting = document.getElementById('host-void-density') ? document.getElementById('host-void-density').value : 'normal';
+            turnTimerDuration = parseInt(document.getElementById('host-turn-timer') ? document.getElementById('host-turn-timer').value : 0) || 0;
 
-        function broadcastState() {
-            if (!isHost) return;
-            let state = { grid: Array.from(grid.entries()), playersList, activePlayerIdx, playsLeft, tilesPlayedThisTurn, hasRolledDiceThisTurn, diceActive, lastDiceValues };
-            connections.forEach(conn => conn.send({ type: 'SYNC_STATE', state }));
+            document.getElementById('tutorial-overlay').classList.remove('visible');
+            grid.clear(); placeTile(0, 0, generateStarterTile());
+            playersList.forEach(p => {
+                p.hand = [];
+                for (let i = 0; i < targetHandSize; i++) p.hand.push(generateRandomTile());
+            });
+            activePlayerIdx = 0;
+            let state = { grid: Array.from(grid.entries()), playersList, activePlayerIdx, winConditionType, winTargetValue, playsLeft: 2, tilesPlayedThisTurn: 0, hasRolledDiceThisTurn: false, diceActive: [], lastDiceValues: { r: 1, b: 1, y: 1 } };
+
+            connections.forEach(c => {
+                if (c && c.open) c.send({ type: 'START_GAME', state });
+            });
+
+            renderBoard(); renderHand(); updateUI(); startTurnLogic();
         }
 
         function applySyncedState(state) {
@@ -2111,26 +2182,6 @@
             } else {
                 showTurnAnnouncement();
             }
-        }
-
-        function launchMultiplayerGame() {
-            if (!isHost) return;
-            winConditionType = document.getElementById('win-condition-type').value;
-            winTargetValue = getTargetValFromUI('host');
-            targetHandSize = parseInt(document.getElementById('host-hand-limit') ? document.getElementById('host-hand-limit').value : 3) || 3;
-            voidDensitySetting = document.getElementById('host-void-density') ? document.getElementById('host-void-density').value : 'normal';
-            turnTimerDuration = parseInt(document.getElementById('host-turn-timer') ? document.getElementById('host-turn-timer').value : 0) || 0;
-
-            document.getElementById('tutorial-overlay').classList.remove('visible');
-            grid.clear(); placeTile(0, 0, generateStarterTile());
-            playersList.forEach(p => {
-                p.hand = [];
-                for (let i = 0; i < targetHandSize; i++) p.hand.push(generateRandomTile());
-            });
-            activePlayerIdx = 0;
-            let state = { grid: Array.from(grid.entries()), playersList, activePlayerIdx, winConditionType, winTargetValue, playsLeft: 2, tilesPlayedThisTurn: 0, hasRolledDiceThisTurn: false, diceActive: [], lastDiceValues: { r: 1, b: 1, y: 1 } };
-            connections.forEach(conn => conn.send({ type: 'START_GAME', state }));
-            renderBoard(); renderHand(); updateUI(); startTurnLogic();
         }
 
         function confirmLocalSetup() {
@@ -2172,8 +2223,10 @@
             if (peer) {
                 let packet = { type: 'CHAT_MSG', sender: myP.name, color: myP.color, text: msg };
                 if (isHost) {
-                    connections.forEach(c => c.send(packet));
-                } else if (hostConn) {
+                    connections.forEach(c => {
+                        if (c && c.open) c.send(packet);
+                    });
+                } else if (hostConn && hostConn.open) {
                     hostConn.send(packet);
                 }
             }
@@ -2895,11 +2948,11 @@
         function triggerManualRoll() {
             if (hasRolledDiceThisTurn || isGameOver) return;
             if (peer && !isHost) {
-                hostConn.send({ type: 'ACTION_ROLL' });
+                safeSendToHost({ type: 'ACTION_ROLL' });
                 return;
             }
             if (isHost && connections.length > 0) {
-                connections.forEach(c => c.send({ type: 'TRIGGER_ROLL' }));
+                broadcastAnimationEvent({ type: 'TRIGGER_ROLL' });
             }
             isRolling = false; isAnimating = false;
             executeDiceRollAnimation();
@@ -3063,7 +3116,7 @@
             if (!val.valid) return;
 
             if (!isRemote && peer && !isHost) {
-                hostConn.send({ type: 'ACTION_PLACE', q, r, handIndex: selectedHandIndex, tile: tile });
+                safeSendToHost({ type: 'ACTION_PLACE', q, r, handIndex: selectedHandIndex, tile: tile });
                 return;
             }
 
@@ -3251,7 +3304,7 @@
 
         function endTurn(isRemote = false) {
             if (!isRemote && peer && !isHost) {
-                hostConn.send({ type: 'ACTION_END_TURN' });
+                safeSendToHost({ type: 'ACTION_END_TURN' });
                 return;
             }
             stopTurnTimer();
