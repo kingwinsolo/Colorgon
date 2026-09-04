@@ -2780,7 +2780,7 @@
 
         async function runBotTurnLogic() {
             let curP = playersList[activePlayerIdx];
-            if (curP.type !== 'bot' || isGameOver) return;
+            if (!curP || curP.type !== 'bot' || isGameOver) return;
 
             let diff = curP.difficulty || 'normal';
             let emptySpots = [];
@@ -2819,7 +2819,10 @@
                 for (let r = 0; r < chosenMove.rot; r++) curP.hand[selectedHandIndex].unshift(curP.hand[selectedHandIndex].pop());
                 renderHand(); await sleep(400);
                 await attemptPlacement(chosenMove.q, chosenMove.r, null, true, selectedHandIndex);
-            } else { await sleep(500); endTurn(); }
+            } else {
+                await sleep(500);
+                endTurn(true);
+            }
         }
 
         function hideTurnAnnouncement() {
@@ -3110,12 +3113,24 @@
             if (winConditionType === 'score' && curP.score >= winTargetValue) { triggerVictoryScreen(); return; }
             else if (winConditionType === 'tiles' && totalTilesPlaced >= winTargetValue) { triggerVictoryScreen(); return; }
 
+            // If the player/bot has no tiles left in hand, cap playsLeft at 0
+            if (curP.hand.length === 0) {
+                playsLeft = 0;
+            }
+
+            renderHand(); renderBoard(); updateUI();
+
             checkNoMoreMoves();
             if (isHost && isOnlineGame) broadcastState();
-            if (curP.type === 'bot' && playsLeft > 0) setTimeout(runBotTurnLogic, 600);
-        }
 
-        function findAndScoreColorgons() {
+            if (curP.type === 'bot') {
+                if (playsLeft > 0 && curP.hand.length > 0) {
+                    setTimeout(runBotTurnLogic, 600);
+                } else {
+                    setTimeout(() => endTurn(), 600);
+                }
+            }
+        } function findAndScoreColorgons() {
             let pointsEarned = 0, groupsEarned = [], colorsToCheck = ['r', 'b', 'y'];
             for (let targetColor of colorsToCheck) {
                 let visited = new Set();
@@ -3183,10 +3198,11 @@
 
         function endTurn(isRemote = false) {
             let curP = playersList[activePlayerIdx];
-            let isMyTurn = (Number(activePlayerIdx) === Number(myPlayerId) || (!isOnlineGame && curP.type === 'human'));
+            if (!curP) return;
 
-            // Prevent action if it's not your turn
-            if (!isMyTurn && !isRemote) return;
+            // Allow turn end for remote actions, AI bots, or the local human player
+            let canEndTurn = isRemote || curP.type === 'bot' || (Number(activePlayerIdx) === Number(myPlayerId));
+            if (!canEndTurn) return;
 
             if (!isRemote && isOnlineGame && !isHost) {
                 publishNetworkData({ type: 'ACTION_END_TURN', fromId: myPlayerId });
