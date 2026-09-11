@@ -25,6 +25,44 @@
     <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
 
     <style>
+        .rotate-icon-btn {
+            background: rgba(243, 156, 18, 0.12);
+            border: 2px solid #f39c12;
+            border-radius: 50%;
+            width: 42px;
+            height: 42px;
+            min-height: 42px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 4px 12px rgba(243, 156, 18, 0.25);
+            clip-path: none !important;
+        }
+
+        .rotate-icon-btn:hover {
+            background: rgba(243, 156, 18, 0.3);
+            transform: scale(1.12);
+            box-shadow: 0 0 16px rgba(243, 156, 18, 0.6);
+        }
+
+        .rotate-icon-btn:active {
+            transform: scale(0.92);
+        }
+
+        .bot-diff-expert {
+            background: rgba(155, 89, 182, 0.25);
+            color: #9b59b6;
+            border-color: #9b59b6;
+        }
+
+        .bot-icon-glow-expert {
+            filter: drop-shadow(0 0 6px #9b59b6);
+            stroke: #9b59b6 !important;
+        }
+
         /* Automatically triggers when entering full screen mode */
         :fullscreen #hand-container,
         :-webkit-full-screen #hand-container {
@@ -402,6 +440,15 @@
             width: 100%;
             background: #2ecc71;
             transition: width 1s linear, background-color 0.5s ease;
+        }
+
+        #dice-panel #end-turn-btn {
+            margin-top: 4px;
+            width: 100%;
+            font-size: 0.65rem;
+            padding: 6px 4px;
+            min-height: 32px;
+            white-space: nowrap;
         }
 
         #dice-panel {
@@ -1295,7 +1342,6 @@
             <button id="chat-toggle-btn" class="secondary-btn" onclick="toggleChatModal()">
                 💬 <span id="chat-unread-badge">0</span>
             </button>
-            <button id="end-turn-btn" onclick="endTurn()">End Turn</button>
             <button id="menu-toggle-btn" class="secondary-btn" onclick="toggleSettingsModal()">☰</button>
         </div>
         <div id="turn-timer-container">
@@ -1377,6 +1423,7 @@
             <div id="die-wrap-b" class="die-container"></div>
             <div id="die-wrap-y" class="die-container"></div>
         </div>
+        <button id="end-turn-btn" onclick="endTurn()">End Turn</button>
     </div>
 
     <div id="hand-container" class="hud-element">
@@ -1384,9 +1431,23 @@
             <h3 id="current-player-label">Player Hand</h3>
             <div id="hand"></div>
         </div>
-        <div class="rotate-btn-group" id="rotate-btn-group">
-            <button class="secondary-btn" id="rotate-cw-btn" onclick="rotateSelectedTileCW()">CW ↻</button>
-            <button class="secondary-btn" id="rotate-ccw-btn" onclick="rotateSelectedTileCCW()">↺ CCW</button>
+        <div class="rotate-btn-group" id="rotate-btn-group" style="display: flex; gap: 8px;">
+            <button class="rotate-icon-btn" id="rotate-ccw-btn" onclick="rotateSelectedTileCCW()"
+                title="Rotate Counter-Clockwise">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f39c12" stroke-width="3"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="1 4 1 10 7 10"></polyline>
+                    <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+                </svg>
+            </button>
+            <button class="rotate-icon-btn" id="rotate-cw-btn" onclick="rotateSelectedTileCW()"
+                title="Rotate Clockwise">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f39c12" stroke-width="3"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="23 4 23 10 17 10"></polyline>
+                    <path d="M20.49 15a9 9 0 1 1-2.13-9.36L23 10"></path>
+                </svg>
+            </button>
         </div>
     </div>
 
@@ -1662,6 +1723,257 @@
     </div>
 
     <script>
+        // =========================================================================
+        // WEB WORKER ENGINE (Runs Expert AI in Background Thread)
+        // =========================================================================
+        const aiWorkerScript = `
+    const neighbors = [
+        { dq: 1, dr: -1, edge: 0, opp: 3 },
+        { dq: 1, dr: 0, edge: 1, opp: 4 },
+        { dq: 0, dr: 1, edge: 2, opp: 5 },
+        { dq: -1, dr: 1, edge: 3, opp: 0 },
+        { dq: -1, dr: 0, edge: 4, opp: 1 },
+        { dq: 0, dr: -1, edge: 5, opp: 2 }
+    ];
+
+    self.onmessage = async function(e) {
+        const { gridArray, curP, playersList, diceActive, targetScore, timeBudgetMs } = e.data;
+        const grid = new Map(gridArray);
+
+        const bestMove = await runDeepMinimaxEngine(grid, curP, playersList, diceActive, targetScore, timeBudgetMs);
+        self.postMessage({ bestMove });
+    };
+
+    function isSpaceBlockedByBlack(sq, sr, grid) {
+        for (let n of neighbors) {
+            let nq = sq + n.dq, nr = sr + n.dr, nKey = \`\${nq},\${nr}\`;
+            if (grid.has(nKey) && grid.get(nKey)[n.opp] === 'k') return true;
+        }
+        return false;
+    }
+
+    function canPlace(q, r, tile, grid) {
+        if (!tile || grid.has(\`\${q},\${r}\`) || isSpaceBlockedByBlack(q, r, grid)) return { valid: false };
+        let hasN = false, matches = 0, matchingEdges = [];
+        for (let n of neighbors) {
+            let nq = q + n.dq, nr = r + n.dr, nKey = \`\${nq},\${nr}\`;
+            if (grid.has(nKey)) {
+                hasN = true;
+                let myC = tile[n.edge], oppC = grid.get(nKey)[n.opp];
+                if (myC === 'k' || oppC === 'k') return { valid: false };
+                if (myC === oppC || myC === 'w' || oppC === 'w') { 
+                    matches++; 
+                    matchingEdges.push({ myDir: n.edge, neighborQ: nq, neighborR: nr, neighborDir: n.opp }); 
+                }
+            }
+        }
+        return { valid: hasN && matches > 0, matches, matchingEdges };
+    }
+
+    function simulateColorgonPoints(grid, diceActive) {
+        let pointsEarned = 0;
+        const colorsToCheck = ['r', 'b', 'y'];
+        for (let targetColor of colorsToCheck) {
+            if (!diceActive.includes(targetColor)) continue;
+            let visited = new Set();
+            for (let [key, tile] of grid.entries()) {
+                let [q, r] = key.split(',').map(Number);
+                for (let dir = 0; dir < 6; dir++) {
+                    let wedgeColor = tile[dir], wedgeId = \`\${q},\${r},\${dir}\`;
+                    if (visited.has(wedgeId) || (wedgeColor !== targetColor && wedgeColor !== 'w')) continue;
+
+                    let stack = [{ q, r, dir }], componentGroup = [], canExpand = false;
+                    while (stack.length > 0) {
+                        let curr = stack.pop(), cid = \`\${curr.q},\${curr.r},\${curr.dir}\`;
+                        if (visited.has(cid)) continue;
+                        visited.add(cid); componentGroup.push(cid);
+
+                        let d1 = (curr.dir + 1) % 6, d2 = (curr.dir + 5) % 6;
+                        let tTile = grid.get(\`\${curr.q},\${curr.r}\`);
+                        if (tTile && (tTile[d1] === targetColor || tTile[d1] === 'w')) stack.push({ q: curr.q, r: curr.r, dir: d1 });
+                        if (tTile && (tTile[d2] === targetColor || tTile[d2] === 'w')) stack.push({ q: curr.q, r: curr.r, dir: d2 });
+
+                        let n = neighbors[curr.dir], nq = curr.q + n.dq, nr = curr.r + n.dr, nKey = \`\${nq},\${nr}\`;
+                        if (grid.has(nKey)) {
+                            let oppColor = grid.get(nKey)[n.opp];
+                            if (oppColor === targetColor || oppColor === 'w') stack.push({ q: nq, r: nr, dir: n.opp });
+                        } else { if (!isSpaceBlockedByBlack(nq, nr, grid)) canExpand = true; }
+                    }
+                    if (!canExpand && componentGroup.length >= 4) pointsEarned += componentGroup.length;
+                }
+            }
+        }
+        return pointsEarned;
+    }
+
+    // Evaluates opponent's optimal counter-attack on the current board
+    function evaluateOpponentMinimaxResponse(grid, diceActive) {
+        let emptySpots = [];
+        grid.forEach((_, k) => {
+            let [q, r] = k.split(',').map(Number);
+            neighbors.forEach(n => {
+                let nk = \`\${q + n.dq},\${r + n.dr}\`;
+                if (!grid.has(nk) && !isSpaceBlockedByBlack(q + n.dq, r + n.dr, grid)) emptySpots.push({ q: q + n.dq, r: r + n.dr });
+            });
+        });
+
+        if (emptySpots.length === 0) return 0;
+        let testHand = ['w', diceActive[0] || 'r', diceActive[1] || 'b', 'w', diceActive[0] || 'y', 'k'];
+        let maxOpponentGain = 0;
+
+        for (let spot of emptySpots) {
+            let tileCopy = [...testHand];
+            for (let rot = 0; rot < 6; rot++) {
+                let res = canPlace(spot.q, spot.r, tileCopy, grid);
+                if (res.valid) {
+                    grid.set(\`\${spot.q},\${spot.r}\`, tileCopy);
+                    let oppColorgon = simulateColorgonPoints(grid, diceActive);
+                    grid.delete(\`\${spot.q},\${spot.r}\`);
+
+                    let score = res.matches + (oppColorgon * 3) + (res.matches >= 2 ? 5 : 0);
+                    if (score > maxOpponentGain) maxOpponentGain = score;
+                }
+                tileCopy.unshift(tileCopy.pop());
+            }
+        }
+        return maxOpponentGain;
+    }
+
+    // Evaluates 2nd tile placement in the same turn if 1st placement granted bonus play
+    function evaluateSecondTileCombo(grid, remainingTiles, diceActive) {
+        let emptySpots = [];
+        grid.forEach((_, k) => {
+            let [q, r] = k.split(',').map(Number);
+            neighbors.forEach(n => {
+                let nk = \`\${q + n.dq},\${r + n.dr}\`;
+                if (!grid.has(nk) && !isSpaceBlockedByBlack(q + n.dq, r + n.dr, grid)) emptySpots.push({ q: q + n.dq, r: r + n.dr });
+            });
+        });
+
+        let maxComboVal = 0;
+        for (let tile of remainingTiles) {
+            for (let spot of emptySpots) {
+                let tileCopy = [...tile];
+                for (let rot = 0; rot < 6; rot++) {
+                    let res = canPlace(spot.q, spot.r, tileCopy, grid);
+                    if (res.valid) {
+                        grid.set(\`\${spot.q},\${spot.r}\`, tileCopy);
+                        let pts = simulateColorgonPoints(grid, diceActive);
+                        grid.delete(\`\${spot.q},\${spot.r}\`);
+
+                        let comboVal = (pts * 35) + (res.matches * 6);
+                        if (comboVal > maxComboVal) maxComboVal = comboVal;
+                    }
+                    tileCopy.unshift(tileCopy.pop());
+                }
+            }
+        }
+        return maxComboVal;
+    }
+
+    async function runDeepMinimaxEngine(grid, curP, playersList, diceActive, targetScore, timeBudgetMs) {
+        let startTime = Date.now();
+        let humanPlayer = playersList.find(p => p.id !== curP.id) || { score: 0 };
+        let botScore = curP.score;
+        let humanScore = humanPlayer.score;
+
+        let isBotEndgame = (targetScore - botScore) <= 25;
+        let isHumanEndgame = (targetScore - humanScore) <= 20;
+
+        let emptySpots = [];
+        grid.forEach((_, k) => {
+            let [q, r] = k.split(',').map(Number);
+            neighbors.forEach(n => {
+                let nk = \`\${q + n.dq},\${r + n.dr}\`;
+                if (!grid.has(nk) && !isSpaceBlockedByBlack(q + n.dq, r + n.dr, grid)) emptySpots.push({ q: q + n.dq, r: r + n.dr });
+            });
+        });
+
+        let candidates = [];
+        for (let handIdx = 0; handIdx < curP.hand.length; handIdx++) {
+            let tileCopy = [...curP.hand[handIdx]];
+            for (let rot = 0; rot < 6; rot++) {
+                for (let spot of emptySpots) {
+                    let res = canPlace(spot.q, spot.r, tileCopy, grid);
+                    if (res.valid) {
+                        candidates.push({ handIdx, rot, q: spot.q, r: spot.r, tileState: [...tileCopy], matches: res.matches, score: 0 });
+                    }
+                }
+                tileCopy.unshift(tileCopy.pop());
+            }
+        }
+
+        if (candidates.length === 0) return null;
+
+        let bestMoveSoFar = candidates[0];
+        let depth = 1;
+
+        // Iterative Deepening Minimax Search Loop
+        while (Date.now() - startTime < timeBudgetMs && depth <= 4) {
+            let currentBestScore = -Infinity;
+            let currentBestMove = null;
+
+            for (let move of candidates) {
+                if (Date.now() - startTime > timeBudgetMs) break;
+
+                let key = \`\${move.q},\${move.r}\`;
+                grid.set(key, move.tileState);
+
+                let immediatePts = simulateColorgonPoints(grid, diceActive);
+                let secondTileBonus = 0;
+
+                // Evaluate combo chain if move earns extra play
+                if (move.matches >= 2 && curP.hand.length > 1) {
+                    let remaining = curP.hand.filter((_, idx) => idx !== move.handIdx);
+                    secondTileBonus = evaluateSecondTileCombo(grid, remaining, diceActive);
+                }
+
+                // Minimax: Calculate human player's optimal response on resulting board
+                let predictedHumanResponse = evaluateOpponentMinimaxResponse(grid, diceActive);
+
+                grid.delete(key);
+
+                // Scoring Weights
+                let moveScore = 0;
+
+                if (isBotEndgame) {
+                    // ENDGAME SPRINT MODE: Maximize immediate win points
+                    moveScore += (immediatePts * 80) + (move.matches * 10) + secondTileBonus;
+                } else if (isHumanEndgame) {
+                    // ENDGAME DENIAL MODE: Heavily punish moves that leave human high scores open
+                    moveScore += (immediatePts * 30) - (predictedHumanResponse * 25);
+                } else {
+                    // BALANCED MINIMAX MODE
+                    let colorgonMult = (immediatePts >= 8) ? 60 : (immediatePts <= 4 && immediatePts > 0 ? 20 : 40);
+                    moveScore += (immediatePts * colorgonMult) + (move.matches * 6) + (move.matches >= 2 ? 35 : 0) + secondTileBonus;
+                    moveScore -= (predictedHumanResponse * 14);
+                }
+
+                // Wildcard Penalty (unless in endgame sprint)
+                let wildcardsUsed = move.tileState.filter(c => c === 'w').length;
+                if (!isBotEndgame && wildcardsUsed > 0 && immediatePts === 0 && move.matches < 2) {
+                    moveScore -= (35 * wildcardsUsed);
+                }
+
+                if (moveScore > currentBestScore) {
+                    currentBestScore = moveScore;
+                    currentBestMove = move;
+                }
+            }
+
+            if (currentBestMove) {
+                bestMoveSoFar = currentBestMove;
+            }
+            depth++;
+        }
+
+        return bestMoveSoFar;
+    }
+`;
+
+        const aiWorkerBlob = new Blob([aiWorkerScript], { type: 'application/javascript' });
+        const aiWorker = new Worker(URL.createObjectURL(aiWorkerBlob));
+
 
         // =========================================================================
         // PUBLIC MQTT WEBSOCKET CONNECTION (Zero Registration / 100% Free)
@@ -2016,11 +2328,434 @@
         }
 
         function cycleBotDifficulty(idx) {
-            let diffs = ['easy', 'normal', 'hard'];
+            let diffs = ['easy', 'normal', 'hard', 'expert'];
             let cur = localSlotSetup[idx].difficulty || 'normal';
             let nextIdx = (diffs.indexOf(cur) + 1) % diffs.length;
             localSlotSetup[idx].difficulty = diffs[nextIdx];
             renderLocalSetupSlots();
+        }
+
+        function cycleHostBotDifficulty(idx) {
+            let diffs = ['easy', 'normal', 'hard', 'expert'];
+            let cur = hostBotSlots[idx].difficulty || 'normal';
+            let nextIdx = (diffs.indexOf(cur) + 1) % diffs.length;
+            hostBotSlots[idx].difficulty = diffs[nextIdx];
+            renderHostBotSlots();
+            updateHostBotList();
+        }
+
+        // Measures the maximum open threat level on the board for opponent Colorgon completions
+        // Simulates the maximum points an opponent could score on their turn if the board is left in this state
+        // Enhanced threat model simulating realistic opponent hand combinations
+        function predictOpponentMaxScore() {
+            let emptySpots = [];
+            grid.forEach((_, k) => {
+                let [q, r] = k.split(',').map(Number);
+                neighbors.forEach(n => {
+                    let nk = `${q + n.dq},${r + n.dr}`;
+                    if (!grid.has(nk) && !isSpaceBlockedByBlack(q + n.dq, r + n.dr)) {
+                        emptySpots.push({ q: q + n.dq, r: r + n.dr });
+                    }
+                });
+            });
+
+            if (emptySpots.length === 0) return 0;
+
+            // Test multiple realistic opponent hand archetypes (Offensive, Wildcard, Void)
+            let simulatedHands = [
+                ['w', diceActive[0] || 'r', diceActive[1] || 'b', 'w', diceActive[0] || 'y', 'k'],
+                [diceActive[0] || 'r', diceActive[0] || 'r', diceActive[1] || 'b', 'r', 'b', 'y'],
+                ['k', 'k', diceActive[0] || 'r', 'w', 'b', 'y']
+            ];
+
+            let maxOpponentScore = 0;
+
+            for (let testTile of simulatedHands) {
+                for (let spot of emptySpots) {
+                    let tileCopy = [...testTile];
+                    for (let rot = 0; rot < 6; rot++) {
+                        let res = canPlace(spot.q, spot.r, tileCopy);
+                        if (res.valid) {
+                            grid.set(`${spot.q},${spot.r}`, tileCopy);
+                            let oppColorgon = simulateColorgonPoints();
+                            grid.delete(`${spot.q},${spot.r}`);
+
+                            let totalPotential = res.matches + (oppColorgon * 3);
+                            if (totalPotential > maxOpponentScore) {
+                                maxOpponentScore = totalPotential;
+                            }
+                        }
+                        tileCopy.unshift(tileCopy.pop());
+                    }
+                }
+            }
+            return maxOpponentScore;
+        }
+
+        // 5-Second Iterative Deepening Engine with Beam Search
+        async function findBestMoveWithTimeBudget(curP, timeBudgetMs = 5000) {
+            let startTime = performance.now();
+            let emptySpots = [];
+
+            grid.forEach((_, k) => {
+                let [q, r] = k.split(',').map(Number);
+                neighbors.forEach(n => {
+                    let nk = `${q + n.dq},${r + n.dr}`;
+                    if (!grid.has(nk) && !isSpaceBlockedByBlack(q + n.dq, r + n.dr)) {
+                        emptySpots.push({ q: q + n.dq, r: r + n.dr });
+                    }
+                });
+            });
+
+            let allCandidateMoves = [];
+            for (let handIdx = 0; handIdx < curP.hand.length; handIdx++) {
+                let tileCopy = [...curP.hand[handIdx]];
+                for (let rot = 0; rot < 6; rot++) {
+                    for (let spot of emptySpots) {
+                        let res = canPlace(spot.q, spot.r, tileCopy);
+                        if (res.valid) {
+                            allCandidateMoves.push({
+                                handIdx,
+                                rot,
+                                q: spot.q,
+                                r: spot.r,
+                                tileState: [...tileCopy],
+                                matches: res.matches,
+                                quickScore: 0
+                            });
+                        }
+                    }
+                    tileCopy.unshift(tileCopy.pop());
+                }
+            }
+
+            if (allCandidateMoves.length === 0) return null;
+
+            // BEAM SEARCH STEP 1: Quick-score candidates to prune weak branches
+            for (let move of allCandidateMoves) {
+                let key = `${move.q},${move.r}`;
+                grid.set(key, move.tileState);
+                move.quickScore = evaluateExpertMove({ q: move.q, r: move.r }, move.tileState, curP);
+                grid.delete(key);
+            }
+
+            // BEAM SEARCH STEP 2: Sort and keep only the top 12 most promising candidate moves
+            allCandidateMoves.sort((a, b) => b.quickScore - a.quickScore);
+            let beamCandidates = allCandidateMoves.slice(0, 12);
+
+            let bestMoveSoFar = beamCandidates[0];
+            let currentDepth = 1;
+            let maxDepth = 5;
+
+            // BEAM SEARCH STEP 3: Deep search phase using the 5-second time budget
+            while (currentDepth <= maxDepth) {
+                let depthBestMove = null;
+                let depthBestScore = -Infinity;
+
+                for (let move of beamCandidates) {
+                    if (performance.now() - startTime > timeBudgetMs) {
+                        return bestMoveSoFar; // Return best completed depth move
+                    }
+
+                    let key = `${move.q},${move.r}`;
+                    grid.set(key, move.tileState);
+
+                    let score = evaluateExpectimaxNode(move, curP, currentDepth, startTime, timeBudgetMs);
+
+                    grid.delete(key);
+
+                    if (score > depthBestScore) {
+                        depthBestScore = score;
+                        depthBestMove = move;
+                        depthBestMove.score = score;
+                    }
+
+                    if (Math.random() < 0.1) await sleep(0); // Maintain 60 FPS UI rendering
+                }
+
+                if (depthBestMove) {
+                    bestMoveSoFar = depthBestMove;
+                }
+
+                currentDepth++;
+            }
+
+            return bestMoveSoFar;
+        }
+
+        // Evaluates partial Colorgon setups (rewarding clusters that are 1-2 wedges away from closing)
+        function evaluateClusterBuilding(spot, tile) {
+            let setupValue = 0;
+            for (let i = 0; i < 6; i++) {
+                let color = tile[i];
+                if (diceActive.includes(color) || color === 'w') {
+                    let n = neighbors[i];
+                    let nKey = `${spot.q + n.dq},${spot.r + n.dr}`;
+                    if (grid.has(nKey)) {
+                        let neighborTile = grid.get(nKey);
+                        if (neighborTile[n.opp] === color || neighborTile[n.opp] === 'w') {
+                            setupValue += 4; // Reward extending existing active-color structures
+                        }
+                    }
+                }
+            }
+            return setupValue;
+        }
+        // Evaluates how effectively a tile acts as scaffolding for a future mega-Colorgon
+        function evaluateSupportTilePotential(spot, tile) {
+            let scaffoldingScore = 0;
+
+            for (let i = 0; i < 6; i++) {
+                let color = tile[i];
+                if (!diceActive.includes(color) && color !== 'w') continue;
+
+                let n = neighbors[i];
+                let nq = spot.q + n.dq, nr = spot.r + n.dr;
+                let nKey = `${nq},${nr}`;
+
+                if (grid.has(nKey)) {
+                    let neighborTile = grid.get(nKey);
+                    let oppColor = neighborTile[n.opp];
+
+                    // Color alignment with existing board tile
+                    if (oppColor === color || oppColor === 'w') {
+                        scaffoldingScore += 8; // Base support connection
+                    }
+                } else {
+                    // Edge faces an EMPTY playable socket
+                    // Check if neighboring tiles around that open socket also share this color (Cluster Formation)
+                    let surroundingMatchingEdges = 0;
+                    neighbors.forEach(nn => {
+                        let checkKey = `${nq + nn.dq},${nr + nn.dr}`;
+                        if (grid.has(checkKey)) {
+                            let checkTile = grid.get(checkKey);
+                            if (checkTile[nn.opp] === color || checkTile[nn.opp] === 'w') {
+                                surroundingMatchingEdges++;
+                            }
+                        }
+                    });
+
+                    // High bonus if placing this tile creates a high-density "pocket" for a future mega-tile
+                    if (surroundingMatchingEdges >= 2) {
+                        scaffoldingScore += 22; // High-value Support Foundation
+                    }
+                }
+            }
+
+            return scaffoldingScore;
+        }
+        // Master Expert Evaluation Engine (Minimax + Multi-Play Combos + Hard Denial)
+        function evaluateExpertMove(spot, tile, curP) {
+            let res = canPlace(spot.q, spot.r, tile);
+            if (!res.valid) return -Infinity;
+
+            let key = `${spot.q},${spot.r}`;
+            grid.set(key, tile); // Temporarily simulate tile placement
+
+            let immediatePts = simulateColorgonPoints();
+            let setupScore = evaluateClusterBuilding(spot, tile);
+            let supportScore = evaluateSupportTilePotential(spot, tile);
+            let comboScore = 0;
+
+            // 1. Multi-Play Combo Planning
+            if (res.matches >= 2 && curP.hand.length > 1) {
+                let remainingTiles = curP.hand.filter(t => t !== tile);
+                let bestCombo = 0;
+
+                neighbors.forEach(n => {
+                    let sq = spot.q + n.dq, sr = spot.r + n.dr;
+                    let sKey = `${sq},${sr}`;
+                    if (!grid.has(sKey) && !isSpaceBlockedByBlack(sq, sr)) {
+                        for (let nextTile of remainingTiles) {
+                            let nextCopy = [...nextTile];
+                            for (let r = 0; r < 6; r++) {
+                                let nextRes = canPlace(sq, sr, nextCopy);
+                                if (nextRes.valid) {
+                                    grid.set(sKey, nextCopy);
+                                    let pts2 = simulateColorgonPoints();
+                                    grid.delete(sKey);
+                                    let score2 = (nextRes.matches * 3) + (pts2 * 25);
+                                    if (score2 > bestCombo) bestCombo = score2;
+                                }
+                                nextCopy.unshift(nextCopy.pop());
+                            }
+                        }
+                    }
+                });
+                comboScore = bestCombo;
+            }
+
+            // 2. Predict Opponent Counter-Attack
+            let predictedOpponentGain = predictOpponentMaxScore();
+
+            // 3. Black Wedge Void-Locking
+            let voidLockBonus = 0;
+            for (let i = 0; i < 6; i++) {
+                if (tile[i] === 'k') {
+                    let n = neighbors[i];
+                    let nKey = `${spot.q + n.dq},${spot.r + n.dr}`;
+                    if (grid.has(nKey)) {
+                        let neighborColor = grid.get(nKey)[n.opp];
+                        if (diceActive.includes(neighborColor)) {
+                            voidLockBonus += 18;
+                        }
+                    }
+                }
+            }
+
+            grid.delete(key); // Revert board state
+
+            // 4. Dynamic Colorgon Valuation (Patience vs. Immediate Greed)
+            let colorgonScoreMultiplier = 40;
+
+            // If completing a small Colorgon (<= 4 wedges) when strong support placements exist elsewhere,
+            // reduce the immediate point multiplier to prioritize building an 8+ wedge structure instead
+            if (immediatePts > 0 && immediatePts <= 4 && supportScore > 25) {
+                colorgonScoreMultiplier = 15; // De-prioritize small premature completions
+            } else if (immediatePts >= 8) {
+                colorgonScoreMultiplier = 60; // Huge reward for actual Mega-Colorgons
+            }
+
+            // Master Weighting Equation
+            let totalScore = 0;
+
+            totalScore += (immediatePts * colorgonScoreMultiplier); // Scaled Colorgon Completion
+            totalScore += (res.matches * 5);                         // Edge Matches
+            totalScore += (res.matches >= 2 ? 30 : 0);               // Extra Turns
+            totalScore += comboScore;                                // Combo Follow-ups
+            totalScore += setupScore;                                // Basic Cluster Growth
+            totalScore += supportScore;                              // Support & Scaffolding Creation
+            totalScore += voidLockBonus;                             // Ruining Opponent Setups
+
+            // Subtract Opponent Threat
+            totalScore -= (predictedOpponentGain * 12);
+
+            // Wildcard Conservation
+            let wildcardsUsed = tile.filter(c => c === 'w').length;
+            if (wildcardsUsed > 0 && immediatePts === 0 && res.matches < 2) {
+                totalScore -= (30 * wildcardsUsed);
+            }
+
+            return totalScore;
+        }
+
+        // Time-bounded search manager
+        async function findBestMoveWithTimeBudget(curP, timeBudgetMs = 5000) {
+            let startTime = performance.now();
+            let emptySpots = [];
+
+            grid.forEach((_, k) => {
+                let [q, r] = k.split(',').map(Number);
+                neighbors.forEach(n => {
+                    let nk = `${q + n.dq},${r + n.dr}`;
+                    if (!grid.has(nk) && !isSpaceBlockedByBlack(q + n.dq, r + n.dr)) {
+                        emptySpots.push({ q: q + n.dq, r: r + n.dr });
+                    }
+                });
+            });
+
+            let allCandidateMoves = [];
+            for (let handIdx = 0; handIdx < curP.hand.length; handIdx++) {
+                let tileCopy = [...curP.hand[handIdx]];
+                for (let rot = 0; rot < 6; rot++) {
+                    for (let spot of emptySpots) {
+                        let res = canPlace(spot.q, spot.r, tileCopy);
+                        if (res.valid) {
+                            allCandidateMoves.push({
+                                handIdx,
+                                rot,
+                                q: spot.q,
+                                r: spot.r,
+                                tileState: [...tileCopy],
+                                matches: res.matches,
+                                quickScore: 0
+                            });
+                        }
+                    }
+                    tileCopy.unshift(tileCopy.pop());
+                }
+            }
+
+            if (allCandidateMoves.length === 0) return null;
+
+            // BEAM SEARCH STEP 1: Quick-score candidates to prune weak branches
+            for (let move of allCandidateMoves) {
+                let key = `${move.q},${move.r}`;
+                grid.set(key, move.tileState);
+                move.quickScore = evaluateExpertMove({ q: move.q, r: move.r }, move.tileState, curP);
+                grid.delete(key);
+            }
+
+            // BEAM SEARCH STEP 2: Sort and keep only the top 12 most promising candidate moves
+            allCandidateMoves.sort((a, b) => b.quickScore - a.quickScore);
+            let beamCandidates = allCandidateMoves.slice(0, 12);
+
+            let bestMoveSoFar = beamCandidates[0];
+            let currentDepth = 1;
+            let maxDepth = 5;
+
+            // BEAM SEARCH STEP 3: Deep search phase using the 5-second time budget
+            while (currentDepth <= maxDepth) {
+                let depthBestMove = null;
+                let depthBestScore = -Infinity;
+
+                for (let move of beamCandidates) {
+                    if (performance.now() - startTime > timeBudgetMs) {
+                        return bestMoveSoFar; // Return best completed depth move
+                    }
+
+                    let key = `${move.q},${move.r}`;
+                    grid.set(key, move.tileState);
+
+                    let score = evaluateExpectimaxNode(move, curP, currentDepth, startTime, timeBudgetMs);
+
+                    grid.delete(key);
+
+                    if (score > depthBestScore) {
+                        depthBestScore = score;
+                        depthBestMove = move;
+                        depthBestMove.score = score;
+                    }
+
+                    if (Math.random() < 0.1) await sleep(0); // Maintain 60 FPS UI rendering
+                }
+
+                if (depthBestMove) {
+                    bestMoveSoFar = depthBestMove;
+                }
+
+                currentDepth++;
+            }
+
+            return bestMoveSoFar;
+        }
+
+        // Recursive Expectimax node considering probabilistic future dice rolls
+        function evaluateExpectimaxNode(move, curP, depth, startTime, timeBudgetMs) {
+            if (depth === 0 || (performance.now() - startTime) > timeBudgetMs) {
+                return evaluateExpertMove({ q: move.q, r: move.r }, move.tileState, curP);
+            }
+
+            let immediatePts = simulateColorgonPoints();
+            let baseScore = (immediatePts * 40) + (move.matches * 5) + (move.matches >= 2 ? 30 : 0);
+
+            // Roll Probability Simulation (Sampling top 3 dice outcomes: Red, Blue, Yellow dominant)
+            let expectedFutureScore = 0;
+            let diceScenarios = [
+                { active: ['r'], weight: 0.33 },
+                { active: ['b'], weight: 0.33 },
+                { active: ['y'], weight: 0.33 }
+            ];
+
+            let oldActive = [...diceActive];
+            for (let scenario of diceScenarios) {
+                diceActive = scenario.active;
+                let oppResponse = predictOpponentMaxScore();
+                expectedFutureScore += (baseScore - (oppResponse * 10)) * scenario.weight;
+            }
+            diceActive = oldActive; // Restore active dice
+
+            return expectedFutureScore;
         }
 
         function addLocalPlayerSlot(type) {
@@ -2778,17 +3513,270 @@
             }
         }
 
+        // Non-mutating simulation to check potential Colorgon points during AI move calculation
+        function simulateColorgonPoints() {
+            let pointsEarned = 0;
+            const colorsToCheck = ['r', 'b', 'y'];
+
+            for (let targetColor of colorsToCheck) {
+                if (!diceActive.includes(targetColor)) continue; // Only active dice score points
+
+                let visited = new Set();
+                for (let [key, tile] of grid.entries()) {
+                    let [q, r] = key.split(',').map(Number);
+                    for (let dir = 0; dir < 6; dir++) {
+                        let wedgeColor = tile[dir];
+                        let wedgeId = `${q},${r},${dir}`;
+                        if (visited.has(wedgeId) || (wedgeColor !== targetColor && wedgeColor !== 'w')) continue;
+
+                        let stack = [{ q, r, dir }];
+                        let componentGroup = [];
+                        let canExpand = false;
+
+                        while (stack.length > 0) {
+                            let curr = stack.pop();
+                            let cid = `${curr.q},${curr.r},${curr.dir}`;
+                            if (visited.has(cid)) continue;
+                            visited.add(cid);
+                            componentGroup.push(cid);
+
+                            let d1 = (curr.dir + 1) % 6;
+                            let d2 = (curr.dir + 5) % 6;
+                            let tTile = grid.get(`${curr.q},${curr.r}`);
+
+                            if (tTile && (tTile[d1] === targetColor || tTile[d1] === 'w')) stack.push({ q: curr.q, r: curr.r, dir: d1 });
+                            if (tTile && (tTile[d2] === targetColor || tTile[d2] === 'w')) stack.push({ q: curr.q, r: curr.r, dir: d2 });
+
+                            let n = neighbors[curr.dir];
+                            let nq = curr.q + n.dq;
+                            let nr = curr.r + n.dr;
+                            let nKey = `${nq},${nr}`;
+
+                            if (grid.has(nKey)) {
+                                let oppColor = grid.get(nKey)[n.opp];
+                                if (oppColor === targetColor || oppColor === 'w') stack.push({ q: nq, r: nr, dir: n.opp });
+                            } else {
+                                if (!isSpaceBlockedByBlack(nq, nr)) canExpand = true;
+                            }
+                        }
+
+                        if (!canExpand && componentGroup.length >= 4) {
+                            let alreadyScored = componentGroup.some(id => scoredColorgons.has(`${id}:${targetColor}`));
+                            if (!alreadyScored) {
+                                pointsEarned += componentGroup.length;
+                            }
+                        }
+                    }
+                }
+            }
+            return pointsEarned;
+        }
+
+        // Advanced heuristic evaluator for AI move decision-making
+        function evaluateBotMove(spot, tile, curP, diff) {
+            let res = canPlace(spot.q, spot.r, tile);
+            if (!res.valid) return -Infinity;
+
+            let key = `${spot.q},${spot.r}`;
+            grid.set(key, tile); // Temporarily place tile on board
+
+            let simulatedColorgonPts = simulateColorgonPoints();
+            grid.delete(key); // Remove temporary tile
+
+            let score = 0;
+
+            if (diff === 'normal') {
+                score += res.matches * 3;
+                if (res.matches >= 2) score += 8; // Extra turn value
+                score += simulatedColorgonPts * 15; // Colorgon completion
+            }
+            else if (diff === 'hard') {
+                // 1. Edge Match Points
+                score += res.matches * 4;
+
+                // 2. Extra Turn Bonus (Crucial strategic advantage)
+                if (res.matches >= 2) score += 20;
+
+                // 3. Colorgon Scoring (Highest priority)
+                score += simulatedColorgonPts * 30;
+
+                // 4. Active Dice Color Synergy
+                for (let m of res.matchingEdges) {
+                    let matchedColor = tile[m.myDir];
+                    if (diceActive.includes(matchedColor)) {
+                        score += 5; // Bonus for matching current active scoring colors
+                    }
+                }
+
+                // 5. Smart Wildcard Usage
+                let wildcardsUsed = tile.filter(c => c === 'w').length;
+                if (wildcardsUsed > 0 && simulatedColorgonPts === 0 && res.matches < 2) {
+                    score -= 12 * wildcardsUsed; // Penalize burning wildcards on low-value plays
+                }
+            }
+
+            return score;
+        }
+        // Time-bounded search manager
+        async function findBestMoveWithTimeBudget(curP, timeBudgetMs = 800) {
+            let startTime = performance.now();
+            let emptySpots = [];
+
+            grid.forEach((_, k) => {
+                let [q, r] = k.split(',').map(Number);
+                neighbors.forEach(n => {
+                    let nk = `${q + n.dq},${r + n.dr}`;
+                    if (!grid.has(nk) && !isSpaceBlockedByBlack(q + n.dq, r + n.dr)) {
+                        emptySpots.push({ q: q + n.dq, r: r + n.dr });
+                    }
+                });
+            });
+
+            let candidateMoves = [];
+            for (let handIdx = 0; handIdx < curP.hand.length; handIdx++) {
+                let tileCopy = [...curP.hand[handIdx]];
+                for (let rot = 0; rot < 6; rot++) {
+                    for (let spot of emptySpots) {
+                        let res = canPlace(spot.q, spot.r, tileCopy);
+                        if (res.valid) {
+                            candidateMoves.push({
+                                handIdx,
+                                rot,
+                                q: spot.q,
+                                r: spot.r,
+                                tileState: [...tileCopy],
+                                matches: res.matches,
+                                score: 0
+                            });
+                        }
+                    }
+                    tileCopy.unshift(tileCopy.pop());
+                }
+            }
+
+            if (candidateMoves.length === 0) return null;
+
+            let bestMoveSoFar = candidateMoves[0];
+            let currentDepth = 1;
+            let maxDepth = 4;
+
+            while (currentDepth <= maxDepth) {
+                let depthBestMove = null;
+                let depthBestScore = -Infinity;
+
+                for (let move of candidateMoves) {
+                    if (performance.now() - startTime > timeBudgetMs) {
+                        return bestMoveSoFar;
+                    }
+
+                    let key = `${move.q},${move.r}`;
+                    grid.set(key, move.tileState);
+
+                    let score = evaluateExpectimaxNode(move, curP, currentDepth, startTime, timeBudgetMs);
+
+                    grid.delete(key);
+
+                    if (score > depthBestScore) {
+                        depthBestScore = score;
+                        depthBestMove = move;
+                        depthBestMove.score = score;
+                    }
+
+                    if (Math.random() < 0.05) await sleep(0);
+                }
+
+                if (depthBestMove) {
+                    bestMoveSoFar = depthBestMove;
+                }
+
+                currentDepth++;
+            }
+
+            return bestMoveSoFar;
+        }
+
+        // Recursive node evaluator
+        function evaluateExpectimaxNode(move, curP, depth, startTime, timeBudgetMs) {
+            if (depth === 0 || (performance.now() - startTime) > timeBudgetMs) {
+                return evaluateExpertMove({ q: move.q, r: move.r }, move.tileState, curP);
+            }
+
+            let immediatePts = simulateColorgonPoints();
+            let baseScore = (immediatePts * 40) + (move.matches * 5) + (move.matches >= 2 ? 30 : 0);
+
+            let expectedFutureScore = 0;
+            let diceScenarios = [
+                { active: ['r'], weight: 0.33 },
+                { active: ['b'], weight: 0.33 },
+                { active: ['y'], weight: 0.33 }
+            ];
+
+            let oldActive = [...diceActive];
+            for (let scenario of diceScenarios) {
+                diceActive = scenario.active;
+                let oppResponse = predictOpponentMaxScore();
+                expectedFutureScore += (baseScore - (oppResponse * 10)) * scenario.weight;
+            }
+            diceActive = oldActive;
+
+            return expectedFutureScore;
+        }
+
+        // Updated main Bot Turn Execution Logic
         async function runBotTurnLogic() {
             let curP = playersList[activePlayerIdx];
             if (!curP || curP.type !== 'bot' || isGameOver) return;
 
             let diff = curP.difficulty || 'normal';
+
+            // EXPERT MODE: Delegates search to background Web Worker thread
+            if (diff === 'expert') {
+                let el = document.getElementById('turn-announcement');
+                if (el) {
+                    el.innerHTML = `<div style="font-size:0.8rem; color:#9b59b6; font-weight:800;">EXPERT AI THINKING... 🧠</div>`;
+                    el.classList.remove('hide-billboard');
+                    el.classList.add('show-billboard');
+                }
+
+                // Replace the payload definition inside runBotTurnLogic() under the Expert block:
+                const payload = {
+                    gridArray: Array.from(grid.entries()),
+                    curP: curP,
+                    playersList: playersList,
+                    diceActive: diceActive,
+                    targetScore: winTargetValue,
+                    timeBudgetMs: 5000
+                };
+
+                aiWorker.postMessage(payload);
+
+                aiWorker.onmessage = async function (e) {
+                    hideTurnAnnouncement();
+                    const bestMove = e.data.bestMove;
+
+                    if (bestMove) {
+                        selectedHandIndex = bestMove.handIdx;
+                        curP.hand[selectedHandIndex] = bestMove.tileState;
+                        renderHand();
+                        await sleep(200);
+                        await attemptPlacement(bestMove.q, bestMove.r, null, true, selectedHandIndex);
+                    } else {
+                        await sleep(300);
+                        endTurn(true);
+                    }
+                };
+                return;
+            }
+
+            // EASY / NORMAL / HARD MODES: Main thread execution
             let emptySpots = [];
             grid.forEach((_, k) => {
                 let [q, r] = k.split(',').map(Number);
                 neighbors.forEach(n => {
                     let nk = `${q + n.dq},${r + n.dr}`;
-                    if (!grid.has(nk) && !isSpaceBlockedByBlack(q + n.dq, r + n.dr)) emptySpots.push({ q: q + n.dq, r: r + n.dr });
+                    if (!grid.has(nk) && !isSpaceBlockedByBlack(q + n.dq, r + n.dr)) {
+                        emptySpots.push({ q: q + n.dq, r: r + n.dr });
+                    }
                 });
             });
 
@@ -2799,7 +3787,10 @@
                     for (let spot of emptySpots) {
                         let res = canPlace(spot.q, spot.r, tileCopy);
                         if (res.valid) {
-                            validMoves.push({ handIdx, rot, q: spot.q, r: spot.r, matches: res.matches });
+                            let score = (diff === 'easy') ? Math.random() : evaluateBotMove(spot, tileCopy, curP, diff);
+                            validMoves.push({
+                                handIdx, rot, q: spot.q, r: spot.r, matches: res.matches, score, tileState: [...tileCopy]
+                            });
                         }
                     }
                     tileCopy.unshift(tileCopy.pop());
@@ -2809,15 +3800,21 @@
             if (validMoves.length > 0) {
                 let chosenMove = null;
                 if (diff === 'easy') {
-                    chosenMove = validMoves[Math.floor(Math.random() * validMoves.length)];
+                    chosenMove = (Math.random() < 0.7)
+                        ? validMoves[Math.floor(Math.random() * validMoves.length)]
+                        : validMoves.sort((a, b) => b.matches - a.matches)[0];
                 } else {
-                    validMoves.sort((a, b) => b.matches - a.matches);
-                    chosenMove = validMoves[0];
+                    validMoves.sort((a, b) => b.score - a.score);
+                    let topScore = validMoves[0].score;
+                    let topMoves = validMoves.filter(m => Math.abs(m.score - topScore) < 0.5);
+                    chosenMove = topMoves[Math.floor(Math.random() * topMoves.length)];
                 }
 
                 selectedHandIndex = chosenMove.handIdx;
-                for (let r = 0; r < chosenMove.rot; r++) curP.hand[selectedHandIndex].unshift(curP.hand[selectedHandIndex].pop());
-                renderHand(); await sleep(400);
+                curP.hand[selectedHandIndex] = chosenMove.tileState;
+
+                renderHand();
+                await sleep(400);
                 await attemptPlacement(chosenMove.q, chosenMove.r, null, true, selectedHandIndex);
             } else {
                 await sleep(500);
