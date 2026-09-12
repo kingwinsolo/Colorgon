@@ -29,6 +29,309 @@
     <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
 
     <style>
+        /* Right HUD Wrapper (Positions Dice Panel + End Turn Button Column) */
+        #right-hud-wrapper {
+            position: absolute;
+            top: 50%;
+            right: max(12px, env(safe-area-inset-right));
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            z-index: 10;
+            pointer-events: auto;
+        }
+
+        /* Standalone Dice Box Styling */
+        #dice-panel {
+            background: var(--panel-bg);
+            backdrop-filter: blur(12px);
+            padding: 10px 8px;
+            clip-path: var(--hex-chamfer);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            width: fit-content;
+        }
+
+        /* Standalone End Turn Button Styling */
+        #end-turn-btn {
+            white-space: normal !important;
+            line-height: 1.1 !important;
+            text-align: center !important;
+            padding: 6px 8px !important;
+            font-size: 0.7rem !important;
+            min-height: 36px !important;
+            width: 100% !important;
+            max-width: 60px !important;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+        }
+
+        /* Compact Adjustments for Small & Landscape Screens */
+        @media (max-width: 650px),
+        (max-height: 600px) {
+            #right-hud-wrapper {
+                right: max(6px, env(safe-area-inset-right)) !important;
+                gap: 6px !important;
+            }
+
+            #dice-panel {
+                padding: 6px 4px !important;
+            }
+
+            #end-turn-btn {
+                font-size: 0.6rem !important;
+                min-height: 30px !important;
+                padding: 4px 4px !important;
+                max-width: 52px !important;
+            }
+        }
+
+        #end-turn-btn {
+            white-space: normal !important;
+            line-height: 1.1 !important;
+            text-align: center !important;
+            max-width: 46px !important;
+            width: 100% !important;
+            padding: 4px 2px !important;
+            display: block !important;
+            margin: 4px auto 0 auto !important;
+        }
+
+        /* =========================================================================
+   LANDSCAPE MODE AUTO-FIT (Short Height / Sideways Phones)
+   ========================================================================= */
+        @media (max-height: 500px) and (orientation: landscape) {
+
+            /* Hand Container & Rotation Controls */
+            #hand-container {
+                padding: 4px 12px !important;
+                gap: 8px !important;
+                bottom: max(4px, env(safe-area-inset-bottom)) !important;
+            }
+
+            .hand-tile {
+                width: clamp(36px, 11vh, 54px) !important;
+                height: clamp(36px, 11vh, 54px) !important;
+            }
+
+            #current-player-label {
+                font-size: 0.7rem !important;
+            }
+
+            .rotate-icon-btn {
+                width: clamp(28px, 8vh, 36px) !important;
+                height: clamp(28px, 8vh, 36px) !important;
+                min-height: auto !important;
+            }
+
+            .rotate-icon-btn svg {
+                width: 16px !important;
+                height: 16px !important;
+            }
+
+            /* Top Left Score Tracker & Branding */
+            #left-hud-wrapper {
+                top: max(4px, env(safe-area-inset-top)) !important;
+                left: max(4px, env(safe-area-inset-left)) !important;
+                max-width: 130px !important;
+                gap: 2px !important;
+            }
+
+            #top-left-hud {
+                padding: 4px 6px !important;
+            }
+
+            h1 {
+                font-size: 0.9rem !important;
+            }
+
+            #leaderboard-container {
+                padding: 4px 6px !important;
+                max-height: 110px !important;
+                overflow-y: auto !important;
+            }
+
+            .lb-header {
+                font-size: 0.55rem !important;
+            }
+
+            .lb-card-inner {
+                padding: 2px 4px !important;
+            }
+
+            .lb-name {
+                font-size: 0.65rem !important;
+            }
+
+            .lb-score {
+                font-size: 0.75rem !important;
+            }
+
+            /* Top Right Action Bar */
+            #ui-bar {
+                top: max(4px, env(safe-area-inset-top)) !important;
+                right: max(4px, env(safe-area-inset-right)) !important;
+                padding: 4px 8px !important;
+            }
+
+            /* Right Side Dice Panel */
+            #dice-panel {
+                top: 50% !important;
+                right: max(4px, env(safe-area-inset-right)) !important;
+                padding: 4px 4px !important;
+                gap: 2px !important;
+            }
+
+            .die-container {
+                width: 26px !important;
+                height: 28px !important;
+            }
+
+            /* Horizontal Alignment for Zoom Buttons in Landscape */
+            #zoom-controls {
+                bottom: max(4px, env(safe-area-inset-bottom)) !important;
+                right: max(55px, calc(env(safe-area-inset-right) + 48px)) !important;
+                flex-direction: row !important;
+                gap: 4px !important;
+            }
+
+            .zoom-btn {
+                width: 32px !important;
+                height: 32px !important;
+                min-height: 32px !important;
+                font-size: 0.85rem !important;
+            }
+
+            /* Modal Optimization */
+            .modal-card {
+                max-height: 94vh !important;
+                padding: 10px 14px !important;
+            }
+
+            .setup-section-box {
+                padding: 8px !important;
+                margin-bottom: 6px !important;
+            }
+
+            select.setup-select,
+            input.setup-input {
+                min-height: 28px !important;
+                padding: 3px 6px !important;
+                font-size: 0.75rem !important;
+            }
+        }
+
+        /* =========================================================================
+   RESPONSIVE AUTO-SCALING & OVERLAP PREVENTION
+   ========================================================================= */
+
+        /* Dynamic Scaling for Hand & Rotation Controls */
+        .hand-tile {
+            width: clamp(46px, 12vw, 72px) !important;
+            height: clamp(46px, 12vw, 72px) !important;
+        }
+
+        #hand {
+            gap: clamp(4px, 1.5vw, 10px) !important;
+            min-height: auto !important;
+        }
+
+        #hand-container {
+            padding: clamp(6px, 1.5vh, 12px) clamp(8px, 2vw, 24px) !important;
+            gap: clamp(6px, 2vw, 16px) !important;
+            max-width: 98vw !important;
+        }
+
+        .rotate-icon-btn {
+            width: clamp(32px, 8vw, 42px) !important;
+            height: clamp(32px, 8vw, 42px) !important;
+            min-height: auto !important;
+        }
+
+        .rotate-icon-btn svg {
+            width: clamp(16px, 4vw, 22px);
+            height: clamp(16px, 4vw, 22px);
+        }
+
+        /* Compact HUDs & Panels for Small Screens & Mobile Devices */
+        @media (max-width: 650px),
+        (max-height: 700px) {
+            #left-hud-wrapper {
+                max-width: 140px !important;
+                gap: 4px !important;
+            }
+
+            #top-left-hud {
+                padding: 6px 8px !important;
+            }
+
+            h1 {
+                font-size: 1.1rem !important;
+            }
+
+            #leaderboard-container {
+                padding: 6px 6px !important;
+            }
+
+            .lb-card-inner {
+                padding: 4px 6px !important;
+            }
+
+            .lb-name {
+                font-size: 0.7rem !important;
+            }
+
+            .lb-score {
+                font-size: 0.8rem !important;
+            }
+
+            #ui-bar {
+                padding: 6px 8px !important;
+            }
+
+            .stat-group .stat-label {
+                font-size: 0.55rem !important;
+            }
+
+            .stat-group .stat-val {
+                font-size: 0.8rem !important;
+            }
+
+            button,
+            .secondary-btn {
+                font-size: 0.65rem !important;
+                padding: 4px 8px !important;
+                min-height: 28px !important;
+            }
+
+            #dice-panel {
+                padding: 6px 4px !important;
+                gap: 4px !important;
+            }
+
+            .die-container {
+                width: 30px !important;
+                height: 34px !important;
+            }
+
+            #zoom-controls {
+                bottom: max(90px, calc(env(safe-area-inset-bottom) + 80px)) !important;
+                right: max(8px, env(safe-area-inset-right)) !important;
+            }
+
+            .zoom-btn {
+                width: 32px !important;
+                height: 34px !important;
+                min-height: 34px !important;
+                font-size: 1rem !important;
+            }
+        }
+
         .rotate-icon-btn {
             background: rgba(243, 156, 18, 0.12);
             border: 2px solid #f39c12;
@@ -1270,6 +1573,452 @@
                 display: none;
             }
         }
+
+        /* =========================================================================
+   UI CLIPPING & LANDSCAPE FIXES
+   ========================================================================= */
+
+        /* Compact Top HUDs for Narrow Screens (e.g. 360px wide phones) */
+        @media (max-width: 420px) {
+            #left-hud-wrapper {
+                max-width: 115px !important;
+                top: max(6px, env(safe-area-inset-top)) !important;
+                left: max(6px, env(safe-area-inset-left)) !important;
+                gap: 3px !important;
+            }
+
+            #top-left-hud {
+                padding: 4px 6px !important;
+            }
+
+            h1 {
+                font-size: 0.95rem !important;
+            }
+
+            #leaderboard-container {
+                padding: 4px !important;
+            }
+
+            .lb-name {
+                font-size: 0.65rem !important;
+            }
+
+            .lb-score {
+                font-size: 0.75rem !important;
+            }
+
+            #ui-bar {
+                top: max(6px, env(safe-area-inset-top)) !important;
+                right: max(6px, env(safe-area-inset-right)) !important;
+                padding: 4px 6px !important;
+                gap: 4px !important;
+            }
+
+            .ui-top-row {
+                gap: 6px !important;
+            }
+
+            .stat-group .stat-label {
+                font-size: 0.5rem !important;
+            }
+
+            .stat-group .stat-val {
+                font-size: 0.75rem !important;
+            }
+        }
+
+        /* Slim Dice Panel Sizing (Prevents wide blue panel) */
+        #dice-panel {
+            width: fit-content !important;
+            max-width: 62px !important;
+            padding: 6px 4px !important;
+            align-items: center !important;
+        }
+
+        #dice-panel #end-turn-btn {
+            width: 100% !important;
+            padding: 4px 2px !important;
+            font-size: 0.6rem !important;
+            min-height: 26px !important;
+            white-space: normal !important;
+            line-height: 1.1 !important;
+            text-align: center !important;
+            letter-spacing: 0px !important;
+        }
+
+        /* Portrait Zoom Buttons Positioning (Floats clear above hand container) */
+        #zoom-controls {
+            bottom: max(95px, calc(env(safe-area-inset-bottom) + 95px)) !important;
+            right: max(8px, env(safe-area-inset-right)) !important;
+            z-index: 90 !important;
+        }
+
+        /* =========================================================================
+   LANDSCAPE MODE FIXES (Short Height Sideways Screens)
+   ========================================================================= */
+        @media (max-height: 500px) and (orientation: landscape) {
+
+            /* Prevent Top Clipping */
+            #left-hud-wrapper {
+                top: max(4px, env(safe-area-inset-top)) !important;
+                left: max(4px, env(safe-area-inset-left)) !important;
+                max-width: 105px !important;
+                gap: 2px !important;
+            }
+
+            #top-left-hud {
+                padding: 2px 4px !important;
+            }
+
+            h1 {
+                font-size: 0.85rem !important;
+            }
+
+            #leaderboard-container {
+                padding: 3px 4px !important;
+                max-height: 80px !important;
+                overflow-y: auto !important;
+            }
+
+            .lb-card-inner {
+                padding: 2px 4px !important;
+            }
+
+            .lb-name {
+                font-size: 0.6rem !important;
+            }
+
+            .lb-score {
+                font-size: 0.7rem !important;
+            }
+
+            #ui-bar {
+                top: max(4px, env(safe-area-inset-top)) !important;
+                right: max(4px, env(safe-area-inset-right)) !important;
+                padding: 3px 6px !important;
+                gap: 4px !important;
+            }
+
+            /* Ultra-Slim Dice Panel in Landscape */
+            #dice-panel {
+                top: 50% !important;
+                right: max(4px, env(safe-area-inset-right)) !important;
+                transform: translateY(-50%) !important;
+                padding: 4px 3px !important;
+                max-width: 52px !important;
+                gap: 3px !important;
+            }
+
+            .die-container {
+                width: 24px !important;
+                height: 26px !important;
+            }
+
+            #dice-panel #end-turn-btn {
+                font-size: 0.52rem !important;
+                padding: 3px 1px !important;
+                min-height: 24px !important;
+            }
+
+            /* Move Zoom Buttons to Bottom-Left in Landscape (Eliminates right-side overlap) */
+            #zoom-controls {
+                bottom: max(6px, env(safe-area-inset-bottom)) !important;
+                right: auto !important;
+                left: max(6px, env(safe-area-inset-left)) !important;
+                flex-direction: row !important;
+                gap: 4px !important;
+            }
+
+            .zoom-btn {
+                width: 28px !important;
+                height: 28px !important;
+                min-height: 28px !important;
+                font-size: 0.8rem !important;
+            }
+
+            /* Compact Hand Panel */
+            #hand-container {
+                bottom: max(2px, env(safe-area-inset-bottom)) !important;
+                padding: 3px 8px !important;
+                gap: 6px !important;
+            }
+
+            .hand-tile {
+                width: clamp(32px, 10vh, 46px) !important;
+                height: clamp(32px, 10vh, 46px) !important;
+            }
+
+            #current-player-label {
+                font-size: 0.65rem !important;
+            }
+        }
+
+        /* =========================================================================
+   LOBBY & MAIN MENU MOBILE AUTO-SCALING
+   ========================================================================= */
+        @media (max-width: 650px),
+        (max-height: 800px) {
+            .modal-card {
+                padding: 10px 12px !important;
+                max-height: 94dvh !important;
+                width: 95vw !important;
+            }
+
+            .modal-card h2 {
+                font-size: 1.15rem !important;
+                margin-bottom: 6px !important;
+            }
+
+            .setup-section-box {
+                padding: 8px 10px !important;
+                margin-bottom: 6px !important;
+                gap: 4px !important;
+            }
+
+            .setting-control-row {
+                padding: 2px 0 !important;
+            }
+
+            .setting-label {
+                font-size: 0.72rem !important;
+            }
+
+            .setting-slider {
+                width: 90px !important;
+            }
+
+            .tab-row {
+                margin-bottom: 6px !important;
+                gap: 4px !important;
+            }
+
+            .tab-btn {
+                padding: 5px 2px !important;
+                font-size: 0.68rem !important;
+                min-height: 28px !important;
+            }
+
+            .lobby-slot-row {
+                padding: 3px 6px !important;
+                margin-bottom: 2px !important;
+            }
+
+            select.setup-select,
+            input.setup-input {
+                min-height: 28px !important;
+                height: 28px !important;
+                padding: 2px 6px !important;
+                font-size: 0.75rem !important;
+            }
+
+            .setup-section-box div {
+                font-size: 0.72rem !important;
+            }
+
+            .setup-section-box button {
+                min-height: 28px !important;
+                padding: 4px 8px !important;
+                font-size: 0.65rem !important;
+            }
+
+            #mobile-lobby-audio-box {
+                margin-bottom: 6px !important;
+            }
+        }
+
+        /* =========================================================================
+   COMPACT SCORE TRACKER / LEADERBOARD SCALING
+   ========================================================================= */
+
+        @media (max-width: 650px),
+        (max-height: 700px) {
+            #leaderboard-container {
+                padding: 4px 5px !important;
+                gap: 3px !important;
+            }
+
+            .lb-header {
+                font-size: 0.52rem !important;
+                letter-spacing: 0.5px !important;
+                margin-bottom: 2px !important;
+            }
+
+            .lb-card-inner {
+                padding: 3px 5px !important;
+                gap: 4px !important;
+            }
+
+            .lb-name {
+                font-size: 0.6rem !important;
+                gap: 3px !important;
+                white-space: nowrap !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+            }
+
+            .lb-name svg {
+                width: 11px !important;
+                height: 11px !important;
+                flex-shrink: 0 !important;
+            }
+
+            .lb-score {
+                font-size: 0.68rem !important;
+                flex-shrink: 0 !important;
+            }
+        }
+
+        /* Extra Compact Scaling for Sideways/Landscape Phones */
+        @media (max-height: 500px) and (orientation: landscape) {
+            #left-hud-wrapper {
+                max-width: 110px !important;
+            }
+
+            #leaderboard-container {
+                padding: 2px 4px !important;
+                max-height: 70px !important;
+            }
+
+            .lb-header {
+                font-size: 0.48rem !important;
+            }
+
+            .lb-card-inner {
+                padding: 2px 3px !important;
+            }
+
+            .lb-name {
+                font-size: 0.52rem !important;
+            }
+
+            .lb-name svg {
+                width: 10px !important;
+                height: 10px !important;
+            }
+
+            .lb-score {
+                font-size: 0.6rem !important;
+            }
+        }
+
+        /* =========================================================================
+   COLORGON TITLE LOGO MOBILE SCALING
+   ========================================================================= */
+        #top-left-hud h1 {
+            white-space: nowrap !important;
+            justify-content: center !important;
+        }
+
+        @media (max-width: 650px),
+        (max-height: 700px) {
+            #top-left-hud {
+                padding: 4px 6px !important;
+            }
+
+            #top-left-hud h1 {
+                font-size: 0.82rem !important;
+                letter-spacing: 0.5px !important;
+            }
+        }
+
+        @media (max-width: 420px) {
+            #top-left-hud h1 {
+                font-size: 0.75rem !important;
+                letter-spacing: 0.2px !important;
+            }
+        }
+
+        @media (max-height: 500px) and (orientation: landscape) {
+            #top-left-hud {
+                padding: 2px 4px !important;
+            }
+
+            #top-left-hud h1 {
+                font-size: 0.68rem !important;
+                letter-spacing: 0.2px !important;
+            }
+        }
+
+        /* =========================================================================
+   PERFORMANCE & GPU RENDER OPTIMIZATION
+   ========================================================================= */
+        /* Hardware accelerate board movement */
+        #master-pan {
+            transform-style: preserve-3d;
+            backface-visibility: hidden;
+        }
+
+        /* Preserve glow filters for wildcards, colorgon scoring, previews, and void spots */
+        #board path:not(.void-neon-pulse):not(.wildcard-shimmer):not(.wedge-colorgon-active):not(.hover-preview-animated),
+        #board polygon:not(.void-neon-pulse):not(.wildcard-shimmer):not(.wedge-colorgon-active):not(.hover-preview-animated) {
+            filter: none !important;
+        }
+
+        /* Replace drop-shadow filter on center logo with clean vector stroke */
+        .svg-center-logo {
+            stroke: #000000 !important;
+            stroke-width: 1.5px !important;
+        }
+
+        /* =========================================================================
+   BLACK HOLE VOID CREATION ANIMATION
+   ========================================================================= */
+        @keyframes blackHoleSwirl {
+            0% {
+                transform: scale(0.1) rotate(0deg);
+                opacity: 0;
+            }
+
+            30% {
+                transform: scale(1.25) rotate(240deg);
+                opacity: 1;
+                filter: drop-shadow(0 0 18px #ff2a4b);
+            }
+
+            70% {
+                transform: scale(1.0) rotate(540deg);
+                opacity: 1;
+                filter: drop-shadow(0 0 25px #e74c3c);
+            }
+
+            100% {
+                transform: scale(0.85) rotate(720deg);
+                opacity: 0.9;
+            }
+        }
+
+        /* =========================================================================
+   BLACK HOLE VOID CREATION ANIMATION FIX
+   ========================================================================= */
+        .black-hole-swirl {
+            transform-box: fill-box !important;
+            transform-origin: center !important;
+            animation: blackHoleSwirl 1.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+
+        @keyframes blackHoleSwirl {
+            0% {
+                transform: scale(0.1) rotate(0deg);
+                opacity: 0;
+            }
+
+            30% {
+                transform: scale(1.15) rotate(180deg);
+                opacity: 1;
+                filter: drop-shadow(0 0 12px #ff2a4b);
+            }
+
+            70% {
+                transform: scale(1.0) rotate(360deg);
+                opacity: 1;
+                filter: drop-shadow(0 0 18px #e74c3c);
+            }
+
+            100% {
+                transform: scale(0.9) rotate(540deg);
+                opacity: 0.95;
+            }
+        }
     </style>
 </head>
 
@@ -1420,14 +2169,16 @@
         </div>
     </div>
 
-    <div id="dice-panel" class="hud-element">
-        <div class="stat-label" style="font-size:0.55rem; color:var(--text-dim); font-weight:700;">Dice</div>
-        <div id="dice-area">
-            <div id="die-wrap-r" class="die-container"></div>
-            <div id="die-wrap-b" class="die-container"></div>
-            <div id="die-wrap-y" class="die-container"></div>
+    <div id="right-hud-wrapper" class="hud-element">
+        <div id="dice-panel">
+            <div class="stat-label" style="font-size:0.55rem; color:var(--text-dim); font-weight:700;">Dice</div>
+            <div id="dice-area">
+                <div id="die-wrap-r" class="die-container"></div>
+                <div id="die-wrap-b" class="die-container"></div>
+                <div id="die-wrap-y" class="die-container"></div>
+            </div>
         </div>
-        <button id="end-turn-btn" onclick="endTurn()">End Turn</button>
+        <button id="end-turn-btn" onclick="endTurn()">END<br>TURN</button>
     </div>
 
     <div id="hand-container" class="hud-element">
@@ -2045,6 +2796,8 @@
         let scoredColorgons = new Set();
         let newlyPlacedKey = null;
 
+        let activeVoidAnimations = new Set();
+
         const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
         function updateHostProfile() {
@@ -2181,8 +2934,12 @@
                 } else if (data.type === 'CHAT_MSG') {
                     receiveChatMessage(data.sender, data.color, data.text);
                 } else if (data.type === 'ACTION_PLACE') { attemptPlacement(data.q, data.r, null, true, data.handIndex, data.tile); }
-                else if (data.type === 'ACTION_END_TURN') { endTurn(true); }
-                else if (data.type === 'ACTION_ROLL') { executeDiceRollAnimation(); broadcastAnimationEvent({ type: 'TRIGGER_ROLL' }); }
+                else if (data.type === 'ACTION_END_TURN') {
+                    // Only process end turn if the message came from the player whose turn it currently is
+                    if (Number(data.fromId) === Number(activePlayerIdx)) {
+                        endTurn(true);
+                    }
+                } else if (data.type === 'ACTION_ROLL') { executeDiceRollAnimation(); broadcastAnimationEvent({ type: 'TRIGGER_ROLL' }); }
             } else {
                 if (data.type === 'ASSIGN_ID') {
                     if (data.targetSenderId === myClientId) {
@@ -3181,6 +3938,54 @@
 
         // SFX Engine
         const SFX = {
+            voidBlackHole() {
+                if (masterSoundMuted || sfxVolume <= 0) return;
+                let ctx = getAudioContext(); if (!ctx) return;
+                let now = ctx.currentTime;
+
+                // 1. Deep Sub-Bass Rumble
+                let sub = ctx.createOscillator(), subGain = ctx.createGain();
+                sub.type = 'sawtooth';
+                sub.frequency.setValueAtTime(140, now);
+                sub.frequency.exponentialRampToValueAtTime(30, now + 1.2);
+
+                let filter = ctx.createBiquadFilter();
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(350, now);
+                filter.frequency.exponentialRampToValueAtTime(50, now + 1.2);
+
+                subGain.gain.setValueAtTime(0.45 * sfxVolume, now);
+                subGain.gain.exponentialRampToValueAtTime(0.001, now + 1.2);
+
+                sub.connect(filter);
+                filter.connect(subGain);
+                subGain.connect(ctx.destination);
+                sub.start(now); sub.stop(now + 1.2);
+
+                // 2. Roaring Fire Noise Buffer
+                let bufferSize = ctx.sampleRate * 1.2;
+                let buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+                let data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+
+                let noise = ctx.createBufferSource();
+                noise.buffer = buffer;
+
+                let noiseFilter = ctx.createBiquadFilter();
+                noiseFilter.type = 'bandpass';
+                noiseFilter.frequency.setValueAtTime(280, now);
+                noiseFilter.frequency.exponentialRampToValueAtTime(70, now + 1.2);
+                noiseFilter.Q.setValueAtTime(2.5, now);
+
+                let noiseGain = ctx.createGain();
+                noiseGain.gain.setValueAtTime(0.35 * sfxVolume, now);
+                noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 1.2);
+
+                noise.connect(noiseFilter);
+                noiseFilter.connect(noiseGain);
+                noiseGain.connect(ctx.destination);
+                noise.start(now); noise.stop(now + 1.2);
+            },
             select() {
                 if (masterSoundMuted || sfxVolume <= 0) return;
                 let ctx = getAudioContext(); if (!ctx) return;
@@ -3855,6 +4660,7 @@
             activePreviewSocketKey = null;
             isGameOver = false;
 
+
             let btn = document.getElementById('end-turn-btn');
             if (btn) btn.classList.remove('pulse-end-turn');
             let toast = document.getElementById('no-moves-toast');
@@ -4019,6 +4825,24 @@
             if (Number(curP.id) !== Number(myPlayerId)) { centerCameraOn(q, r, 1.3); await sleep(400); }
 
             placeTile(q, r, tile);
+
+            // ONLY trigger void animation if the newly placed tile has a black wedge ('k')
+            let createdNewVoid = false;
+            neighbors.forEach(n => {
+                let nq = q + n.dq, nr = r + n.dr, nKey = `${nq},${nr}`;
+                if (!grid.has(nKey) && tile[n.edge] === 'k') {
+                    activeVoidAnimations.add(nKey);
+                    createdNewVoid = true;
+                }
+            });
+
+            if (createdNewVoid) {
+                SFX.voidBlackHole();
+                setTimeout(() => {
+                    activeVoidAnimations.clear();
+                    renderBoard();
+                }, 1200);
+            }
             curP.hand.splice(tileIdx, 1);
             selectedHandIndex = -1;
             tilesPlayedThisTurn++; totalTilesPlaced++;
@@ -4201,10 +5025,12 @@
             let curP = playersList[activePlayerIdx];
             if (!curP) return;
 
+            // Reject end turn requests if it is not currently this player's turn
+            if (!isRemote && isOnlineGame && Number(activePlayerIdx) !== Number(myPlayerId)) return;
+
             // Allow turn end for remote actions, AI bots, or the local human player
             let canEndTurn = isRemote || curP.type === 'bot' || (Number(activePlayerIdx) === Number(myPlayerId));
             if (!canEndTurn) return;
-
             if (!isRemote && isOnlineGame && !isHost) {
                 publishNetworkData({ type: 'ACTION_END_TURN', fromId: myPlayerId });
                 return;
@@ -4248,94 +5074,156 @@
 
             let isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || window.matchMedia('(pointer: coarse)').matches;
 
+            // Loop through empty sockets directly (unwrapped)
             empty.forEach(k => {
                 let [q, r] = k.split(',').map(Number);
                 let x = cx + w * q, y = cy + h * (r + q / 2);
                 let spotKey = `${q},${r}`;
 
+                // 1. ALWAYS render Void Spots
+                // ALWAYS render Void Spots
                 if (isSpaceBlockedByBlack(q, r)) {
                     let g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
                     g.setAttribute('transform', `translate(${x}, ${y})`);
+                    g.style.pointerEvents = 'none';
 
-                    let lip = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
-                    lip.setAttribute('points', "20,-34.64 40,0 20,34.64 -20,34.64 -40,0 -20,-34.64");
-                    lip.setAttribute('fill', 'rgba(20, 10, 20, 0.95)');
-                    lip.setAttribute('stroke-width', '2.5'); lip.classList.add('void-neon-pulse'); g.appendChild(lip);
+                    if (activeVoidAnimations.has(spotKey)) {
+                        // SWIRLING BLACK HOLE EFFECT (Local Hex Centered)
+                        let swirlG = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                        swirlG.classList.add('black-hole-swirl');
 
-                    let voidHex = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
-                    voidHex.setAttribute('points', "17,-29.44 34,0 17,29.44 -17,29.44 -34,0 -17,-29.44");
-                    voidHex.setAttribute('fill', '#0c0408'); voidHex.setAttribute('stroke', '#000000'); voidHex.setAttribute('stroke-width', '1.5');
-                    g.appendChild(voidHex);
+                        // Outer Event Horizon Hex Rim
+                        let outerHex = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+                        outerHex.setAttribute('points', "20,-34.64 40,0 20,34.64 -20,34.64 -40,0 -20,-34.64");
+                        outerHex.setAttribute('fill', 'rgba(20, 10, 20, 0.9)');
+                        outerHex.setAttribute('stroke', '#ff2a4b');
+                        outerHex.setAttribute('stroke-width', '2');
+                        swirlG.appendChild(outerHex);
 
-                    let text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-                    text.setAttribute('x', '0'); text.setAttribute('y', '8'); text.setAttribute('text-anchor', 'middle');
-                    text.setAttribute('fill', '#ff2a4b'); text.setAttribute('font-size', '26'); text.setAttribute('font-weight', '900');
-                    text.classList.add('void-neon-pulse'); text.textContent = '✕';
-                    g.appendChild(text); socketsLayer.appendChild(g); return;
+                        // Vortex Spiral Ring
+                        let ring = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                        ring.setAttribute('cx', '0'); ring.setAttribute('cy', '0');
+                        ring.setAttribute('r', '22');
+                        ring.setAttribute('fill', 'none');
+                        ring.setAttribute('stroke', '#ff5252');
+                        ring.setAttribute('stroke-width', '2.5');
+                        ring.setAttribute('stroke-dasharray', '8 6');
+                        swirlG.appendChild(ring);
+
+                        // Central Black Hole Core
+                        let core = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                        core.setAttribute('cx', '0'); core.setAttribute('cy', '0');
+                        core.setAttribute('r', '13');
+                        core.setAttribute('fill', '#040408');
+                        core.setAttribute('stroke', '#ff2a4b');
+                        core.setAttribute('stroke-width', '1.5');
+                        swirlG.appendChild(core);
+
+                        g.appendChild(swirlG);
+                    }
+                    else {
+                        // SETTLED RED 'X' VOID SPOT
+                        let lip = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+                        lip.setAttribute('points', "20,-34.64 40,0 20,34.64 -20,34.64 -40,0 -20,-34.64");
+                        lip.setAttribute('fill', 'rgba(20, 10, 20, 0.95)');
+                        lip.setAttribute('stroke', '#ff2a4b');
+                        lip.setAttribute('stroke-width', '2.5');
+                        lip.classList.add('void-neon-pulse');
+                        g.appendChild(lip);
+
+                        let voidHex = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+                        voidHex.setAttribute('points', "17,-29.44 34,0 17,29.44 -17,29.44 -34,0 -17,-29.44");
+                        voidHex.setAttribute('fill', '#0c0408');
+                        voidHex.setAttribute('stroke', '#ff2a4b');
+                        voidHex.setAttribute('stroke-width', '1');
+                        g.appendChild(voidHex);
+
+                        let text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                        text.setAttribute('x', '0'); text.setAttribute('y', '8');
+                        text.setAttribute('text-anchor', 'middle');
+                        text.setAttribute('fill', '#ff2a4b');
+                        text.setAttribute('font-size', '26');
+                        text.setAttribute('font-weight', '900');
+                        text.setAttribute('stroke', 'none');
+                        text.style.fontFamily = "'Montserrat', sans-serif";
+                        text.textContent = '✕';
+                        g.appendChild(text);
+                    }
+
+                    socketsLayer.appendChild(g);
+                    return;
                 }
 
-                let isLegalSpotForCurrentTile = (activeSelectedTile) ? canPlace(q, r, activeSelectedTile).valid : false;
+                // 2. ONLY render placement guides when holding an active tile
+                if (activeSelectedTile && isMyTurn) {
+                    let isLegalSpotForCurrentTile = canPlace(q, r, activeSelectedTile).valid;
 
-                if (isLegalSpotForCurrentTile && validGuidesEnabled) {
-                    let hexSpot = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
-                    hexSpot.setAttribute('points', "20,-34.64 40,0 20,34.64 -20,34.64 -40,0 -20,-34.64");
-                    hexSpot.setAttribute('transform', `translate(${x}, ${y})`);
-                    hexSpot.setAttribute('fill', spotKey === activePreviewSocketKey ? 'rgba(46, 204, 113, 0.35)' : 'rgba(46, 204, 113, 0.18)');
-                    hexSpot.setAttribute('stroke', spotKey === activePreviewSocketKey ? 'rgba(46, 204, 113, 0.9)' : 'rgba(46, 204, 113, 0.45)');
-                    hexSpot.setAttribute('stroke-width', spotKey === activePreviewSocketKey ? '2.5' : '1.5');
-                    hexSpot.classList.add('legal-spot-active');
-                    socketsLayer.appendChild(hexSpot);
-                }
+                    if (isLegalSpotForCurrentTile && validGuidesEnabled) {
+                        let hexSpot = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+                        hexSpot.setAttribute('points', "20,-34.64 40,0 20,34.64 -20,34.64 -40,0 -20,-34.64");
+                        hexSpot.setAttribute('transform', `translate(${x}, ${y})`);
+                        hexSpot.setAttribute('fill', spotKey === activePreviewSocketKey ? 'rgba(46, 204, 113, 0.35)' : 'rgba(46, 204, 113, 0.18)');
+                        hexSpot.setAttribute('stroke', spotKey === activePreviewSocketKey ? 'rgba(46, 204, 113, 0.9)' : 'rgba(46, 204, 113, 0.45)');
+                        hexSpot.setAttribute('stroke-width', spotKey === activePreviewSocketKey ? '2.5' : '1.5');
+                        hexSpot.classList.add('legal-spot-active');
+                        socketsLayer.appendChild(hexSpot);
+                    }
 
-                if (isTouchDevice && isLegalSpotForCurrentTile && activePreviewSocketKey === spotKey) {
-                    let previewGroup = createHexGroup(activeSelectedTile, q, r);
-                    previewGroup.setAttribute('transform', `translate(${x}, ${y})`);
-                    previewGroup.style.pointerEvents = 'none';
-                    let innerG = previewGroup.querySelector('g');
-                    if (innerG) { innerG.classList.add('hover-preview-animated'); innerG.style.pointerEvents = 'none'; }
-                    topActiveLayer.appendChild(previewGroup);
-                }
+                    if (isTouchDevice && isLegalSpotForCurrentTile && activePreviewSocketKey === spotKey) {
+                        let previewGroup = createHexGroup(activeSelectedTile, q, r);
+                        previewGroup.setAttribute('transform', `translate(${x}, ${y})`);
+                        previewGroup.style.pointerEvents = 'none';
+                        let innerG = previewGroup.querySelector('g');
+                        if (innerG) { innerG.classList.add('hover-preview-animated'); innerG.style.pointerEvents = 'none'; }
+                        topActiveLayer.appendChild(previewGroup);
+                    }
 
-                let hitArea = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
-                hitArea.setAttribute('points', "20,-34.64 40,0 20,34.64 -20,34.64 -40,0 -20,-34.64");
-                hitArea.setAttribute('transform', `translate(${x}, ${y})`);
-                hitArea.setAttribute('fill', 'rgba(0,0,0,0.001)'); hitArea.setAttribute('stroke', 'none'); hitArea.style.cursor = 'pointer';
+                    let hitArea = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+                    hitArea.setAttribute('points', "20,-34.64 40,0 20,34.64 -20,34.64 -40,0 -20,-34.64");
+                    hitArea.setAttribute('transform', `translate(${x}, ${y})`);
+                    hitArea.setAttribute('fill', 'rgba(0,0,0,0.001)');
+                    hitArea.setAttribute('stroke', 'none');
+                    hitArea.style.cursor = 'pointer';
 
-                let previewGroup = null;
+                    let previewGroup = null;
 
-                if (!isTouchDevice) {
-                    hitArea.onmouseenter = () => {
-                        if (isLegalSpotForCurrentTile) {
-                            SFX.hover(); previewGroup = createHexGroup(activeSelectedTile, q, r);
-                            previewGroup.setAttribute('transform', `translate(${x}, ${y})`);
-                            previewGroup.style.pointerEvents = 'none';
-                            let innerG = previewGroup.querySelector('g');
-                            if (innerG) { innerG.classList.add('hover-preview-animated'); innerG.style.pointerEvents = 'none'; }
-                            topActiveLayer.appendChild(previewGroup);
-                        }
-                    };
-                    hitArea.onmouseleave = () => { if (previewGroup) { previewGroup.remove(); previewGroup = null; } };
-                    hitArea.onclick = () => {
-                        if (hasDragged) return;
-                        if (!isLegalSpotForCurrentTile) return;
-                        if (previewGroup) { previewGroup.remove(); previewGroup = null; }
-                        attemptPlacement(q, r, hitArea, false, selectedHandIndex);
-                    };
-                } else {
-                    hitArea.onclick = () => {
-                        if (hasDragged) return;
-                        if (!isLegalSpotForCurrentTile) return;
-
-                        if (activePreviewSocketKey === spotKey) {
+                    if (!isTouchDevice) {
+                        hitArea.onmouseenter = () => {
+                            if (isLegalSpotForCurrentTile) {
+                                SFX.hover();
+                                previewGroup = createHexGroup(activeSelectedTile, q, r);
+                                previewGroup.setAttribute('transform', `translate(${x}, ${y})`);
+                                previewGroup.style.pointerEvents = 'none';
+                                let innerG = previewGroup.querySelector('g');
+                                if (innerG) { innerG.classList.add('hover-preview-animated'); innerG.style.pointerEvents = 'none'; }
+                                topActiveLayer.appendChild(previewGroup);
+                            }
+                        };
+                        hitArea.onmouseleave = () => {
+                            if (previewGroup) { previewGroup.remove(); previewGroup = null; }
+                        };
+                        hitArea.onclick = () => {
+                            if (hasDragged) return;
+                            if (!isLegalSpotForCurrentTile) return;
+                            if (previewGroup) { previewGroup.remove(); previewGroup = null; }
                             attemptPlacement(q, r, hitArea, false, selectedHandIndex);
-                        } else {
-                            activePreviewSocketKey = spotKey;
-                            SFX.hover();
-                            renderBoard();
-                        }
-                    };
+                        };
+                    } else {
+                        hitArea.onclick = () => {
+                            if (hasDragged) return;
+                            if (!isLegalSpotForCurrentTile) return;
+
+                            if (activePreviewSocketKey === spotKey) {
+                                attemptPlacement(q, r, hitArea, false, selectedHandIndex);
+                            } else {
+                                activePreviewSocketKey = spotKey;
+                                SFX.hover();
+                                renderBoard();
+                            }
+                        };
+                    }
+                    socketsLayer.appendChild(hitArea);
                 }
-                socketsLayer.appendChild(hitArea);
             });
 
             grid.forEach((tile, k) => {
@@ -4614,6 +5502,14 @@
         function hideVictoryBanner() {
             let banner = document.getElementById('top-victory-banner');
             if (banner) banner.classList.remove('visible');
+        }
+
+        function getPinchDistance() {
+            let pts = Array.from(activePointers.values());
+            if (pts.length < 2) return 0;
+            let dx = pts[0].x - pts[1].x;
+            let dy = pts[0].y - pts[1].y;
+            return Math.hypot(dx, dy);
         }
 
         // CONTROLS & LISTENERS
